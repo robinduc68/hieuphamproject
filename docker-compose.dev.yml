@@ -1,0 +1,24 @@
+# Override for local development – hot reload on both services
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "python -u -m app.migrations.runner upgrade &&
+             python -u -m app.seed &&
+             python -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: "http://localhost:${BACKEND_HOST_PORT:-8000}/api/v1"
+    command: npm run dev -- --host

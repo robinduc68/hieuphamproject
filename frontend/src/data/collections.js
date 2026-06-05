@@ -1,0 +1,38 @@
+export const collections = [
+  {
+    id: 1,
+    title: 'Dáng Lụa Từ Hoa',
+    subtitle: 'Câu chuyện của Mây',
+    href: '/collection/dang-lua-tu-hoa-cau-chuyen-cua-may',
+    tall: true,
+    gradient: 'linear-gradient(160deg,#2c2620 0%,#4a3828 60%,#3a2e22 100%)',
+    accentColor: '#d4af37',
+  },
+  {
+    id: 2,
+    title: 'Bridal',
+    subtitle: 'A Wedding Dress',
+    href: '/collection/a-wedding-dress',
+    tall: false,
+    gradient: 'linear-gradient(135deg,#e8e0d0 0%,#d4c8b0 100%)',
+    accentColor: '#b8972a',
+  },
+  {
+    id: 3,
+    title: 'WomenSwear',
+    subtitle: 'Phong Cách Đương Đại',
+    href: '/danh-muc-san-pham/womenswear',
+    tall: false,
+    gradient: 'linear-gradient(135deg,#1a1a18 0%,#2c2620 100%)',
+    accentColor: '#c0395a',
+  },
+  {
+    id: 4,
+    title: 'Timeless Perfection',
+    subtitle: 'Collection',
+    href: '/collection/timeless-perfection',
+    tall: false,
+    gradient: 'linear-gradient(135deg,#3a2e22 0%,#2a2218 100%)',
+    accentColor: '#7b9eb5',
+  },
+]
