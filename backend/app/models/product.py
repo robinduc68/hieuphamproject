@@ -1,6 +1,6 @@
 from peewee import (
     CharField, TextField, DecimalField, BooleanField,
-    IntegerField, ForeignKeyField
+    IntegerField, ForeignKeyField, SmallIntegerField
 )
 from .base import BaseModel
 from .category import Category, SubCategory
@@ -18,11 +18,12 @@ class Product(BaseModel):
     category          = ForeignKeyField(Category,    backref="products", null=True, on_delete="SET NULL")
     subcategory       = ForeignKeyField(SubCategory, backref="products", null=True, on_delete="SET NULL")
     collection        = ForeignKeyField(Collection,  backref="products", null=True, on_delete="SET NULL")
+    compare_at_price  = DecimalField(max_digits=14, decimal_places=0, null=True)  # giá gốc khi sale
     is_new            = BooleanField(default=False)
     is_active         = BooleanField(default=True)
     is_featured       = BooleanField(default=False)
     sort_order        = IntegerField(default=0)
-    primary_color     = CharField(max_length=20, null=True)  # HEX cho placeholder UI
+    primary_color     = CharField(max_length=20, null=True)
 
     class Meta:
         table_name = "products"
@@ -42,9 +43,10 @@ class ProductImage(BaseModel):
 
 class ProductSize(BaseModel):
     product       = ForeignKeyField(Product, backref="sizes", on_delete="CASCADE")
-    size          = CharField(max_length=20)    # 32, 34, S, M, L …
+    size          = CharField(max_length=20)
     stock         = IntegerField(default=0)
     is_available  = BooleanField(default=True)
+    sort_order    = SmallIntegerField(default=0)
 
     class Meta:
         table_name = "product_sizes"

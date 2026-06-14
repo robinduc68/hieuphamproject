@@ -2,18 +2,22 @@ from typing import Optional
 from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, status
-from peewee import fn, DoesNotExist, SQL
+from peewee import fn, DoesNotExist
 
 from app.models.product import Product, ProductImage, ProductSize, Category
+from app.models.category import SubCategory
 from app.schemas.product import (
     ProductOut, ProductListOut, ProductCreate, ProductUpdate,
     PaginatedProducts, CategoryOut, CategoryCreate, CategoryUpdate,
+    SubCategoryOut, SubCategoryCreate, SubCategoryUpdate,
+    ProductImageUpdate, ProductSizeOut, SizeCreate, SizeUpdate,
 )
 from app.auth import get_current_admin
 from app.database import get_db
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 cat_router = APIRouter(prefix="/api/categories", tags=["Categories"])
+sub_router = APIRouter(prefix="/api/subcategories", tags=["SubCategories"])
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
@@ -21,7 +25,7 @@ def _product_to_out(p: Product) -> dict:
     images = list(
         ProductImage.select()
         .where(ProductImage.product == p)
-        .order_by(SQL("product_images.sort_order"), SQL("product_images.id"))
+        .order_by(ProductImage.sort_order, ProductImage.id)
     )
     sizes = list(
         ProductSize.select()
@@ -45,6 +49,7 @@ def _product_to_out(p: Product) -> dict:
         "category_id":      p.category_id,
         "created_at":       p.created_at,
         "updated_at":       p.updated_at,
+        "primary_color": p.primary_color,
         "images": [
             {
                 "id": i.id,
@@ -84,7 +89,13 @@ def list_categories(active_only: bool = True):
     qs = Category.select().order_by(Category.sort_order, Category.name)
     if active_only:
         qs = qs.where(Category.is_active == True)
-    return [CategoryOut.model_validate(c, from_attributes=True) for c in qs]
+    result = []
+    for c in qs:
+        subs = list(SubCategory.select().where(SubCategory.category == c).order_by(SubCategory.sort_order, SubCategory.name))
+        out = CategoryOut.model_validate(c, from_attributes=True)
+        out.subcategories = [SubCategoryOut.model_validate(s, from_attributes=True) for s in subs]
+        result.append(out)
+    return result
 
 
 @cat_router.get("/{slug}", response_model=CategoryOut)
@@ -124,46 +135,38 @@ def list_products(
     page:        int            = Query(1, ge=1),
     per_page:    int            = Query(12, ge=1, le=100),
     category:    Optional[str]  = Query(None, description="category slug"),
+    category_id: Optional[int]  = Query(None, description="category id"),
     search:      Optional[str]  = Query(None),
     is_new:      Optional[bool] = Query(None),
     is_featured: Optional[bool] = Query(None),
     _db=Depends(get_db),
 ):
-    print(33333333)
     qs = (
         Product.select()
         .where(Product.is_active == True)
         .order_by(Product.created_at.desc())
     )
-    print(1212121221, qs)
     if category:
         try:
             cat = Category.get(Category.slug == category)
             qs = qs.where(Product.category == cat)
         except DoesNotExist:
             raise HTTPException(status_code=404, detail="Category not found")
-    print(82828282, qs)
+    if category_id:
+        qs = qs.where(Product.category == category_id)
     if search:
         qs = qs.where(
             fn.LOWER(Product.name).contains(search.lower()) |
             fn.LOWER(Product.description).contains(search.lower())
         )
-    print(8383883, qs)
     if is_new is not None:
         qs = qs.where(Product.is_new == is_new)
-    print(8484884, qs)
     if is_featured is not None:
         qs = qs.where(Product.is_featured == is_featured)
-    print(6466464, qs)
 
     total   = qs.count()
     records = list(qs.offset((page - 1) * per_page).limit(per_page))
-    print(737373)
-    results = []
-    print(5555 ,records)
-    for p in records:
-        d = _product_to_out(p)
-        results.append(ProductListOut.model_validate(d))
+    results = [ProductListOut.model_validate(_product_to_out(p)) for p in records]
     return PaginatedProducts(total=total, page=page, per_page=per_page, results=results)
 
 
@@ -192,7 +195,10 @@ def featured_products(limit: int = Query(4, le=20), _db=Depends(get_db)):
 @router.get("/{slug}", response_model=ProductOut)
 def get_product(slug: str, _db=Depends(get_db)):
     try:
-        p = Product.get(Product.slug == slug, Product.is_active == True)
+        if slug.isdigit():
+            p = Product.get_by_id(int(slug))
+        else:
+            p = Product.get(Product.slug == slug, Product.is_active == True)
         return ProductOut.model_validate(_product_to_out(p))
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -202,8 +208,8 @@ def get_product(slug: str, _db=Depends(get_db)):
              dependencies=[Depends(get_current_admin)])
 def create_product(data: ProductCreate, _db=Depends(get_db)):
     sizes     = data.sizes
-    color_hex = data.color_hex
-    payload   = data.model_dump(exclude={"sizes", "color_hex"})
+    color_hex = data.color_hex or data.primary_color  # accept both fields
+    payload   = data.model_dump(exclude={"sizes", "color_hex", "primary_color"})
     if color_hex:
         payload["primary_color"] = color_hex
     payload.pop("sub_category", None)
@@ -254,34 +260,25 @@ def upload_image(
     color_hex:  Optional[str] = None,
     _db=Depends(get_db),
 ):
+    from app.storage import upload_file
     try:
         product = Product.get_by_id(product_id)
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    import os, aiofiles, asyncio
-    from app.config import get_settings
-    settings = get_settings()
-    save_dir = os.path.join(settings.media_dir, "products", str(product_id))
-    os.makedirs(save_dir, exist_ok=True)
-    fname = f"{product_id}_{file.filename}"
-    fpath = os.path.join(save_dir, fname)
-
-    # sync write (keeps router simple; swap to async endpoint if needed)
-    with open(fpath, "wb") as f:
-        f.write(file.file.read())
+    file_bytes   = file.file.read()
+    content_type = file.content_type or "image/jpeg"
+    public_url   = upload_file(file_bytes, file.filename or "image.jpg", product_id, content_type)
 
     next_pos = (
-        ProductImage.select(
-            fn.COALESCE(fn.MAX(SQL("product_images.sort_order")), -1),
-        )
+        ProductImage.select(fn.COALESCE(fn.MAX(ProductImage.sort_order), -1))
         .where(ProductImage.product == product)
         .scalar()
         + 1
     )
     img = ProductImage.create(
         product=product,
-        url=f"/media/products/{product_id}/{fname}",
+        url=public_url,
         alt_text=product.name,
         sort_order=next_pos,
         is_primary=False,
@@ -290,3 +287,142 @@ def upload_image(
         product.primary_color = color_hex
         product.save(only=[Product.primary_color])
     return {"id": img.id, "url": img.url, "position": img.sort_order}
+
+
+@router.put("/{product_id}/images/{img_id}",
+            dependencies=[Depends(get_current_admin)])
+def update_image(product_id: int, img_id: int, data: ProductImageUpdate, _db=Depends(get_db)):
+    try:
+        img = ProductImage.get(ProductImage.id == img_id, ProductImage.product == product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Image not found")
+    if data.is_primary:
+        ProductImage.update(is_primary=False).where(ProductImage.product == product_id).execute()
+        img.is_primary = True
+    if data.alt_text is not None:
+        img.alt_text = data.alt_text
+    if data.sort_order is not None:
+        img.sort_order = data.sort_order
+    img.save()
+    return {"id": img.id, "url": img.url, "position": img.sort_order, "is_primary": img.is_primary}
+
+
+@router.patch("/{product_id}/images/reorder",
+              dependencies=[Depends(get_current_admin)])
+def reorder_images(product_id: int, data: list[dict], _db=Depends(get_db)):
+    """data = [{ id: int, sort_order: int }, ...]"""
+    try:
+        Product.get_by_id(product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Product not found")
+    for item in data:
+        ProductImage.update(sort_order=item["sort_order"]).where(
+            ProductImage.id == item["id"],
+            ProductImage.product == product_id,
+        ).execute()
+    return {"ok": True}
+
+
+@router.delete("/{product_id}/images/{img_id}", status_code=204,
+               dependencies=[Depends(get_current_admin)])
+def delete_image(product_id: int, img_id: int, _db=Depends(get_db)):
+    from app.storage import delete_file
+    try:
+        img = ProductImage.get(ProductImage.id == img_id, ProductImage.product == product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Image not found")
+    delete_file(img.url)
+    img.delete_instance()
+
+
+# ── Size endpoints ────────────────────────────────────────────────────────
+@router.post("/{product_id}/sizes", response_model=ProductSizeOut, status_code=201,
+             dependencies=[Depends(get_current_admin)])
+def add_size(product_id: int, data: SizeCreate, _db=Depends(get_db)):
+    try:
+        product = Product.get_by_id(product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Product not found")
+    s = ProductSize.create(product=product, size=data.size, is_available=data.is_available)
+    return ProductSizeOut(id=s.id, size=s.size, in_stock=s.is_available)
+
+
+@router.put("/{product_id}/sizes/{size_id}", response_model=ProductSizeOut,
+            dependencies=[Depends(get_current_admin)])
+def update_size(product_id: int, size_id: int, data: SizeUpdate, _db=Depends(get_db)):
+    try:
+        s = ProductSize.get(ProductSize.id == size_id, ProductSize.product == product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Size not found")
+    if data.size is not None:
+        s.size = data.size
+    if data.is_available is not None:
+        s.is_available = data.is_available
+    s.save()
+    return ProductSizeOut(id=s.id, size=s.size, in_stock=s.is_available)
+
+
+@router.delete("/{product_id}/sizes/{size_id}", status_code=204,
+               dependencies=[Depends(get_current_admin)])
+def delete_size(product_id: int, size_id: int, _db=Depends(get_db)):
+    try:
+        s = ProductSize.get(ProductSize.id == size_id, ProductSize.product == product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Size not found")
+    s.delete_instance()
+
+
+# ── Category DELETE ────────────────────────────────────────────────────────
+@cat_router.delete("/{cat_id}", status_code=204,
+                   dependencies=[Depends(get_current_admin)])
+def delete_category(cat_id: int, _db=Depends(get_db)):
+    try:
+        cat = Category.get_by_id(cat_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Category not found")
+    cat.delete_instance()
+
+
+# ── SubCategory endpoints ──────────────────────────────────────────────────
+@cat_router.get("/{cat_id}/subcategories", response_model=list[SubCategoryOut])
+def list_subcategories(cat_id: int, _db=Depends(get_db)):
+    try:
+        cat = Category.get_by_id(cat_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Category not found")
+    subs = SubCategory.select().where(SubCategory.category == cat).order_by(SubCategory.sort_order, SubCategory.name)
+    return [SubCategoryOut.model_validate(s, from_attributes=True) for s in subs]
+
+
+@cat_router.post("/{cat_id}/subcategories", response_model=SubCategoryOut, status_code=201,
+                 dependencies=[Depends(get_current_admin)])
+def create_subcategory(cat_id: int, data: SubCategoryCreate, _db=Depends(get_db)):
+    try:
+        cat = Category.get_by_id(cat_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Category not found")
+    sub = SubCategory.create(category=cat, **data.model_dump())
+    return SubCategoryOut.model_validate(sub, from_attributes=True)
+
+
+@sub_router.put("/{sub_id}", response_model=SubCategoryOut,
+                dependencies=[Depends(get_current_admin)])
+def update_subcategory(sub_id: int, data: SubCategoryUpdate, _db=Depends(get_db)):
+    try:
+        sub = SubCategory.get_by_id(sub_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="SubCategory not found")
+    for field, val in data.model_dump(exclude_none=True).items():
+        setattr(sub, field, val)
+    sub.save()
+    return SubCategoryOut.model_validate(sub, from_attributes=True)
+
+
+@sub_router.delete("/{sub_id}", status_code=204,
+                   dependencies=[Depends(get_current_admin)])
+def delete_subcategory(sub_id: int, _db=Depends(get_db)):
+    try:
+        sub = SubCategory.get_by_id(sub_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="SubCategory not found")
+    sub.delete_instance()

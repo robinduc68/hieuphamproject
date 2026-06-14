@@ -281,6 +281,7 @@ import { useRoute }             from 'vue-router'
 import { useProduct }           from '@/composables/useProducts'
 import { useNewArrivals }       from '@/composables/useProducts'
 import { useCartStore }         from '@/stores/cart'
+import { customizationApi }     from '@/api'
 import ProductCard              from '@/components/ui/ProductCard.vue'
 
 const route      = useRoute()
@@ -289,6 +290,9 @@ const slug       = computed(() => route.params.slug)
 
 const { product, loading, error } = useProduct(slug)
 const { products: allProducts }   = useNewArrivals(8)
+
+// Customization options fetched once from backend
+const customizationGroups = ref([])  // [{ group_key, group_label, options: [{option_key, price_adjustment, ...}] }]
 
 // Local UI state
 const activeImg        = ref(0)
@@ -315,6 +319,21 @@ watch(product, () => {
   note.value            = ''
 })
 
+// ── Customization helpers ─────────────────────────────────────────────────
+function adjustmentFor(groupKey, optionKey) {
+  if (!optionKey) return null
+  const group = customizationGroups.value.find(g => g.group_key === groupKey)
+  if (!group) return 0
+  const opt = group.options.find(o => o.option_key === optionKey)
+  return opt ? Number(opt.price_adjustment) : 0
+}
+
+function maxAdjFor(groupKey) {
+  const group = customizationGroups.value.find(g => g.group_key === groupKey)
+  if (!group || !group.options.length) return 0
+  return Math.max(...group.options.map(o => Number(o.price_adjustment)))
+}
+
 // ── Computed ─────────────────────────────────────────────────────────────
 const allSelected = computed(() => {
   const methodOk = tailoringMethod.value === 'custom'
@@ -324,10 +343,19 @@ const allSelected = computed(() => {
 
 const displayPrice = computed(() => {
   if (!product.value) return ''
-  const max = product.value.price
-  const min = product.value.price_min ?? max
-  if (allSelected.value || min === max) return formatPrice(max)
-  return `${formatPrice(min)} – ${formatPrice(max)}`
+  const base = Number(product.value.price)
+
+  if (allSelected.value) {
+    const adj = (adjustmentFor('tailoring_method', tailoringMethod.value) ?? 0)
+              + (adjustmentFor('lining_type',      liningType.value)      ?? 0)
+              + (adjustmentFor('color_option',      colorOption.value)     ?? 0)
+    return formatPrice(base + adj)
+  }
+
+  // Show range: min (all cheapest = 0) to max total adjustment
+  const maxAdj = maxAdjFor('tailoring_method') + maxAdjFor('lining_type') + maxAdjFor('color_option')
+  if (!customizationGroups.value.length || maxAdj === 0) return formatPrice(base)
+  return `${formatPrice(base)} – ${formatPrice(base + maxAdj)}`
 })
 const displayImages = computed(() => {
   if (!product.value) return []
@@ -381,7 +409,17 @@ function handleAddToCart() {
     sizeError.value = true
     return
   }
-  cartStore.addItem(product.value, selectedSize.value)
+  const size = tailoringMethod.value === 'custom' ? 'THEO SỐ ĐO' : selectedSize.value
+  const adj  = (adjustmentFor('tailoring_method', tailoringMethod.value) ?? 0)
+             + (adjustmentFor('lining_type',      liningType.value)      ?? 0)
+             + (adjustmentFor('color_option',      colorOption.value)     ?? 0)
+
+  cartStore.addItem(product.value, size, 1, {
+    tailoring_method:  tailoringMethod.value,
+    lining_type:       liningType.value,
+    color_option:      colorOption.value,
+    price_adjustment:  adj,
+  })
   justAdded.value = true
   setTimeout(() => { justAdded.value = false }, 2000)
 }
@@ -439,6 +477,12 @@ function relatedNext() {
 }
 
 onMounted(async () => {
+  // Fetch customization options once (price range display)
+  try {
+    const res = await customizationApi.listGrouped()
+    customizationGroups.value = res.data
+  } catch { /* fallback: show single price */ }
+
   await calcItemW()
   relatedRO = new ResizeObserver(calcItemW)
   if (relatedVp.value) relatedRO.observe(relatedVp.value)

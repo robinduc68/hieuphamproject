@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useCartStore = defineStore('cart', () => {
-  // Persist cart in localStorage
   const _load = () => {
     try { return JSON.parse(localStorage.getItem('huyvo_cart') || '[]') } catch { return [] }
   }
@@ -18,39 +17,53 @@ export const useCartStore = defineStore('cart', () => {
     localStorage.setItem('huyvo_cart', JSON.stringify(items.value))
   }
 
-  function addItem(product, size, quantity = 1) {
-    const idx = items.value.findIndex(
-      (i) => i.product_id === product.id && i.size === size
-    )
+  /**
+   * @param {object} product
+   * @param {string} size
+   * @param {number} quantity
+   * @param {{ tailoring_method, lining_type, color_option, price_adjustment }} customization
+   */
+  function addItem(product, size, quantity = 1, customization = {}) {
+    const unitPrice = Number(product.price) + Number(customization.price_adjustment ?? 0)
+    // Unique key includes all selections so different combos are separate cart lines
+    const key = [
+      product.id,
+      size,
+      customization.tailoring_method ?? '',
+      customization.lining_type ?? '',
+      customization.color_option ?? '',
+    ].join('|')
+
+    const idx = items.value.findIndex(i => i._key === key)
     if (idx !== -1) {
       items.value[idx].quantity += quantity
     } else {
       items.value.push({
-        product_id: product.id,
-        slug:       product.slug,
-        name:       product.name,
-        price:      Number(product.price),
-        color_hex:  product.images?.[0]?.color_hex ?? null,
+        _key:             key,
+        product_id:       product.id,
+        slug:             product.slug,
+        name:             product.name,
+        price:            unitPrice,
+        color_hex:        product.images?.[0]?.color_hex ?? null,
         size,
         quantity,
+        tailoring_method: customization.tailoring_method ?? null,
+        lining_type:      customization.lining_type ?? null,
+        color_option:     customization.color_option ?? null,
       })
     }
     _save()
   }
 
-  function removeItem(productId, size) {
-    items.value = items.value.filter(
-      (i) => !(i.product_id === productId && i.size === size)
-    )
+  function removeItem(key) {
+    items.value = items.value.filter(i => i._key !== key)
     _save()
   }
 
-  function updateQty(productId, size, quantity) {
-    const item = items.value.find(
-      (i) => i.product_id === productId && i.size === size
-    )
+  function updateQty(key, quantity) {
+    const item = items.value.find(i => i._key === key)
     if (item) {
-      if (quantity <= 0) removeItem(productId, size)
+      if (quantity <= 0) removeItem(key)
       else item.quantity = quantity
     }
     _save()
@@ -61,12 +74,14 @@ export const useCartStore = defineStore('cart', () => {
     _save()
   }
 
-  /** Build payload for POST /api/orders/ */
   function toOrderItems() {
-    return items.value.map((i) => ({
-      product_id: i.product_id,
-      size:       i.size,
-      quantity:   i.quantity,
+    return items.value.map(i => ({
+      product_id:       i.product_id,
+      size:             i.size,
+      quantity:         i.quantity,
+      tailoring_method: i.tailoring_method,
+      lining_type:      i.lining_type,
+      color_option:     i.color_option,
     }))
   }
 

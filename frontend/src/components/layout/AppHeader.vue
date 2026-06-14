@@ -263,7 +263,7 @@ watch(searchOpen, async (val) => { if (val) { await nextTick(); searchInput.valu
   display: flex;
   align-items: center;
   padding: 0 22px;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 400;
   color: var(--text-dark);
   white-space: nowrap;

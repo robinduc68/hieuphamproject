@@ -50,6 +50,18 @@ services:
     depends_on:
       - backend
 
+  # ── Admin Panel ─────────────────────────────────────────────────────────────
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: huyvo_admin
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
   # ── pgAdmin (chỉ dùng khi dev) ─────────────────────────────────────────────
   pgadmin:
     image: dpage/pgadmin4:latest

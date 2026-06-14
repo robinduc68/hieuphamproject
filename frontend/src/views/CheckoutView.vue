@@ -10,6 +10,13 @@
           <h2 class="co-section-title">THÔNG TIN THANH TOÁN</h2>
           <form @submit.prevent="handleSubmit" novalidate>
 
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input v-model="form.email" type="email" class="form-input"
+                :class="{ error: errors.email }" placeholder="example@email.com" />
+              <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Họ và tên*</label>
@@ -192,13 +199,14 @@
 
         <div class="summary-items">
           <div v-if="!cartStore.items.length" class="summary-empty">Giỏ hàng trống</div>
-          <div v-for="item in cartStore.items" :key="`${item.product_id}-${item.size}`" class="summary-item">
+          <div v-for="item in cartStore.items" :key="item._key" class="summary-item">
             <div class="item-img" :style="{ background: swatchGradient(item.color_hex) }" />
             <div class="item-info">
               <p class="item-name">{{ item.name.toUpperCase() }}</p>
-              <p class="item-detail">May theo size: {{ item.size }}</p>
-              <p class="item-detail">Tà trong: May yếm rời</p>
-              <p class="item-detail">Màu sắc: Giống ảnh mẫu</p>
+              <p v-if="item.tailoring_method === 'custom'" class="item-detail">May theo số đo</p>
+              <p v-else class="item-detail">Size: {{ item.size }}</p>
+              <p v-if="item.lining_type" class="item-detail">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà ngoài' }}</p>
+              <p v-if="item.color_option" class="item-detail">Màu sắc: {{ item.color_option === 'same' ? 'Giống ảnh mẫu' : 'Phối màu riêng' }}</p>
             </div>
             <div class="item-right">
               <span class="item-qty">x{{ item.quantity }}</span>
@@ -263,6 +271,7 @@ const orderCode = 'VTL' + Math.floor(10000 + Math.random() * 90000)
 const depositAmount = computed(() => Math.round(cartStore.total * 0.5))
 
 const form = ref({
+  email:     authStore.user?.email     ?? '',
   full_name: authStore.user?.full_name ?? '',
   phone:     authStore.user?.phone     ?? '',
   country:   'Vietnam',
@@ -300,6 +309,7 @@ function copyOrderCode() {
 
 function validate() {
   const e = {}
+  if (!form.value.email.trim())     e.email     = 'Vui lòng nhập email'
   if (!form.value.full_name.trim()) e.full_name = 'Vui lòng nhập họ tên'
   if (!form.value.phone.trim())     e.phone     = 'Vui lòng nhập số điện thoại'
   if (!form.value.address.trim())   e.address   = 'Vui lòng nhập địa chỉ'

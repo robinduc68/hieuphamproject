@@ -5,6 +5,7 @@ from .product import Product, ProductImage, ProductSize
 from .user import User
 from .order import Order, OrderItem
 from .newsletter import NewsletterSubscription
+from .customization import CustomizationOption
 
 ALL_MODELS = [
     Category, SubCategory,
@@ -13,4 +14,5 @@ ALL_MODELS = [
     User,
     Order, OrderItem,
     NewsletterSubscription,
+    CustomizationOption,
 ]

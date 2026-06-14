@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     )
     media_dir: str = Field(default="./media", validation_alias="MEDIA_DIR")
 
+    # Cloudflare R2 (bỏ trống để dùng local storage)
+    r2_account_id:       str | None = Field(default=None, validation_alias="R2_ACCOUNT_ID")
+    r2_access_key_id:    str | None = Field(default=None, validation_alias="R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str | None = Field(default=None, validation_alias="R2_SECRET_ACCESS_KEY")
+    r2_bucket_name:      str | None = Field(default=None, validation_alias="R2_BUCKET_NAME")
+    r2_public_url:       str | None = Field(default=None, validation_alias="R2_PUBLIC_URL")  # https://pub-xxx.r2.dev hoặc custom domain
+
+    @computed_field
+    @property
+    def use_r2(self) -> bool:
+        return bool(self.r2_account_id and self.r2_access_key_id and
+                    self.r2_secret_access_key and self.r2_bucket_name and self.r2_public_url)
+
     @computed_field
     @property
     def origins_list(self) -> list[str]:

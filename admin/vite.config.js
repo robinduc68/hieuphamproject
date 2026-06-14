@@ -9,11 +9,8 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 80,
-    watch: {
-      usePolling: true,
-      interval: 300,
-    },
+    port: 3001,
+    watch: { usePolling: true, interval: 300 },
     proxy: {
       '/api':   { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
       '/media': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },

@@ -8,10 +8,12 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import db
-from app.routers.products    import router as products_router, cat_router
-from app.routers.collections import router as collections_router
-from app.routers.users       import router as users_router
-from app.routers.orders      import router as orders_router, nl_router
+from app.routers.products       import router as products_router, cat_router, sub_router
+from app.routers.collections    import router as collections_router
+from app.routers.users          import router as users_router
+from app.routers.orders         import router as orders_router, nl_router
+from app.routers.admin          import router as admin_router
+from app.routers.customization  import router as customization_router
 
 settings = get_settings()
 
@@ -52,11 +54,14 @@ app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
 
 # ── Routers ───────────────────────────────────────────────────────────────
 app.include_router(cat_router)
+app.include_router(sub_router)
 app.include_router(products_router)
 app.include_router(collections_router)
 app.include_router(users_router)
 app.include_router(orders_router)
 app.include_router(nl_router)
+app.include_router(admin_router)
+app.include_router(customization_router)
 
 
 # ── Health check ──────────────────────────────────────────────────────────

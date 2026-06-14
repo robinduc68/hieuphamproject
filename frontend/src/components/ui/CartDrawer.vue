@@ -28,20 +28,23 @@
           </div>
 
           <div v-else class="cart-items">
-            <div v-for="item in cartStore.items" :key="`${item.product_id}-${item.size}`" class="cart-item">
+            <div v-for="item in cartStore.items" :key="item._key" class="cart-item">
               <div class="ci-img" :style="{ background: swatchGrad(item.color_hex) }" />
               <div class="ci-info">
                 <p class="ci-name">{{ item.name }}</p>
-                <p class="ci-meta">Size: {{ item.size }}</p>
+                <p v-if="item.tailoring_method !== 'custom'" class="ci-meta">Size: {{ item.size }}</p>
+                <p v-else class="ci-meta">May theo số đo</p>
+                <p v-if="item.lining_type" class="ci-meta">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà' }}</p>
+                <p v-if="item.color_option" class="ci-meta">Màu: {{ item.color_option === 'same' ? 'Giống ảnh' : 'Phối màu riêng' }}</p>
                 <div class="ci-qty">
-                  <button @click="cartStore.updateQty(item.product_id, item.size, item.quantity - 1)">−</button>
+                  <button @click="cartStore.updateQty(item._key, item.quantity - 1)">−</button>
                   <span>{{ item.quantity }}</span>
-                  <button @click="cartStore.updateQty(item.product_id, item.size, item.quantity + 1)">+</button>
+                  <button @click="cartStore.updateQty(item._key, item.quantity + 1)">+</button>
                 </div>
               </div>
               <div class="ci-right">
                 <p class="ci-price">{{ fmt(item.price * item.quantity) }}</p>
-                <button class="ci-remove" @click="cartStore.removeItem(item.product_id, item.size)" aria-label="Xoá">✕</button>
+                <button class="ci-remove" @click="cartStore.removeItem(item._key)" aria-label="Xoá">✕</button>
               </div>
             </div>
           </div>
