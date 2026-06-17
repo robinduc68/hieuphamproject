@@ -83,7 +83,7 @@ const posts = [
 .news-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 56px 80px 96px;
+  padding: 100px 80px 96px;
 }
 
 .news-title {

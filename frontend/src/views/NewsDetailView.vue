@@ -181,6 +181,7 @@ const related = computed(() =>
 .nd-page {
   min-height: 80vh;
   background: var(--bg-gray);
+  padding-top: 100px;
 }
 
 /* Wrap */

@@ -50,8 +50,8 @@ onUnmounted(() => cancelAnimationFrame(raf))
 .hero {
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 480px;
+  height: 72vh;
+  min-height: 320px;
   overflow: hidden;
   background: #111;
 }

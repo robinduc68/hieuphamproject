@@ -79,7 +79,7 @@ const faqs = [
 .faq-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 64px 48px 96px;
+  padding: 100px 48px 96px;
 }
 
 .faq-title {

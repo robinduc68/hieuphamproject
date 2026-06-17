@@ -203,7 +203,7 @@ function formatPrice(price) {
 .shop-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 32px 48px 64px;
+  padding: 100px 48px 64px;
 }
 
 /* ── Tiêu đề ── */

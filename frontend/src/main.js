@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia }  from 'pinia'
 import App              from './App.vue'
 import HomeView         from './views/HomeView.vue'
+import AboutView        from './views/AboutView.vue'
 import ProductDetailView from './views/ProductDetailView.vue'
 import CheckoutView     from './views/CheckoutView.vue'
 import ShopView         from './views/ShopView.vue'
@@ -16,6 +17,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/',               component: HomeView,          name: 'home' },
+    { path: '/ve-chung-toi',   component: AboutView,         name: 'about' },
     { path: '/cua-hang',       component: ShopView,          name: 'shop' },
     { path: '/lua-to-tam',     component: FabricView,        name: 'fabric' },
     { path: '/faq',            component: FaqView,           name: 'faq' },

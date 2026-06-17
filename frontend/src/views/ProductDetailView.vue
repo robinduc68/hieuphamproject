@@ -498,6 +498,7 @@ onUnmounted(() => {
 .product-detail-page {
   min-height: 80vh;
   background: var(--warm-white);
+  padding-top: 100px;
 }
 
 /* ── Centered wrapper (giống homepage pattern) ───────────────────────────── */
@@ -890,8 +891,7 @@ onUnmounted(() => {
 
 /* ── Related products carousel ───────────────────────────────────────────── */
 .pd-related {
-  background: var(--bg-gray);
-  border-top: 1px solid var(--border);
+  background: var(--warm-white);
 }
 .pd-related-inner {
   max-width: 1300px;

@@ -2,26 +2,11 @@
   <header class="app-header" :class="{ 'app-header--overlay': overlay }">
     <div class="header-wrap">
 
-      <!-- Seal badge — nằm ngoài card -->
-      <RouterLink to="/" class="header-seal" aria-label="Trang chủ">
-        <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="36" cy="36" r="34" stroke="#3a3028" stroke-width="1.2"/>
-          <circle cx="36" cy="36" r="29" stroke="#3a3028" stroke-width="0.6"/>
-          <text x="36" y="47" text-anchor="middle"
-            font-family="Italianno, cursive" font-size="34" fill="#3a3028">A</text>
-          <!-- decorative top arc text placeholder -->
-          <path id="arc" d="M 14 36 A 22 22 0 0 1 58 36" fill="none"/>
-        </svg>
-      </RouterLink>
-
       <!-- Nav card — bo góc -->
       <div class="header-card">
 
         <!-- Logo -->
-        <RouterLink to="/" class="logo-block">
-          <span class="logo-name">Hà Hoạt</span>
-          <span class="logo-sub">Sil</span>
-        </RouterLink>
+        <LogoBrand size="sm" class="logo-block" />
 
         <!-- Nav -->
         <nav class="main-nav">
@@ -104,6 +89,7 @@ import { ref, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import CartDrawer from '@/components/ui/CartDrawer.vue'
 import MegaMenu  from '@/components/layout/MegaMenu.vue'
+import LogoBrand  from '@/components/ui/LogoBrand.vue'
 import { useCartStore } from '@/stores/cart'
 
 const props = defineProps({
@@ -192,21 +178,6 @@ watch(searchOpen, async (val) => { if (val) { await nextTick(); searchInput.valu
   gap: 8px;
 }
 
-/* Seal badge */
-.header-seal {
-  flex-shrink: 0;
-  width: 72px;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.header-seal svg {
-  width: 72px;
-  height: 72px;
-  transition: opacity var(--transition);
-}
-.header-seal:hover svg { opacity: .75; }
 
 /* Rounded card — stretch so nav links fill full height */
 .header-card {
@@ -221,29 +192,10 @@ watch(searchOpen, async (val) => { if (val) { await nextTick(); searchInput.valu
   background: var(--bg-white);
 }
 
-/* Logo — padding moved here */
+/* Logo */
 .logo-block {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-  text-decoration: none;
   padding: 4px 20px 4px 24px;
   justify-content: center;
-}
-.logo-name {
-  font-family: var(--font-script);
-  font-size: 32px;
-  color: var(--brand-red);
-  line-height: 1.0;
-}
-.logo-sub {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-style: italic;
-  color: var(--brand-red);
-  letter-spacing: 2px;
-  text-align: right;
-  margin-top: -2px;
 }
 
 /* Nav — stretch links to full card height */

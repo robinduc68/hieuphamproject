@@ -347,7 +347,7 @@ const cities = [
 .checkout-page {
   background: #fff;
   min-height: 80vh;
-  padding: 48px 0 80px;
+  padding: 100px 0 80px;
 }
 
 .checkout-layout {

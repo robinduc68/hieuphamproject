@@ -4,9 +4,9 @@
     <!-- ── Sidebar ── -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-icon">HV</span>
+        <span class="logo-icon">RBD</span>
         <div>
-          <div class="logo-name">Huyvo Admin</div>
+          <div class="logo-name">Robin Admin</div>
           <div class="logo-sub">Quản trị hệ thống</div>
         </div>
       </div>

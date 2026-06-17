@@ -2,8 +2,8 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-logo">
-        <span class="logo-badge">HV</span>
-        <h1>Huyvo Admin</h1>
+        <span class="logo-badge">RBD</span>
+        <h1>Robin Admin</h1>
         <p>Đăng nhập để quản trị hệ thống</p>
       </div>
 
