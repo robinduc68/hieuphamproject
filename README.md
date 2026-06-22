@@ -239,6 +239,101 @@ Swagger UI đầy đủ: **http://localhost:8000/api/docs**
 
 ---
 
+## 🌐 Deploy lên VPS (Ubuntu 24.04)
+
+### Yêu cầu
+- VPS Ubuntu 24.04
+- Domain trỏ về IP VPS (DNS A record)
+- Repo đã push lên GitHub
+
+### Lần đầu deploy
+
+**1. SSH vào VPS**
+```bash
+ssh root@IP_VPS
+```
+
+**2. Cập nhật hệ thống**
+```bash
+apt update && apt upgrade -y
+reboot
+# SSH lại sau 30 giây
+```
+
+**3. Cài Docker**
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+**4. Cài Nginx + Certbot**
+```bash
+apt install nginx certbot python3-certbot-nginx -y
+```
+
+**5. Clone repo**
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git /var/www/hahoatsilk
+cd /var/www/hahoatsilk
+```
+
+**6. Tạo file .env**
+```bash
+cp .env.production.example .env
+nano .env
+```
+Tạo password và secret key:
+```bash
+python3 -c "import secrets; print(secrets.token_hex(16))"  # POSTGRES_PASSWORD
+python3 -c "import secrets; print(secrets.token_hex(32))"  # SECRET_KEY
+```
+Điền vào `.env`: `POSTGRES_PASSWORD`, `DATABASE_URL`, `SECRET_KEY`, `ALLOWED_ORIGINS`, `APP_ENV=production`, `DEBUG=false`
+
+**7. Cài Nginx config tạm (HTTP)**
+```bash
+cp /var/www/hahoatsilk/nginx-vps-temp.conf /etc/nginx/sites-available/hahoatsilk
+ln -s /etc/nginx/sites-available/hahoatsilk /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+**8. Trỏ DNS về IP VPS** (Cloudflare)
+
+Thêm 3 A record, Proxy status = **DNS only**:
+| Name | Content |
+|------|---------|
+| `@` | IP VPS |
+| `www` | IP VPS |
+| `admin` | IP VPS |
+
+**9. Cài SSL**
+```bash
+certbot --nginx -d hahoatsilk.com -d www.hahoatsilk.com -d admin.hahoatsilk.com
+```
+
+**10. Deploy app**
+```bash
+bash deploy.sh
+```
+
+---
+
+### Các lần deploy tiếp theo
+
+Push code lên GitHub rồi chạy trên VPS:
+```bash
+cd /var/www/hahoatsilk && bash deploy.sh
+```
+
+---
+
+### Kiểm tra logs
+```bash
+docker compose logs -f backend     # log backend
+docker compose logs -f frontend    # log frontend
+docker compose ps                  # trạng thái containers
+```
+
+---
+
 ## 📦 Tech Stack
 
 | Layer | Công nghệ |
