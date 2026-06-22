@@ -1,0 +1,27 @@
+services:
+  postgres:
+    # Production: KHÔNG expose port ra ngoài
+    ports: !reset []
+
+  backend:
+    # Production: KHÔNG mount source code (dùng image đã build)
+    volumes:
+      - media_files:/app/media
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+    # Production: KHÔNG expose port ra ngoài (chỉ qua internal Docker network)
+    ports: !reset []
+
+  frontend:
+    ports:
+      - "3000:80"
+
+  admin:
+    ports:
+      - "3001:80"
+
+  pgadmin:
+    # Không chạy pgAdmin trên production bao giờ
+    profiles:
+      - never
