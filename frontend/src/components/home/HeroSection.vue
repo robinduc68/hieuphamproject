@@ -10,7 +10,7 @@
       preload="auto"
       :poster="poster"
     >
-      <source :src="videoSrc" type="video/mp4" />
+      <source :src="videoSrc" type="video/webm" />
     </video>
 
     <!-- Light dark overlay so any hero text stays legible -->
@@ -20,8 +20,8 @@
 
 <script setup>
 // ponytail: pure background video, no JS controls needed (autoplay+loop+muted).
-// Files served from public/videos/ — drop hero-loop.mp4 + hero-poster.jpg there.
-const videoSrc = '/videos/hero-loop.mp4'
+// Drop hero.webm in public/videos/ (poster optional).
+const videoSrc = '/videos/hero.webm'
 const poster   = '/videos/hero-poster.jpg'
 </script>
 
@@ -29,7 +29,7 @@ const poster   = '/videos/hero-poster.jpg'
 .hero {
   position: relative;
   width: 100%;
-  height: 72vh;
+  height: 870px;
   min-height: 320px;
   overflow: hidden;
   background: linear-gradient(135deg, #1a100e 0%, #2b1a15 40%, #1a1510 100%);
@@ -40,6 +40,7 @@ const poster   = '/videos/hero-poster.jpg'
   inset: 0;
   width: 100%;
   height: 100%;
+  border: 0;
   object-fit: cover;
 }
 
