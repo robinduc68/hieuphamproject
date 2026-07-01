@@ -50,14 +50,14 @@
 
 <script setup>
 const photos = [
-  { src: 'https://placehold.co/300x220/d4c4b0/666?text=Giải+thưởng', alt: 'Giải thưởng' },
-  { src: 'https://placehold.co/300x220/c8b89a/666?text=Lụa+cuộn', alt: 'Lụa cuộn' },
-  { src: 'https://placehold.co/300x220/b8a888/666?text=Bằng+khen', alt: 'Bằng khen' },
-  { src: 'https://placehold.co/300x220/a89870/666?text=Lụa+màu', alt: 'Lụa màu sắc' },
-  { src: 'https://placehold.co/300x220/c0a870/666?text=Áo+dài', alt: 'Áo dài' },
-  { src: 'https://placehold.co/300x220/d0b880/666?text=Xưởng+dệt', alt: 'Xưởng dệt' },
-  { src: 'https://placehold.co/300x220/c4b498/666?text=Nghệ+nhân', alt: 'Nghệ nhân' },
-  { src: 'https://placehold.co/300x220/b0a080/666?text=Sản+phẩm', alt: 'Sản phẩm' },
+  { src: '/general-1.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-2.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-3.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-4.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-5.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-6.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-1.jpg', alt: 'Hà Hoạt Silk' },
+  { src: '/general-4.jpg', alt: 'Hà Hoạt Silk' },
 ]
 
 // Split into left (even indices) and right (odd indices), each duplicated for seamless loop
@@ -72,22 +72,25 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 }
 
 .about-card {
-  max-width: 1060px;
+  max-width: 1272px;
   margin: 0 auto;
-  background: var(--bg-gray);
+  background: #681927;
   border-radius: 16px;
   display: grid;
   grid-template-columns: 1.45fr 1fr;
+  gap: 14px;
+  padding: 14px;
   overflow: hidden;
   box-shadow: 0 1px 16px rgba(0,0,0,.07);
   border: 1px solid rgba(0,0,0,.05);
-  height: 600px;
+  height: 720px;
 }
 
 /* ── Photo ticker ── */
 .photo-ticker {
   overflow: hidden;
-  background: #ece8e2;
+  background: #681927;
+  border-radius: 10px;
   padding: 10px;
   display: flex;
   gap: 8px;
@@ -132,7 +135,8 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 
 /* ── Brand panel ── */
 .about-panel {
-  background: #ffffff;
+  background: #F5F5F5;
+  border-radius: 10px;
   padding: 40px 48px;
   display: flex;
   flex-direction: column;
@@ -142,13 +146,12 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 }
 
 .panel-logo {
-  width: 180px;
-  height: 180px;
-  background-image: url('@/assets/logo-icon.svg');
+  width: 210px;
+  height: 210px;
+  background-image: url('/HHSLG.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  filter: url(#mh-remove-white);
 }
 
 .tagline {
@@ -165,7 +168,9 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
   font-weight: 600;
 }
 .desc strong {
+  font-family: 'Philosopher', sans-serif;
   font-style: italic;
   font-weight: 700;
+  color: #681927;
 }
 </style>

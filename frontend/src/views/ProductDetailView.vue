@@ -375,7 +375,7 @@ const descriptionParagraphs = computed(() => {
 const tabs = computed(() => {
   if (!product.value) return []
   return [
-    { key: 'fabric',   label: 'Chất liệu',          content: product.value.fabric            ?? '—' },
+    { key: 'desc',     label: 'Mô tả',              content: product.value.description        ?? product.value.fabric ?? '—' },
     { key: 'care',     label: 'Hướng dẫn chăm sóc', content: product.value.care_instructions  ?? '—' },
     { key: 'shipping', label: 'Giao hàng & Đổi trả', content: product.value.shipping_info     ?? '—' },
   ]

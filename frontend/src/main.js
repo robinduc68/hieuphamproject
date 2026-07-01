@@ -8,6 +8,7 @@ import ProductDetailView from './views/ProductDetailView.vue'
 import CheckoutView     from './views/CheckoutView.vue'
 import ShopView         from './views/ShopView.vue'
 import FabricView       from './views/FabricView.vue'
+import FabricDetailView from './views/FabricDetailView.vue'
 import FaqView          from './views/FaqView.vue'
 import NewsView         from './views/NewsView.vue'
 import NewsDetailView   from './views/NewsDetailView.vue'
@@ -20,6 +21,7 @@ const router = createRouter({
     { path: '/ve-chung-toi',   component: AboutView,         name: 'about' },
     { path: '/cua-hang',       component: ShopView,          name: 'shop' },
     { path: '/lua-to-tam',     component: FabricView,        name: 'fabric' },
+    { path: '/lua-to-tam/:id', component: FabricDetailView,  name: 'fabric-detail' },
     { path: '/faq',            component: FaqView,           name: 'faq' },
     { path: '/tin-tuc',           component: NewsView,          name: 'news' },
     { path: '/tin-tuc/:slug',     component: NewsDetailView,    name: 'news-detail' },

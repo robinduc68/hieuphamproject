@@ -5,7 +5,8 @@
     class="brand-logo"
     :class="`brand-logo--${size}`"
   >
-    <img src="@/assets/logo.svg" alt="Hà Hoạt Silk" class="logo-img" />
+    <!-- dark bg → cream logo, light bg → plum logo -->
+    <img :src="dark ? '/HHS LG (1) (2).png' : '/HHSLG.png'" alt="Hà Hoạt Silk" class="logo-img" />
   </component>
 </template>
 
@@ -13,6 +14,7 @@
 defineProps({
   size:   { type: String, default: 'md' },
   linked: { type: Boolean, default: true },
+  dark:   { type: Boolean, default: false },
 })
 </script>
 

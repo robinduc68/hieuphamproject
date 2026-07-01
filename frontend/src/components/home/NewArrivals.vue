@@ -2,13 +2,10 @@
   <section class="custom-section">
     <div class="custom-inner">
 
-      <!-- Top row: script title + heading -->
+      <!-- Top: 2-line centered heading -->
       <div class="custom-top">
-        <p class="custom-script">Custom-Made</p>
-        <h2 class="custom-heading">
-          Để Hà Hoạt Silk giúp bạn <em><strong>tự tay</strong></em> tạo nên
-          kiệt tác <span class="heading-accent"><em><strong>độc bản</strong></em></span>.
-        </h2>
+        <h2 class="custom-heading">THIẾT KẾ TRANG PHỤC ĐỘC BẢN</h2>
+        <p class="custom-sub">Trải nghiệm Custom-Made</p>
       </div>
 
       <!-- 4 steps -->
@@ -51,8 +48,9 @@ const steps = [
 
 <style scoped>
 .custom-section {
-  background: var(--bg-gray);
+  background: #DEDEDE;
   padding: 80px 48px;
+  color: rgb(104, 25, 39);
 }
 
 .custom-inner {
@@ -63,36 +61,28 @@ const steps = [
   gap: 52px;
 }
 
-/* Top row */
+/* Top: centered 2-line heading */
 .custom-top {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  align-items: flex-start;
-  gap: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
   padding-top: 8px;
 }
 
-.custom-script {
-  font-family: var(--font-script);
-  font-size: 62px;
-  color: var(--brand-red);
-  line-height: 1.1;
-}
-
 .custom-heading {
-  font-family: var(--font-display);
+  font-family: 'Philosopher', sans-serif;
   font-size: 46px;
-  font-weight: 400;
-  color: var(--text-dark);
-  line-height: 1.4;
+  color: rgb(104, 25, 39);
+  line-height: 1.3;
 }
 
-.custom-heading strong {
-  font-weight: 700;
-}
-
-.heading-accent {
-  color: var(--brand-red);
+.custom-sub {
+  font-family: var(--font-script);
+  font-size: 46px;
+  color: rgb(104, 25, 39);
+  line-height: 1.2;
 }
 
 /* Steps row */
@@ -104,7 +94,7 @@ const steps = [
 }
 
 .step {
-  background: #E2E1DE;
+  background: #ffffff;
   border-radius: 12px;
   padding: 36px 28px 40px;
   display: flex;
@@ -113,25 +103,22 @@ const steps = [
 }
 
 .step-num {
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-script);
   font-size: 72px;
-  font-weight: 300;
-  color: var(--text-light);
+  color: rgb(104, 25, 39);
   line-height: 1;
 }
 
 .step-title {
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--brand-red);
+  font-family: 'Philosopher', sans-serif;
+  font-size: 25px;
+  color: rgb(104, 25, 39);
   line-height: 1.4;
 }
 
 .step-desc {
   font-size: 14px;
-  color: var(--text-medium);
+  color: #000000;
   line-height: 1.7;
   font-weight: 400;
 }

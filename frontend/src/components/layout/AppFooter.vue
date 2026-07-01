@@ -5,17 +5,10 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="footer-logo">
-            <svg viewBox="0 0 48 48" fill="none" class="footer-badge">
-              <circle cx="24" cy="24" r="22" stroke="white" stroke-width="1.2"/>
-              <text x="24" y="31" text-anchor="middle" font-family="Great Vibes, cursive" font-size="22" fill="white">H</text>
-            </svg>
-            <div class="footer-logo-text">
-              <span class="footer-brand-script">Hà Hoạt</span>
-              <span class="footer-brand-sub">Silk</span>
-            </div>
+            <img src="/HHS LG (1) (2).png" alt="Hà Hoạt Silk" class="footer-logo-img" />
           </div>
           <p class="footer-tagline">
-            <em>Lụa tơ tằm NhaXá cao cấp</em>
+            <em>Lụa tơ tằm Nha Xá cao cấp</em>
           </p>
         </div>
 
@@ -118,28 +111,10 @@
   gap: 10px;
 }
 
-.footer-badge { width: 40px; height: 40px; }
-
-.footer-logo-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.footer-brand-script {
-  font-family: var(--font-script);
-  font-size: 34px;
-  color: white;
-  line-height: 1.0;
-}
-
-.footer-brand-sub {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-style: italic;
-  color: rgba(255,255,255,0.75);
-  letter-spacing: 3px;
-  text-align: right;
+.footer-logo-img {
+  height: 88px;
+  width: auto;
+  object-fit: contain;
 }
 
 .footer-tagline {

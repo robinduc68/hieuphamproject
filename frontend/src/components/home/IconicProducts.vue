@@ -114,7 +114,8 @@ onUnmounted(() => {
 }
 
 .products-heading {
-  font-size: 13px;
+  font-family: 'Philosopher', sans-serif;
+  font-size: 27.9px;
   font-weight: 700;
   letter-spacing: 2.5px;
   color: var(--brand-red);

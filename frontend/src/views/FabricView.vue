@@ -57,17 +57,17 @@
         <p class="fabric-desc">Chọn mẫu vải để thiết kế bộ áo dài, pháp phục của riêng bạn.</p>
 
         <div class="fabric-grid">
-          <div
+          <RouterLink
             v-for="fabric in displayedFabrics"
             :key="fabric.id"
+            :to="`/lua-to-tam/${fabric.id}`"
             class="fabric-card"
-            @click="selectFabric(fabric)"
           >
             <div class="fabric-img" :style="{ background: fabricGradient(fabric.color1, fabric.color2) }">
               <div class="fabric-shimmer" />
             </div>
             <p class="fabric-name">{{ fabric.name }}</p>
-          </div>
+          </RouterLink>
         </div>
       </main>
 
@@ -77,50 +77,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { fabrics as allFabrics, patterns, colors, fabricGradient } from '@/data/fabrics'
 
 const patternSearch   = ref('')
 const selectedPatterns = ref([])
 const selectedColors  = ref([])
-
-const patterns = [
-  'Thọ Đôi', 'Đuôi Công', 'Cúc', 'Cúc Đại Đóa',
-  'Sen Tròn', 'Sen - Hổ Diệp', 'Thủy Tiên', 'Phúc Thọ',
-  'Long Phụng', 'Hoa Mai', 'Hoa Đào', 'Trúc Mai',
-]
-
-const colors = [
-  { name: 'Đỏ',       hex: '#E53935' },
-  { name: 'Vàng',     hex: '#FDD835' },
-  { name: 'Hồng',     hex: '#F06292' },
-  { name: 'Be',       hex: '#EDE0C8' },
-  { name: 'Cam',      hex: '#FB8C00' },
-  { name: 'Xanh lá',  hex: '#2E7D32' },
-  { name: 'Xanh lam', hex: '#1A237E' },
-  { name: 'Tím',      hex: '#9575CD' },
-  { name: 'Nâu',      hex: '#6D4C41' },
-  { name: 'Trắng',    hex: '#FFFFFF' },
-  { name: 'Đen',      hex: '#212121' },
-  { name: 'Xám',      hex: '#9E9E9E' },
-]
-
-const allFabrics = [
-  { id:  1, name: '[TD] HỒNG ÁNH VÀNG',      color1: '#E8B4BC', color2: '#D4A0A8', pattern: 'Thọ Đôi',     colorTag: 'Hồng' },
-  { id:  2, name: '[TD] HỒNG ÁNH VÀNG 02',   color1: '#DDA8B0', color2: '#C89098', pattern: 'Thọ Đôi',     colorTag: 'Hồng' },
-  { id:  3, name: '[TD] HỒNG ÁNH VÀNG 03',   color1: '#F0C0C8', color2: '#E0A8B0', pattern: 'Cúc',         colorTag: 'Hồng' },
-  { id:  4, name: '[TD] HỒNG ÁNH VÀNG 04',   color1: '#E4B0B8', color2: '#D49098', pattern: 'Đuôi Công',   colorTag: 'Hồng' },
-  { id:  5, name: '[TD] VÀNG CỔ ĐIỂN',        color1: '#D4B060', color2: '#C09840', pattern: 'Cúc Đại Đóa', colorTag: 'Vàng' },
-  { id:  6, name: '[TD] VÀNG HOA MAI',        color1: '#DEC070', color2: '#CAA850', pattern: 'Hoa Mai',     colorTag: 'Vàng' },
-  { id:  7, name: '[TD] ĐỎ PHÚC THỌ',        color1: '#C04050', color2: '#A02838', pattern: 'Phúc Thọ',    colorTag: 'Đỏ'   },
-  { id:  8, name: '[TD] ĐỎ LONG PHỤNG',      color1: '#D05060', color2: '#B03848', pattern: 'Long Phụng',  colorTag: 'Đỏ'   },
-  { id:  9, name: '[TD] XANH LÁ SEN TRÒN',   color1: '#4A8860', color2: '#367048', pattern: 'Sen Tròn',    colorTag: 'Xanh lá' },
-  { id: 10, name: '[TD] TÍM THỦY TIÊN',      color1: '#9070B8', color2: '#7858A0', pattern: 'Thủy Tiên',   colorTag: 'Tím'  },
-  { id: 11, name: '[TD] BE TRÚC MAI',        color1: '#D8C8A8', color2: '#C8B890', pattern: 'Trúc Mai',    colorTag: 'Be'   },
-  { id: 12, name: '[TD] ĐEN CÚC HOA',        color1: '#404040', color2: '#282828', pattern: 'Cúc',         colorTag: 'Đen'  },
-  { id: 13, name: '[TD] HỒNG SEN HỔ DIỆP',  color1: '#F0A8B8', color2: '#E09098', pattern: 'Sen - Hổ Diệp', colorTag: 'Hồng' },
-  { id: 14, name: '[TD] VÀNG ĐÔI LONG',      color1: '#E8C878', color2: '#D4B060', pattern: 'Long Phụng',  colorTag: 'Vàng' },
-  { id: 15, name: '[TD] CAM HỔ DIỆP',        color1: '#E89060', color2: '#D07848', pattern: 'Sen - Hổ Diệp', colorTag: 'Cam' },
-  { id: 16, name: '[TD] NÂU ĐÔI PHỤNG',      color1: '#A07858', color2: '#886040', pattern: 'Đuôi Công',   colorTag: 'Nâu'  },
-]
 
 const filteredPatterns = computed(() =>
   patterns.filter(p => p.toLowerCase().includes(patternSearch.value.toLowerCase()))
@@ -149,13 +110,6 @@ function resetFilter() {
   patternSearch.value    = ''
 }
 
-function selectFabric(fabric) {
-  // placeholder — sẽ mở modal hoặc navigate
-}
-
-function fabricGradient(c1, c2) {
-  return `linear-gradient(145deg, ${c1} 0%, ${c2} 60%, ${c1}CC 100%)`
-}
 </script>
 
 <style scoped>
@@ -324,6 +278,9 @@ function fabricGradient(c1, c2) {
 
 .fabric-card {
   cursor: pointer;
+  display: block;
+  color: inherit;
+  text-decoration: none;
 }
 
 .fabric-img {

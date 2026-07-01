@@ -11,7 +11,7 @@
       <!-- Right: 4 cards -->
       <div class="features-cards">
         <div v-for="feat in features" :key="feat.title" class="feat-card">
-          <div class="feat-icon" v-html="feat.icon" />
+          <img class="feat-icon" :src="feat.icon" :alt="feat.title.replace('\n',' ')" />
           <h3 class="feat-title">{{ feat.title }}</h3>
           <p class="feat-desc">{{ feat.desc }}</p>
         </div>
@@ -25,50 +25,34 @@ const features = [
   {
     title: 'Thiết kế riêng\nđộc nhất',
     desc: 'Không tồn tại sản phẩm thứ hai hoàn toàn giống "tác phẩm" bạn tạo nên.',
-    icon: `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M12 28 L20 10 L22 16 L30 14 L20 32 Z" stroke-linejoin="round"/>
-      <circle cx="22" cy="16" r="2" fill="currentColor" stroke="none"/>
-    </svg>`,
+    icon: '/2.png',   // áo dài + vân tay: cá nhân hóa
   },
   {
     title: 'Vừa vặn\ntừng đường nét',
     desc: 'Tùy chọn may theo bảng kích thước sản phẩm hoặc số đo cá nhân, miễn sao phù hợp với bạn.',
-    icon: `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M8 32 L20 8 L32 32 Z" stroke-linejoin="round"/>
-      <line x1="8" y1="32" x2="32" y2="32"/>
-      <line x1="14" y1="24" x2="26" y2="24"/>
-    </svg>`,
+    icon: '/4.png',   // ma-nơ-canh + thước dây: đo may chuẩn form
   },
   {
     title: 'Trọn vẹn\ntrải nghiệm',
     desc: 'Trọn gói mọi trải nghiệm với lụa tơ tằm, từ chọn vải, chọn họa tiết, chọn cách may.',
-    icon: `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-      <rect x="8" y="14" width="24" height="18" rx="2"/>
-      <path d="M14 14 V10 a6 6 0 0 1 12 0 v4"/>
-      <path d="M16 24 L18 26 L24 20"/>
-    </svg>`,
+    icon: '/5.png',   // kiểm định an toàn, không hóa chất độc hại
   },
   {
     title: 'Hỗ trợ\nlâu dài',
     desc: 'Đồng hành cùng bạn chăm sóc, bảo quản sản phẩm bền đẹp.',
-    icon: `<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M10 20 a10 10 0 1 1 20 0" stroke-linecap="round"/>
-      <path d="M8 20 Q8 26 12 26 L12 14 Q8 14 8 20"/>
-      <path d="M32 20 Q32 26 28 26 L28 14 Q32 14 32 20"/>
-      <path d="M20 30 Q24 30 26 28"/>
-    </svg>`,
+    icon: '/3.png',   // khăn lụa + khiên trái tim: bảo hành / chăm sóc
   },
 ]
 </script>
 
 <style scoped>
 .features-section {
-  background: var(--bg-gray);
+  background: #DEDEDE;
   padding: 80px 48px;
 }
 
 .features-inner {
-  max-width: 1100px;
+  max-width: 1540px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -85,24 +69,25 @@ const features = [
 
 .title-script {
   font-family: var(--font-script);
-  font-size: 48px;
-  color: var(--text-dark);
+  font-size: 68px;
+  white-space: nowrap;
+  color: rgb(104, 25, 39);
   line-height: 1.05;
 }
 
 .title-regular {
   font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--text-dark);
+  font-size: 32px;
+  color: #000000;
   font-weight: 400;
   margin-top: 2px;
 }
 
 .title-italic {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 44px;
   font-style: italic;
-  color: var(--brand-red);
+  color: rgb(104, 25, 39);
   font-weight: 500;
   margin-top: 2px;
 }
@@ -117,32 +102,34 @@ const features = [
 .feat-card {
   background: var(--bg-white);
   border-radius: var(--radius);
-  padding: 28px 18px 24px;
+  padding: 42px 27px 36px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
   transition: box-shadow var(--transition);
 }
 .feat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
 
 .feat-icon {
-  color: var(--text-dark);
-  width: 36px;
-  height: 36px;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  transition: transform var(--transition);
 }
-.feat-icon :deep(svg) { width: 36px; height: 36px; }
+.feat-card:hover .feat-icon { transform: scale(1.06); }
 
 .feat-title {
-  font-size: 14px;
+  font-family: 'Philosopher', sans-serif;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #681927;
   line-height: 1.45;
   white-space: pre-line;
 }
 
 .feat-desc {
-  font-size: 12px;
-  color: var(--text-medium);
+  font-size: 14px;
+  color: #000000;
   line-height: 1.75;
   font-weight: 400;
 }
