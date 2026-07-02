@@ -60,7 +60,9 @@
               <div
                 class="thumb-swatch"
                 :style="{ background: swatchGradient(img.color_hex) }"
-              />
+              >
+                <img v-if="!isPlaceholderImg(img)" :src="img.url" :alt="img.alt_text || product.name" class="thumb-photo" />
+              </div>
             </button>
           </div>
 
@@ -70,8 +72,15 @@
               class="main-img"
               :style="{ background: swatchGradient(displayImages[activeImg]?.color_hex) }"
             >
-              <!-- Overlay text (matches real site) -->
-              <div class="img-overlay-text" aria-hidden="true">
+              <img
+                v-if="!isPlaceholderImg(displayImages[activeImg])"
+                :src="displayImages[activeImg].url"
+                :alt="displayImages[activeImg].alt_text || product.name"
+                class="main-img-photo"
+              />
+
+              <!-- Overlay text (chỉ hiện khi chưa có ảnh thật) -->
+              <div v-else class="img-overlay-text" aria-hidden="true">
                 <span class="overlay-category">
                   {{ product.sub_category || product.category?.name || 'HUY VO' }}
                 </span>
@@ -109,6 +118,7 @@
                 </div>
               </div>
               <button
+                v-if="customTailoringActive"
                 class="method-alt-btn"
                 :class="{ active: tailoringMethod === 'custom' }"
                 @click="tailoringMethod = 'custom'; selectedSize = null; sizeError = false"
@@ -122,20 +132,26 @@
           </div>
 
           <!-- ── Lựa chọn tà trong ── -->
-          <div class="pd-option">
+          <div v-if="liningOptions.length" class="pd-option">
             <p class="opt-label">Lựa chọn tà trong</p>
             <div class="opt-choice-row">
-              <button class="choice-btn" :class="{ active: liningType === 'yem_roi' }" @click="liningType = 'yem_roi'">May yếm rời</button>
-              <button class="choice-btn" :class="{ active: liningType === 'lien_ta' }" @click="liningType = 'lien_ta'">May liền tà ngoài</button>
+              <button
+                v-for="opt in liningOptions" :key="opt.option_key"
+                class="choice-btn" :class="{ active: liningType === opt.option_key }"
+                @click="liningType = opt.option_key"
+              >{{ opt.option_label }}</button>
             </div>
           </div>
 
           <!-- ── Lựa chọn màu sắc ── -->
-          <div class="pd-option">
+          <div v-if="colorOptions.length" class="pd-option">
             <p class="opt-label">Lựa chọn màu sắc</p>
             <div class="opt-choice-row">
-              <button class="choice-btn" :class="{ active: colorOption === 'same' }" @click="colorOption = 'same'">Giống ảnh mẫu</button>
-              <button class="choice-btn" :class="{ active: colorOption === 'custom_color' }" @click="colorOption = 'custom_color'">Phối màu riêng</button>
+              <button
+                v-for="opt in colorOptions" :key="opt.option_key"
+                class="choice-btn" :class="{ active: colorOption === opt.option_key }"
+                @click="colorOption = opt.option_key"
+              >{{ opt.option_label }}</button>
             </div>
             <div class="opt-links opt-links--end">
               <button class="opt-link">Hướng dẫn chọn màu &amp; đặt may</button>
@@ -217,7 +233,8 @@
                 >
                   <div class="rel-img">
                     <div class="rel-swatch" :style="{ background: swatchGradient(p.images?.[0]?.color_hex ?? p.color) }">
-                      <div class="rel-img-overlay" aria-hidden="true">
+                      <img v-if="!isPlaceholderImg(p.images?.[0])" :src="p.images[0].url" :alt="p.name" class="rel-photo" />
+                      <div v-else class="rel-img-overlay" aria-hidden="true">
                         <span class="rel-overlay-sub">{{ p.sub_category || 'ÁO DÀI' }}</span>
                         <span class="rel-overlay-logo">HU<em>Y</em>VO</span>
                       </div>
@@ -334,6 +351,14 @@ function maxAdjFor(groupKey) {
   return Math.max(...group.options.map(o => Number(o.price_adjustment)))
 }
 
+function optionsFor(groupKey) {
+  const group = customizationGroups.value.find(g => g.group_key === groupKey)
+  return group ? group.options : []
+}
+const liningOptions         = computed(() => optionsFor('lining_type'))
+const colorOptions          = computed(() => optionsFor('color_option'))
+const customTailoringActive = computed(() => optionsFor('tailoring_method').some(o => o.option_key === 'custom'))
+
 // ── Computed ─────────────────────────────────────────────────────────────
 const allSelected = computed(() => {
   const methodOk = tailoringMethod.value === 'custom'
@@ -357,15 +382,11 @@ const displayPrice = computed(() => {
   if (!customizationGroups.value.length || maxAdj === 0) return formatPrice(base)
   return `${formatPrice(base)} – ${formatPrice(base + maxAdj)}`
 })
-const displayImages = computed(() => {
-  if (!product.value) return []
-  const imgs = product.value.images ?? []
-  // Pad to 4 slots reusing primary color
-  const primary = imgs[0] ?? { color_hex: '#d4c8b0' }
-  const shades = [1, 0.8, 0.65, 0.5]
-  while (imgs.length < 4) imgs.push({ ...primary })
-  return imgs.slice(0, 4)
-})
+const displayImages = computed(() => product.value?.images ?? [])
+
+function isPlaceholderImg(img) {
+  return !img?.url || img.url.includes('/placeholder/')
+}
 
 const descriptionParagraphs = computed(() => {
   if (!product.value?.description) return []
@@ -571,6 +592,12 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
 }
+.thumb-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .main-img-wrap {
   flex: 1;
@@ -585,6 +612,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.main-img-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
 }
 
 .img-overlay-text {
@@ -956,6 +992,14 @@ onUnmounted(() => {
   transition: transform .55s cubic-bezier(.25,.46,.45,.94);
 }
 .rel-slide:hover .rel-swatch { transform: scale(1.03); }
+
+.rel-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .rel-img-overlay {
   display: flex;
