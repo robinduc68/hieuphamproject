@@ -13,7 +13,7 @@ export const statsApi = {
 
 // ── Products ──────────────────────────────────────────────────────────────
 export const productsApi = {
-  list:   (params) => client.get('/products', { params }),
+  list:   (params) => client.get('/products/', { params }),
   get:    (slug)   => client.get(`/products/${slug}`),
   create: (data)   => client.post('/products', data),
   update: (id, data) => client.put(`/products/${id}`, data),
@@ -33,8 +33,8 @@ export const productsApi = {
 
 // ── Categories ────────────────────────────────────────────────────────────
 export const categoriesApi = {
-  list:   ()       => client.get('/categories', { params: { active_only: false } }),
-  create: (data)   => client.post('/categories', data),
+  list:   ()       => client.get('/categories/', { params: { active_only: false } }),
+  create: (data)   => client.post('/categories/', data),
   update: (id, data) => client.put(`/categories/${id}`, data),
   remove: (id)     => client.delete(`/categories/${id}`),
 
@@ -46,7 +46,7 @@ export const categoriesApi = {
 
 // ── Orders ────────────────────────────────────────────────────────────────
 export const ordersApi = {
-  list:         (params) => client.get('/orders', { params }),
+  list:         (params) => client.get('/orders/', { params }),
   get:          (id)     => client.get(`/orders/${id}`),
   updateStatus: (id, data) => client.patch(`/orders/${id}/status`, data),
 }
@@ -60,9 +60,9 @@ export const usersApi = {
 
 // ── Customization options ─────────────────────────────────────────────────
 export const customizationApi = {
-  listGrouped: ()          => client.get('/customization-options'),
+  listGrouped: ()          => client.get('/customization-options/'),
   listAll:     ()          => client.get('/customization-options/all'),
-  create:      (data)      => client.post('/customization-options', data),
+  create:      (data)      => client.post('/customization-options/', data),
   update:      (id, data)  => client.put(`/customization-options/${id}`, data),
   remove:      (id)        => client.delete(`/customization-options/${id}`),
 }

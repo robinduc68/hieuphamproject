@@ -46,28 +46,26 @@
               <div class="form-group">
                 <label class="form-label">Tỉnh / Thành phố *</label>
                 <select v-model="form.city" class="form-input form-select"
-                  :class="{ error: errors.city }">
-                  <option value="">Chọn Tỉnh / Thành phố</option>
-                  <option v-for="c in cities" :key="c" :value="c">{{ c }}</option>
+                  :class="{ error: errors.city }" :disabled="loadingProvinces">
+                  <option value="">{{ loadingProvinces ? 'Đang tải...' : 'Chọn Tỉnh / Thành phố' }}</option>
+                  <option v-for="p in provinces" :key="p.code" :value="p.name">{{ p.name }}</option>
                 </select>
                 <span v-if="errors.city" class="form-error">{{ errors.city }}</span>
+                <span v-if="locationError" class="form-error">
+                  {{ locationError }} <a href="#" @click.prevent="loadProvinces">Thử lại</a>
+                </span>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Quận / Huyện *</label>
-                <select v-model="form.district" class="form-input form-select">
-                  <option value="">Chọn Quận / Huyện</option>
-                  <option v-for="d in districts" :key="d" :value="d">{{ d }}</option>
-                </select>
-              </div>
-              <div class="form-group">
                 <label class="form-label">Phường / Xã *</label>
-                <select v-model="form.ward" class="form-input form-select">
-                  <option value="">Chọn Phường / Xã</option>
-                  <option v-for="w in wards" :key="w" :value="w">{{ w }}</option>
+                <select v-model="form.ward" class="form-input form-select"
+                  :class="{ error: errors.ward }" :disabled="!form.city || loadingWards">
+                  <option value="">{{ loadingWards ? 'Đang tải...' : 'Chọn Phường / Xã' }}</option>
+                  <option v-for="w in wardsList" :key="w.code" :value="w.name">{{ w.name }}</option>
                 </select>
+                <span v-if="errors.ward" class="form-error">{{ errors.ward }}</span>
               </div>
             </div>
 
@@ -255,10 +253,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
-import { ordersApi }    from '@/api'
+import { ordersApi, locationsApi } from '@/api'
 
 const cartStore = useCartStore()
 const authStore = useAuthStore()
@@ -276,7 +274,6 @@ const form = ref({
   phone:     authStore.user?.phone     ?? '',
   country:   'Vietnam',
   city:      '',
-  district:  '',
   ward:      '',
   address:   '',
   note:      '',
@@ -287,14 +284,42 @@ const submitting  = ref(false)
 const submitError = ref('')
 const success     = ref(false)
 
-const districts = computed(() => {
-  if (!form.value.city) return []
-  return ['Quận 1','Quận 2','Quận 3','Quận Bình Thạnh','Quận Tân Bình','Huyện Củ Chi']
+// ── Địa chỉ hành chính VN (tỉnh/thành → phường/xã) ──────────────────────
+const provinces       = ref([])
+const wardsList       = ref([])
+const loadingProvinces = ref(false)
+const loadingWards     = ref(false)
+const locationError    = ref('')
+
+async function loadProvinces() {
+  loadingProvinces.value = true
+  locationError.value = ''
+  try {
+    provinces.value = await locationsApi.provinces()
+  } catch {
+    locationError.value = 'Không tải được danh sách tỉnh/thành.'
+  } finally {
+    loadingProvinces.value = false
+  }
+}
+
+watch(() => form.value.city, async (cityName) => {
+  form.value.ward = ''
+  wardsList.value = []
+  if (!cityName) return
+  const province = provinces.value.find((p) => p.name === cityName)
+  if (!province) return
+  loadingWards.value = true
+  try {
+    wardsList.value = await locationsApi.wards(province.code)
+  } catch {
+    locationError.value = 'Không tải được danh sách phường/xã.'
+  } finally {
+    loadingWards.value = false
+  }
 })
-const wards = computed(() => {
-  if (!form.value.district) return []
-  return ['Phường 1','Phường 2','Phường 3','Phường 4','Phường 5']
-})
+
+onMounted(loadProvinces)
 
 function formatPrice(n) {
   return Number(n).toLocaleString('vi-VN') + ' Đ'
@@ -314,6 +339,7 @@ function validate() {
   if (!form.value.phone.trim())     e.phone     = 'Vui lòng nhập số điện thoại'
   if (!form.value.address.trim())   e.address   = 'Vui lòng nhập địa chỉ'
   if (!form.value.city)             e.city      = 'Vui lòng chọn tỉnh / thành'
+  if (!form.value.ward)             e.ward      = 'Vui lòng chọn phường / xã'
   if (!agreed.value)                e.agreed    = 'Vui lòng đồng ý với điều khoản'
   errors.value = e
   return !Object.keys(e).length
@@ -334,13 +360,6 @@ async function handleSubmit() {
     submitting.value = false
   }
 }
-
-const cities = [
-  'Hà Nội','TP. Hồ Chí Minh','Đà Nẵng','Hải Phòng','Cần Thơ','Huế','Nha Trang',
-  'Vũng Tàu','Đà Lạt','Hội An','An Giang','Bắc Giang','Bắc Ninh','Bình Định',
-  'Bình Dương','Đồng Nai','Gia Lai','Hà Tĩnh','Khánh Hòa','Lâm Đồng','Nghệ An',
-  'Quảng Nam','Quảng Ninh','Thanh Hóa','Thừa Thiên Huế',
-]
 </script>
 
 <style scoped>
