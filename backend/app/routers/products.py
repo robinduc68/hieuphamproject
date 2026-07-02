@@ -215,9 +215,11 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
     payload.pop("sub_category", None)
     product = Product.create(**payload)
 
+    from app.storage import save_placeholder
+    placeholder_url = save_placeholder(product.slug, product.name, color_hex)
     ProductImage.create(
         product=product,
-        url=f"/media/placeholder/{product.slug}.svg",
+        url=placeholder_url,
         alt_text=product.name,
         sort_order=0,
         is_primary=True,

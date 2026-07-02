@@ -430,9 +430,11 @@ def run():
                     is_featured=p.get("is_featured", False),
                     sort_order=p.get("sort_order", 0),
                 )
+                from app.storage import save_placeholder
+                placeholder_url = save_placeholder(product.slug, product.name, p.get("color_hex"))
                 ProductImage.create(
                     product=product,
-                    url=f"/media/placeholder/{product.slug}.svg",
+                    url=placeholder_url,
                     alt_text=product.name,
                     sort_order=0,
                     is_primary=True,
