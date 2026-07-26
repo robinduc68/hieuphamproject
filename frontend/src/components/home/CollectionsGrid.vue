@@ -1,11 +1,11 @@
 <template>
-  <section class="features-section">
+  <section class="features-section" ref="sectionEl">
     <div class="features-inner">
       <!-- Left title -->
       <div class="features-title">
         <p class="title-script">Đặc quyền</p>
         <p class="title-regular">của lựa chọn</p>
-        <p class="title-italic">Custom-Made</p>
+        <p class="title-italic">May đo cá nhân hóa</p>
       </div>
 
       <!-- Right: 4 cards -->
@@ -21,6 +21,23 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const sectionEl = ref(null)
+let ctx = null
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
 const features = [
   {
     title: 'Thiết kế riêng\nđộc nhất',
@@ -43,6 +60,34 @@ const features = [
     icon: '/3.png',   // khăn lụa + khiên trái tim: bảo hành / chăm sóc
   },
 ]
+
+/* Pin ~0.9 viewport: nền maroon → xám, nội dung fade lên đồng bộ
+   (đảm bảo dễ đọc khi nền đã xám). */
+onMounted(() => {
+  if (prefersReducedMotion()) return
+  if (window.innerWidth <= 700) return
+
+  ctx = gsap.context(() => {
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: sectionEl.value,
+        start: 'top top',
+        end: '+=90%',          // scroll thêm – thời gian đọc 4 card + nền maroon→xám chậm
+        pin: true,
+        scrub: 1,
+      },
+    })
+    const pageBg = document.querySelector('[data-page-bg]')
+    // Nền maroon→xám NHANH (duration 0.3, ~1/3 đầu scroll); nội dung fade chậm hơn (0.8) → nền xám sẵn từ sớm.
+    tl.to(pageBg, { backgroundColor: '#DEDEDE', duration: 0.3 }, 0)
+      .from('.features-inner', { opacity: 0, y: 40, duration: 0.8 }, 0)
+  }, sectionEl.value)
+})
+
+onUnmounted(() => {
+  if (ctx) ctx.revert()
+})
 </script>
 
 <style scoped>
@@ -50,8 +95,18 @@ const features = [
   background: #DEDEDE;
   padding: 80px 48px;
 }
+@media (min-width: 701px) {
+  .features-section {
+    background: transparent;    /* hiện lớp nền chung đổi màu */
+    min-height: 100vh;          /* to ra – đầy viewport khi pin đổi màu */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 
 .features-inner {
+  width: 100%;
   max-width: 1540px;
   margin: 0 auto;
   display: grid;
@@ -85,11 +140,12 @@ const features = [
 
 .title-italic {
   font-family: var(--font-display);
-  font-size: 44px;
+  font-size: 34px;
   font-style: italic;
   color: rgb(104, 25, 39);
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 2px;
+  line-height: 1.2;
 }
 
 /* Cards */

@@ -80,3 +80,37 @@ button { cursor: pointer; font-family: inherit; }
   margin-bottom: 40px;
   line-height: 1.2;
 }
+
+/* ─── TYPEWRITER DIRECTIVE (v-typewriter) ─── */
+/* Mỗi ký tự được bọc trong <span class="tw-char">, ẩn mặc định và
+   hiện dần khi cuộn tới (xem directives/typewriter.js). */
+.tw-char {
+  opacity: 0;
+  transition: opacity .08s ease;
+}
+.tw-char.tw-show {
+  opacity: 1;
+}
+/* Dấu nháy "đang gõ" ở ký tự cuối cùng đang hiện */
+.tw-char.tw-show:last-of-type::after {
+  content: '';
+  display: inline-block;
+  width: .06em;
+  height: 1em;
+  margin-left: .04em;
+  vertical-align: -0.12em;
+  background: currentColor;
+  animation: tw-caret 0.7s steps(1) infinite;
+}
+.tw-done .tw-char.tw-show:last-of-type::after { display: none; }
+
+@keyframes tw-caret {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Khi đặt prefers-reduced-motion → hiện toàn bộ ngay lập tức */
+@media (prefers-reduced-motion: reduce) {
+  .tw-char { opacity: 1 !important; transition: none !important; }
+  .tw-char.tw-show:last-of-type::after { display: none; }
+}

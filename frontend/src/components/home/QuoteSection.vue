@@ -1,5 +1,5 @@
 <template>
-  <section class="quote-section">
+  <section class="quote-section" ref="sectionEl">
     <!-- Cột trái -->
     <div class="col col-left">
       <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" />
@@ -34,7 +34,89 @@
 </template>
 
 <script setup>
-// ponytail: static layout, no JS needed
+import { ref, onMounted, onUnmounted } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+/* Pin section ~3 viewport. Lúc đầu: chữ mờ/blur, ảnh trôi dưới (ẩn).
+   Scroll: chữ dần hết mờ → rõ, ảnh trôi lên đúng chỗ, CTA hiện cuối. */
+const sectionEl = ref(null)
+let ctx = null
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+/* Chia từng ký tự thành <span class="qchar"> (giữ <em>/<strong>/màu vàng),
+   whitespace giữ nguyên để text vẫn xuống dòng tự nhiên. */
+function splitChars(el) {
+  Array.from(el.childNodes).forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const frag = document.createDocumentFragment()
+      for (const ch of node.textContent) {
+        if (/\s/.test(ch)) {
+          frag.appendChild(document.createTextNode(ch))
+        } else {
+          const span = document.createElement('span')
+          span.className = 'qchar'
+          span.textContent = ch
+          frag.appendChild(span)
+        }
+      }
+      node.replaceWith(frag)
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      splitChars(node)
+    }
+  })
+}
+
+onMounted(() => {
+  if (prefersReducedMotion()) return
+  if (window.innerWidth <= 700) return   // mobile: hiển thị thường, không pin
+
+  ctx = gsap.context(() => {
+    // chia ký tự trước khi tạo timeline
+    sectionEl.value.querySelectorAll('.quote-line').forEach(splitChars)
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: sectionEl.value,
+        start: 'top top',
+        end: '+=84%',         // scroll gấp rưỡi (56%→84%)
+        pin: true,
+        scrub: 1,
+      },
+    })
+
+    // Chữ: mờ (opacity .2) → rõ TỪNG KÝ TỰ, sớm – rút ngắn stagger/duration để text rõ hết trong ~1/3 đầu
+    tl.from('.qchar', { opacity: 0.2, duration: 0.22, stagger: 0.005 }, 0)
+    // Hình: hiện muộn hơn (sau khi chữ gần rõ hết)
+    tl.from('.img', { y: 240, opacity: 0, duration: 0.5, stagger: 0.08 }, 1.5)
+    // CTA cuối
+    tl.from('.quote-cta', { opacity: 0, y: 18, duration: 0.5 })
+
+    /* Nền (lớp chung) xám→maroon, NHANH (~1/3 đầu scroll) giống CollectionsGrid.
+       Dùng 'to' (không fromTo) để khi chưa tới range không ép giá trị. */
+    const pageBg = document.querySelector('[data-page-bg]')
+    tl.to(pageBg, { backgroundColor: '#6E1F31', duration: 1.0 }, 0)
+
+    ScrollTrigger.refresh()
+    // Ảnh load xong có thể đổi layout → tính lại trigger.
+    window.addEventListener('load', ScrollTrigger.refresh)
+  }, sectionEl.value)
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') window.removeEventListener('load', ScrollTrigger.refresh)
+  ctx && ctx.revert()
+})
 </script>
 
 <style scoped>
@@ -44,13 +126,16 @@
   --accent-gold: #E8D5A8;
 
   background: var(--bg-maroon);
-  min-height: 640px;
+  min-height: 100vh;
   padding: 56px 60px;
   display: grid;
   grid-template-columns: 1fr 1.4fr 1fr;
   align-items: stretch;
   gap: 8px;
   overflow: hidden;
+}
+@media (min-width: 701px) {
+  .quote-section { background: transparent; }   /* hiện lớp nền chung đổi màu */
 }
 
 .col {
@@ -98,7 +183,7 @@
 
 /* Cột giữa */
 .col-center {
-  justify-content: center;
+  justify-content: flex-start;   /* chữ lên đầu – sát NewArrivals bên trên */
   align-items: center;
   text-align: center;
   padding: 0 8px;
@@ -156,7 +241,7 @@
 @media (max-width: 1024px) {
   .quote-section {
     grid-template-columns: 1fr 1.2fr;
-    min-height: 0;
+    min-height: 100vh;
   }
   .col-right { display: none; }
 }

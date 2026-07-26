@@ -1,0 +1,276 @@
+- generic [ref=f2e3]:
+  - banner [ref=f2e4]:
+    - generic [ref=f2e6]:
+      - link [ref=f2e7] [cursor=pointer]:
+        - /url: /
+        - img "Hà Hoạt Silk" [ref=f2e8]
+      - navigation [ref=f2e9]:
+        - link "Về chúng tôi" [ref=f2e10] [cursor=pointer]:
+          - /url: /ve-chung-toi
+        - button "Sản phẩm" [ref=f2e12] [cursor=pointer]
+        - link "Câu hỏi thường gặp" [ref=f2e13] [cursor=pointer]:
+          - /url: /faq
+        - link "Tin tức" [ref=f2e14] [cursor=pointer]:
+          - /url: /tin-tuc
+      - generic [ref=f2e15]:
+        - button "Tìm kiếm" [ref=f2e16] [cursor=pointer]
+        - link "Tài khoản" [ref=f2e20] [cursor=pointer]:
+          - /url: /tai-khoan
+        - generic [ref=f2e24] [cursor=pointer]:
+          - generic [ref=f2e25]: 🇻🇳
+          - generic [ref=f2e26]: VI
+        - button "Giỏ hàng" [ref=f2e29] [cursor=pointer]
+  - main [ref=f2e34]:
+    - generic [ref=f2e38]:
+      - generic [ref=f2e39]:
+        - generic [ref=f2e41]:
+          - img "Hà Hoạt Silk" [ref=f2e43]
+          - img "Hà Hoạt Silk" [ref=f2e45]
+          - img "Hà Hoạt Silk" [ref=f2e47]
+          - img "Hà Hoạt Silk" [ref=f2e49]
+          - img "Hà Hoạt Silk" [ref=f2e51]
+          - img "Hà Hoạt Silk" [ref=f2e53]
+          - img "Hà Hoạt Silk" [ref=f2e55]
+          - img "Hà Hoạt Silk" [ref=f2e57]
+        - generic [ref=f2e59]:
+          - img "Hà Hoạt Silk" [ref=f2e61]
+          - img "Hà Hoạt Silk" [ref=f2e63]
+          - img "Hà Hoạt Silk" [ref=f2e65]
+          - img "Hà Hoạt Silk" [ref=f2e67]
+          - img "Hà Hoạt Silk" [ref=f2e69]
+          - img "Hà Hoạt Silk" [ref=f2e71]
+          - img "Hà Hoạt Silk" [ref=f2e73]
+          - img "Hà Hoạt Silk" [ref=f2e75]
+      - generic [ref=f2e76]:
+        - img "Hà Hoạt Silk" [ref=f2e77]
+        - paragraph [ref=f2e78]:
+          - emphasis [ref=f2e79]: Thương hiệu Di sản
+        - paragraph [ref=f2e80]:
+          - text: Lụa tơ tằm Nha Xá, được bảo chứng bởi
+          - strong [ref=f2e81]: Nghệ nhân Phạm Văn Hoạt.
+    - generic [ref=f2e82]:
+      - generic [ref=f2e83]:
+        - heading "LỤA TƠ TẰM NHA XÁ - GỐC NGHỆ NHÂN" [level=2] [ref=f2e84]
+        - paragraph [ref=f2e85]: Tinh hoa trong từng sợi vải
+      - generic [ref=f2e86]:
+        - generic [ref=f2e87]:
+          - img "Dệt & Nhuộm thủ công tỉ mỉ" [ref=f2e88]
+          - heading "Dệt & Nhuộm thủ công tỉ mỉ" [level=3] [ref=f2e89]
+          - paragraph [ref=f2e90]: Từng thước lụa mang trọn tâm huyết và kỹ nghệ truyền thống của làng nghề.
+        - generic [ref=f2e91]:
+          - img "Lựa chọn cao cấp" [ref=f2e92]
+          - heading "Lựa chọn cao cấp" [level=3] [ref=f2e93]
+          - paragraph [ref=f2e94]: Cam kết chất liệu tơ tằm Nha Xá cao cấp, dày dặn, đanh mướt, óng ả.
+        - generic [ref=f2e95]:
+          - img "Kho vải đồ sộ 5000+ mẫu" [ref=f2e96]
+          - heading "Kho vải đồ sộ 5000+ mẫu" [level=3] [ref=f2e97]
+          - paragraph [ref=f2e98]: Luôn sẵn kho hàng ngàn màu sắc, họa tiết để bạn thỏa sức lựa chọn.
+    - generic [ref=f2e99]:
+      - generic [ref=f2e100]:
+        - button "Mẫu trước"
+        - generic [ref=f2e102]:
+          - link [ref=f2e103] [cursor=pointer]:
+            - /url: /lua-to-tam
+            - img "Thọ Dơi" [ref=f2e105]
+            - paragraph [ref=f2e107]: Thọ Dơi
+          - link [ref=f2e108] [cursor=pointer]:
+            - /url: /lua-to-tam
+            - img "Đuôi Công" [ref=f2e110]
+            - paragraph [ref=f2e112]: Đuôi Công
+          - link [ref=f2e113] [cursor=pointer]:
+            - /url: /lua-to-tam
+            - img "Cúc" [ref=f2e115]
+            - paragraph [ref=f2e117]: Cúc
+          - link [ref=f2e118] [cursor=pointer]:
+            - /url: /lua-to-tam
+            - img "Thủy Tiên" [ref=f2e120]
+            - paragraph [ref=f2e122]: Thủy Tiên
+          - link [ref=f2e123] [cursor=pointer]:
+            - /url: /lua-to-tam
+            - img "Sen - Hồ Điệp" [ref=f2e125]
+            - paragraph [ref=f2e127]: Sen - Hồ Điệp
+        - button "Mẫu sau" [ref=f2e128] [cursor=pointer]
+      - link [ref=f2e131] [cursor=pointer]:
+        - /url: /lua-to-tam
+    - generic [ref=f2e136]:
+      - generic [ref=f2e137]:
+        - heading "THIẾT KẾ TRANG PHỤC ĐỘC BẢN" [level=2] [ref=f2e138]
+        - paragraph [ref=f2e139]: Trải nghiệm Custom-Made
+      - generic [ref=f2e140]:
+        - generic [ref=f2e141]:
+          - generic [ref=f2e142]: "01"
+          - generic [ref=f2e143]:
+            - heading "Chọn mẫu áo dài, pháp phục" [level=3] [ref=f2e144]
+            - paragraph [ref=f2e145]: Lựa chọn mẫu theo sở thích
+        - generic [ref=f2e146]:
+          - generic [ref=f2e147]: "02"
+          - generic [ref=f2e148]:
+            - heading "Điều chỉnh các tùy chọn" [level=3] [ref=f2e149]
+            - paragraph [ref=f2e150]: Cân nhắc các lựa chọn hình thức may, kiểu dáng, phối màu
+        - generic [ref=f2e151]:
+          - generic [ref=f2e152]: "03"
+          - generic [ref=f2e153]:
+            - heading "\"Custom\" thiết kế của riêng bạn" [level=3] [ref=f2e154]
+            - paragraph [ref=f2e155]: Thay đổi mẫu vải nếu có nhu cầu để tạo ra thiết kế độc bản chỉ riêng bạn có.
+        - generic [ref=f2e156]:
+          - generic [ref=f2e157]: "04"
+          - generic [ref=f2e158]:
+            - heading "Sản phẩm được chế tác" [level=3] [ref=f2e159]
+            - paragraph [ref=f2e160]: Hà Hoạt Silk giúp bạn hoàn thiện sản phẩm mang dấu ấn riêng.
+    - generic [ref=f2e161]:
+      - generic [ref=f2e162]:
+        - img "Khung dệt lụa" [ref=f2e163]
+        - img "Người phụ nữ guồng tơ" [ref=f2e164]
+      - generic [ref=f2e165]:
+        - paragraph [ref=f2e166]: Hà Hoạt Silk hiểu rằng,
+        - paragraph [ref=f2e167]: bộ đồ "đẹp" nhất không phải
+        - paragraph [ref=f2e168]: những gì chạy theo số đông, mà là
+        - paragraph [ref=f2e169]:
+          - emphasis [ref=f2e170]:
+            - strong [ref=f2e171]: lựa chọn phù hợp nhất,
+        - paragraph [ref=f2e172]:
+          - emphasis [ref=f2e173]:
+            - strong [ref=f2e174]: mang câu chuyện của riêng bạn.
+        - paragraph [ref=f2e175]: Để Hà Hoạt Silk giúp bạn
+        - paragraph [ref=f2e176]:
+          - emphasis [ref=f2e177]:
+            - strong [ref=f2e178]: tự tay
+          - text: tạo nên kiệt tác
+          - emphasis [ref=f2e179]:
+            - strong [ref=f2e180]: độc bản.
+        - generic [ref=f2e181]:
+          - link "Khám phá sản phẩm" [ref=f2e182] [cursor=pointer]:
+            - /url: "#products"
+          - link "Liên hệ hỗ trợ" [ref=f2e183] [cursor=pointer]:
+            - /url: "#contact"
+      - generic [ref=f2e184]:
+        - img "Xưởng nhuộm tơ" [ref=f2e185]
+        - img "Lọ gốm nhuộm" [ref=f2e186]
+    - generic [ref=f2e188]:
+      - generic [ref=f2e189]:
+        - paragraph [ref=f2e190]: Đặc quyền
+        - paragraph [ref=f2e191]: của lựa chọn
+        - paragraph [ref=f2e192]: May đo cá nhân hóa
+      - generic [ref=f2e193]:
+        - generic [ref=f2e194]:
+          - img "Thiết kế riêng độc nhất" [ref=f2e195]
+          - heading "Thiết kế riêng độc nhất" [level=3] [ref=f2e196]
+          - paragraph [ref=f2e197]: Không tồn tại sản phẩm thứ hai hoàn toàn giống "tác phẩm" bạn tạo nên.
+        - generic [ref=f2e198]:
+          - img "Vừa vặn từng đường nét" [ref=f2e199]
+          - heading "Vừa vặn từng đường nét" [level=3] [ref=f2e200]
+          - paragraph [ref=f2e201]: Tùy chọn may theo bảng kích thước sản phẩm hoặc số đo cá nhân, miễn sao phù hợp với bạn.
+        - generic [ref=f2e202]:
+          - img "Trọn vẹn trải nghiệm" [ref=f2e203]
+          - heading "Trọn vẹn trải nghiệm" [level=3] [ref=f2e204]
+          - paragraph [ref=f2e205]: Trọn gói mọi trải nghiệm với lụa tơ tằm, từ chọn vải, chọn họa tiết, chọn cách may.
+        - generic [ref=f2e206]:
+          - img "Hỗ trợ lâu dài" [ref=f2e207]
+          - heading "Hỗ trợ lâu dài" [level=3] [ref=f2e208]
+          - paragraph [ref=f2e209]: Đồng hành cùng bạn chăm sóc, bảo quản sản phẩm bền đẹp.
+    - generic [ref=f2e210]:
+      - heading "ĐƯỢC TIN CHỌN NHIỀU NHẤT" [level=2] [ref=f2e212]
+      - generic [ref=f2e213]:
+        - button "Trước" [ref=f2e324] [cursor=pointer]
+        - generic [ref=f2e215]:
+          - link [ref=f2e217] [cursor=pointer]:
+            - /url: /san-pham/san-pham-1
+            - img "TÊN SẢN PHẨM" [ref=f2e219]
+            - generic [ref=f2e220]:
+              - paragraph [ref=f2e221]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e222]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e224] [cursor=pointer]:
+            - /url: /san-pham/san-pham-2
+            - img "TÊN SẢN PHẨM" [ref=f2e226]
+            - generic [ref=f2e227]:
+              - paragraph [ref=f2e228]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e229]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e231] [cursor=pointer]:
+            - /url: /san-pham/san-pham-3
+            - img "TÊN SẢN PHẨM" [ref=f2e233]
+            - generic [ref=f2e234]:
+              - paragraph [ref=f2e235]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e236]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e238] [cursor=pointer]:
+            - /url: /san-pham/san-pham-4
+            - img "TÊN SẢN PHẨM" [ref=f2e240]
+            - generic [ref=f2e241]:
+              - paragraph [ref=f2e242]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e243]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e245] [cursor=pointer]:
+            - /url: /san-pham/san-pham-5
+            - img "TÊN SẢN PHẨM" [ref=f2e247]
+            - generic [ref=f2e248]:
+              - paragraph [ref=f2e249]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e250]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e252] [cursor=pointer]:
+            - /url: /san-pham/san-pham-6
+            - img "TÊN SẢN PHẨM" [ref=f2e254]
+            - generic [ref=f2e255]:
+              - paragraph [ref=f2e256]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e257]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e259] [cursor=pointer]:
+            - /url: /san-pham/san-pham-7
+            - img "TÊN SẢN PHẨM" [ref=f2e261]
+            - generic [ref=f2e262]:
+              - paragraph [ref=f2e263]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e264]: 0.000.000 - 0.000.000 Đ
+          - link [ref=f2e266] [cursor=pointer]:
+            - /url: /san-pham/san-pham-8
+            - img "TÊN SẢN PHẨM" [ref=f2e268]
+            - generic [ref=f2e269]:
+              - paragraph [ref=f2e270]: TÊN SẢN PHẨM
+              - paragraph [ref=f2e271]: 0.000.000 - 0.000.000 Đ
+        - button "Sau" [ref=f2e272] [cursor=pointer]
+  - contentinfo [ref=f2e275]:
+    - generic [ref=f2e276]:
+      - generic [ref=f2e277]:
+        - generic [ref=f2e278]:
+          - img "Hà Hoạt Silk" [ref=f2e280]
+          - paragraph [ref=f2e281]:
+            - emphasis [ref=f2e282]: Lụa tơ tằm Nha Xá cao cấp
+        - link "Khám phá sản phẩm" [ref=f2e283] [cursor=pointer]:
+          - /url: /cua-hang
+      - generic [ref=f2e287]:
+        - generic [ref=f2e288]:
+          - heading "HỖ TRỢ KHÁCH HÀNG" [level=4] [ref=f2e289]
+          - paragraph [ref=f2e290]: (+84)08 66666 201
+          - paragraph [ref=f2e291]: hahoatsilk@gmail.com
+          - paragraph [ref=f2e292]: Làng nghề Nha Xá, Duy Tân, Ninh Bình
+        - generic [ref=f2e293]:
+          - heading "KHÁM PHÁ" [level=4] [ref=f2e294]
+          - list [ref=f2e295]:
+            - listitem [ref=f2e296]:
+              - link "Về chúng tôi" [ref=f2e297] [cursor=pointer]:
+                - /url: /ve-chung-toi
+            - listitem [ref=f2e298]:
+              - link "Sản phẩm" [ref=f2e299] [cursor=pointer]:
+                - /url: /cua-hang
+            - listitem [ref=f2e300]:
+              - link "Câu hỏi thường gặp" [ref=f2e301] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=f2e302]:
+              - link "Tin tức" [ref=f2e303] [cursor=pointer]:
+                - /url: /tin-tuc
+        - generic [ref=f2e304]:
+          - heading "CHÍNH SÁCH" [level=4] [ref=f2e305]
+          - list [ref=f2e306]:
+            - listitem [ref=f2e307]:
+              - link "Chính sách bảo mật" [ref=f2e308] [cursor=pointer]:
+                - /url: /chinh-sach-bao-mat
+            - listitem [ref=f2e309]:
+              - link "Chính sách đổi trả" [ref=f2e310] [cursor=pointer]:
+                - /url: /chinh-sach-doi-tra
+            - listitem [ref=f2e311]:
+              - link "Chính sách thanh toán" [ref=f2e312] [cursor=pointer]:
+                - /url: /chinh-sach-thanh-toan
+            - listitem [ref=f2e313]:
+              - link "Chính sách vận chuyển" [ref=f2e314] [cursor=pointer]:
+                - /url: /chinh-sach-van-chuyen
+        - generic [ref=f2e315]:
+          - heading "THEO DÕI HÀ HOẠT SILK" [level=4] [ref=f2e316]
+          - generic [ref=f2e317]:
+            - link "Facebook" [ref=f2e318] [cursor=pointer]:
+              - /url: https://facebook.com
+            - link "TikTok" [ref=f2e321] [cursor=pointer]:
+              - /url: https://tiktok.com

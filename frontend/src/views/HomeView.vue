@@ -1,5 +1,7 @@
 <template>
   <main>
+    <!-- Lớp nền fixed chung: 3 section đổi màu sẽ animate lên đây → không bao giờ lộ đường nối -->
+    <div class="page-bg" data-page-bg aria-hidden="true"></div>
     <HeroSection />
     <ModernHeritage />
     <MasterCraft />
@@ -21,3 +23,15 @@ import QuoteSection   from '@/components/home/QuoteSection.vue'
 import CollectionsGrid from '@/components/home/CollectionsGrid.vue'
 import IconicProducts from '@/components/home/IconicProducts.vue'
 </script>
+
+<style scoped>
+/* Lớp nền chung fixed – nằm sau mọi content (z-index:-1).
+   Trong suốt tại 3 section đổi màu → hiện lớp này liên tục, không đường nối. */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-gray);
+  pointer-events: none;
+}
+</style>

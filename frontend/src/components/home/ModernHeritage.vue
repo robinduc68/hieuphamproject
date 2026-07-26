@@ -68,28 +68,29 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 <style scoped>
 .about-section {
   background: var(--bg-gray);
-  padding: 56px 48px;
+  padding: 0;
 }
 
 .about-card {
-  max-width: 1272px;
-  margin: 0 auto;
-  background: #681927;
-  border-radius: 16px;
+  max-width: none;
+  margin: 0;
+  background: #000000;
+  border-radius: 0;
   display: grid;
   grid-template-columns: 1.45fr 1fr;
   gap: 14px;
   padding: 14px;
   overflow: hidden;
-  box-shadow: 0 1px 16px rgba(0,0,0,.07);
-  border: 1px solid rgba(0,0,0,.05);
-  height: 720px;
+  box-shadow: none;
+  border: none;
+  height: 100vh;
+  min-height: 560px;
 }
 
 /* ── Photo ticker ── */
 .photo-ticker {
   overflow: hidden;
-  background: #681927;
+  background: #000000;
   border-radius: 10px;
   padding: 10px;
   display: flex;
@@ -172,5 +173,9 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
   font-style: italic;
   font-weight: 700;
   color: #681927;
+}
+
+@media (max-width: 860px) {
+  .about-card { margin: 0; }
 }
 </style>

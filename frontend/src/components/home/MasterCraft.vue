@@ -8,8 +8,8 @@
     <div class="craft-cards">
       <div v-for="c in cards" :key="c.title" class="craft-card">
         <img class="craft-icon" :src="c.icon" :alt="c.title" />
-        <h3 class="craft-card-title">{{ c.title }}</h3>
-        <p class="craft-card-desc">{{ c.desc }}</p>
+        <h3 class="craft-card-title" v-typewriter="24">{{ c.title }}</h3>
+        <p class="craft-card-desc" v-typewriter="24">{{ c.desc }}</p>
       </div>
     </div>
   </section>
@@ -38,7 +38,7 @@ const cards = [
 <style scoped>
 .craft-section {
   background: var(--bg-gray);
-  padding: 80px 48px;
+  padding: 80px 20px 48px;   /* khớp padding ngang 20px; lùi đáy cho sát NewArrivals */
 }
 
 .craft-head {
@@ -62,19 +62,23 @@ const cards = [
 }
 
 .craft-cards {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 0 auto;
+  padding: 0 64px;           /* = nút 48px + gap 16px → căn đúng mép ảnh lụa (bỏ 2 nút) */
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 22px;
 }
 
 .craft-card {
   background: #DEDEDE;
   border-radius: var(--radius);
-  padding: 36px 28px 32px;
+  padding: 46px 28px 64px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
   gap: 16px;
   transition: box-shadow var(--transition), transform var(--transition);
 }
@@ -84,26 +88,31 @@ const cards = [
 }
 
 .craft-icon {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
 }
 
 .craft-card-title {
   font-family: 'Philosopher', sans-serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: #681927;
   line-height: 1.3;
+  overflow-wrap: break-word;
 }
 
 .craft-card-desc {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--text-medium);
   line-height: 1.75;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 860px) {
   .craft-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .craft-cards { margin: 0; }
 }
 </style>

@@ -1,18 +1,43 @@
 <template>
   <section class="fabric-showcase">
-    <div class="fs-row">
-      <RouterLink
-        v-for="f in fabrics"
-        :key="f.name"
-        to="/lua-to-tam"
-        class="fs-card"
-      >
-        <div class="fs-swatch">
-          <img :src="f.img" :alt="f.name" class="fs-img" />
-          <span class="fs-shimmer" />
+    <div class="fs-carousel">
+
+      <!-- Arrow left -->
+      <button class="fs-arrow fs-arrow-left" @click="prev" aria-label="Mẫu trước">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      <!-- Viewport -->
+      <div class="fs-viewport" ref="viewportEl">
+        <div
+          class="fs-track"
+          :class="{ 'no-anim': !animate }"
+          :style="{ transform: `translateX(-${currentIndex * (itemWidth + GAP)}px)` }"
+        >
+          <RouterLink
+            v-for="(f, i) in loopFabrics"
+            :key="i"
+            to="/lua-to-tam"
+            class="fs-card"
+            :style="{ width: itemWidth + 'px' }"
+          >
+            <div class="fs-swatch">
+              <img :src="f.img" :alt="f.name" class="fs-img" />
+              <span class="fs-shimmer" />
+            </div>
+            <p class="fs-name">{{ f.name }}</p>
+          </RouterLink>
         </div>
-        <p class="fs-name">{{ f.name }}</p>
-      </RouterLink>
+      </div>
+
+      <!-- Arrow right -->
+      <button class="fs-arrow fs-arrow-right" @click="next" aria-label="Mẫu sau">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
     </div>
 
     <RouterLink to="/lua-to-tam" class="fs-cta">
@@ -27,6 +52,9 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useInfiniteCarousel } from '@/composables/useInfiniteCarousel'
+
 const fabrics = [
   { name: 'Thọ Dơi',       img: '/tho-doi.png' },
   { name: 'Đuôi Công',     img: '/duoi-cong.jpg' },
@@ -34,23 +62,84 @@ const fabrics = [
   { name: 'Thủy Tiên',     img: '/thuy-tien.jpg' },
   { name: 'Sen - Hồ Điệp', img: '/sen-ho-diep.png' },
 ]
+
+// Render 2× để carousel vô tận trượt mượt (real + clone)
+const loopFabrics = [...fabrics, ...fabrics]
+
+const GAP        = 20
+const viewportEl = ref(null)
+const itemWidth  = ref(240)
+
+const { currentIndex, animate, next, prev, reset } = useInfiniteCarousel(
+  () => fabrics.length,
+  () => itemWidth.value + GAP
+)
+
+function computeVisible() {
+  const w = window.innerWidth
+  return w > 980 ? 4 : (w > 620 ? 3 : 2)
+}
+
+function updateItemWidth() {
+  if (!viewportEl.value) return
+  const visible = computeVisible()
+  itemWidth.value = Math.floor(
+    (viewportEl.value.offsetWidth - GAP * (visible - 1)) / visible
+  )
+}
+
+function onResize() {
+  updateItemWidth()
+  reset()
+}
+
+onMounted(() => {
+  updateItemWidth()
+  window.addEventListener('resize', onResize)
+  startAuto()
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  clearInterval(timer)
+})
+
+/* ── Auto-play ~4.5s (tự chạy giống slideshow dưới) ── */
+let timer = null
+function startAuto() {
+  clearInterval(timer)
+  timer = setInterval(next, 4500)
+}
 </script>
 
 <style scoped>
 .fabric-showcase {
   background: var(--bg-gray);
-  padding: 0 48px 80px;
+  padding: 0 20px 48px;
 }
 
-.fs-row {
-  max-width: 1200px;
+/* Carousel */
+.fs-carousel {
+  max-width: 1600px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.fs-card { display: block; color: inherit; }
+.fs-viewport {
+  flex: 1;
+  overflow: hidden;
+}
+
+.fs-track {
+  display: flex;
+  gap: 20px;
+  transition: transform 0.55s cubic-bezier(.25,.46,.45,.94);
+  will-change: transform;
+}
+.fs-track.no-anim { transition: none; }
+
+.fs-card { display: block; color: inherit; flex-shrink: 0; }
 
 .fs-swatch {
   width: 100%;
@@ -90,36 +179,59 @@ const fabrics = [
   color: var(--charcoal);
 }
 
+/* Arrows */
+.fs-arrow {
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--brand-red);
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  transition: all var(--transition);
+}
+.fs-arrow:hover {
+  background: var(--brand-red);
+  border-color: var(--brand-red);
+  color: #FFFFFF;
+}
+.fs-arrow svg { width: 20px; height: 20px; }
+
+/* CTA – nền = màu chữ cũ, chữ = màu nền cũ, to & đậm hơn */
 .fs-cta {
   margin: 40px auto 0;
   width: fit-content;
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #FFFFFF;
-  color: var(--brand-red);
+  background: var(--brand-red);
+  color: #FFFFFF;
   border: 1px solid var(--brand-red);
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 500;
-  padding: 14px 14px 14px 28px;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 16px 18px 16px 34px;
   border-radius: 999px;
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition);
 }
-.fs-cta:hover { background: var(--cream); }
+.fs-cta:hover {
+  background: var(--brand-dark);
+  transform: translateY(-2px);
+}
 .fs-cta-icon {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--brand-red);
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: var(--brand-red);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .fs-cta-icon svg { width: 18px; height: 18px; }
-
-@media (max-width: 860px) {
-  .fs-row { grid-template-columns: repeat(2, 1fr); }
-}
 </style>

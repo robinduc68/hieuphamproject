@@ -29,7 +29,7 @@ const poster   = '/videos/hero-poster.jpg'
 .hero {
   position: relative;
   width: 100%;
-  height: 870px;
+  height: 100vh;
   min-height: 320px;
   overflow: hidden;
   background: linear-gradient(135deg, #1a100e 0%, #2b1a15 40%, #1a1510 100%);

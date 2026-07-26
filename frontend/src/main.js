@@ -13,6 +13,7 @@ import FaqView          from './views/FaqView.vue'
 import NewsView         from './views/NewsView.vue'
 import NewsDetailView   from './views/NewsDetailView.vue'
 import '@/assets/base.css'
+import { vTypewriter } from './directives/typewriter'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -37,4 +38,5 @@ const app   = createApp(App)
 
 app.use(pinia)
 app.use(router)
+app.directive('typewriter', vTypewriter)
 app.mount('#app')

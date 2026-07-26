@@ -6,7 +6,7 @@
     :class="`brand-logo--${size}`"
   >
     <!-- dark bg → cream logo, light bg → plum logo -->
-    <img :src="dark ? '/HHS LG (1) (2).png' : '/HHSLG.png'" alt="Hà Hoạt Silk" class="logo-img" />
+    <img :src="dark ? '/HHS LG (1) (2).png' : '/HHSLG(2).png'" alt="Hà Hoạt Silk" class="logo-img" />
   </component>
 </template>
 
