@@ -8,20 +8,22 @@
 
     <!-- Cột giữa -->
     <div class="col col-center">
-      <p class="quote-line cream">Hà Hoạt Silk hiểu rằng,</p>
-      <p class="quote-line cream">bộ đồ "đẹp" nhất không phải</p>
-      <p class="quote-line cream">những gì chạy theo số đông, mà là</p>
-      <p class="quote-line gold"><em><strong>lựa chọn phù hợp nhất,</strong></em></p>
-      <p class="quote-line gold"><em><strong>mang câu chuyện của riêng bạn.</strong></em></p>
-      <p class="quote-line cream spacer-top">Để Hà Hoạt Silk giúp bạn</p>
-      <p class="quote-line cream">
-        <em class="gold"><strong>tự tay</strong></em> tạo nên kiệt tác
-        <em class="gold"><strong>độc bản.</strong></em>
-      </p>
+      <div class="center-inner" ref="centerInner">
+        <p class="quote-line cream">Hà Hoạt Silk hiểu rằng,</p>
+        <p class="quote-line cream">bộ đồ "đẹp" nhất không phải</p>
+        <p class="quote-line cream">những gì chạy theo số đông, mà là</p>
+        <p class="quote-line gold"><em><strong>lựa chọn phù hợp nhất,</strong></em></p>
+        <p class="quote-line gold"><em><strong>mang câu chuyện của riêng bạn.</strong></em></p>
+        <p class="quote-line cream spacer-top">Để Hà Hoạt Silk giúp bạn</p>
+        <p class="quote-line cream">
+          <em class="gold"><strong>tự tay</strong></em> tạo nên kiệt tác
+          <em class="gold"><strong>độc bản.</strong></em>
+        </p>
 
-      <div class="quote-cta">
-        <a href="#products" class="btn btn-solid">Khám phá sản phẩm</a>
-        <a href="#contact" class="btn btn-outline">Liên hệ hỗ trợ</a>
+        <div class="quote-cta">
+          <a href="#products" class="btn btn-solid">Khám phá sản phẩm</a>
+          <a href="#contact" class="btn btn-outline">Liên hệ hỗ trợ</a>
+        </div>
       </div>
     </div>
 
@@ -43,7 +45,17 @@ gsap.registerPlugin(ScrollTrigger)
 /* Pin section ~3 viewport. Lúc đầu: chữ mờ/blur, ảnh trôi dưới (ẩn).
    Scroll: chữ dần hết mờ → rõ, ảnh trôi lên đúng chỗ, CTA hiện cuối. */
 const sectionEl = ref(null)
+const centerInner = ref(null)
 let ctx = null
+
+/* Khoảng cách từ vị trí căn giữa lên sát mép trên của cột giữa.
+   Dùng làm điểm bắt đầu của khối chữ; scroll xuống thì y → 0 (về giữa). */
+function topOffset() {
+  const inner = centerInner.value
+  if (!inner) return 0
+  const col = inner.parentElement
+  return Math.max(0, (col.clientHeight - inner.offsetHeight) / 2)
+}
 
 function prefersReducedMotion() {
   return (
@@ -92,11 +104,14 @@ onMounted(() => {
         end: '+=84%',         // scroll gấp rưỡi (56%→84%)
         pin: true,
         scrub: 1,
+        invalidateOnRefresh: true,   // tính lại topOffset khi resize/ảnh load xong
       },
     })
 
     // Chữ: mờ (opacity .2) → rõ TỪNG KÝ TỰ, sớm – rút ngắn stagger/duration để text rõ hết trong ~1/3 đầu
     tl.from('.qchar', { opacity: 0.2, duration: 0.22, stagger: 0.005 }, 0)
+    // Khối chữ + CTA: bắt đầu sát mép trên → trôi xuống giữa cùng lúc ảnh hiện lên
+    tl.from('.center-inner', { y: () => -topOffset(), duration: 0.9 }, 1.3)
     // Hình: hiện muộn hơn (sau khi chữ gần rõ hết)
     tl.from('.img', { y: 240, opacity: 0, duration: 0.5, stagger: 0.08 }, 1.5)
     // CTA cuối
@@ -181,12 +196,19 @@ onUnmounted(() => {
   margin-left: -30px;
 }
 
-/* Cột giữa */
+/* Cột giữa – khối chữ căn giữa dọc, lúc đầu bị GSAP đẩy lên sát mép trên */
 .col-center {
-  justify-content: flex-start;   /* chữ lên đầu – sát NewArrivals bên trên */
+  justify-content: center;
   align-items: center;
   text-align: center;
   padding: 0 8px;
+}
+.center-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  will-change: transform;
 }
 
 .quote-line {
