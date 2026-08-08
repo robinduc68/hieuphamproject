@@ -1,5 +1,5 @@
 <template>
-  <section class="custom-section" ref="sectionEl">
+  <section class="custom-section" :class="{ 'bg-anim': bgAnim }" ref="sectionEl">
     <div class="custom-inner">
 
       <!-- Top: 2-line centered heading -->
@@ -34,6 +34,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const sectionEl = ref(null)
+/* true khi timeline đổi nền thật sự chạy → mới cho section trong suốt.
+   Nếu không (mobile / prefers-reduced-motion) giữ nền đặc, tránh lòi nền trắng. */
+const bgAnim = ref(false)
 let ctx = null
 
 function prefersReducedMotion() {
@@ -73,6 +76,7 @@ onMounted(() => {
   if (window.innerWidth <= 700) return   // mobile: nền #DEDEDE tĩnh, không pin
 
   const pageBg = document.querySelector('[data-page-bg]')   // lớp nền chung – không lộ đường nối
+  bgAnim.value = true
   ctx = gsap.context(() => {
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -85,7 +89,7 @@ onMounted(() => {
     })
     // Màu chuyển NHANH (1/3 đầu scroll); phần còn lại giữ nguyên cho xem
     tl.fromTo(pageBg, { backgroundColor: '#FFFFFF' }, { backgroundColor: '#DEDEDE', ease: 'none', duration: 0.3 }, 0)
-    tl.fromTo('.step', { backgroundColor: '#F2F2F2' }, { backgroundColor: '#FFFFFF', ease: 'none', duration: 0.3 }, 0)
+    tl.fromTo('.step', { backgroundColor: '#DEDEDE' }, { backgroundColor: '#FFFFFF', ease: 'none', duration: 0.3 }, 0)
     tl.to({}, { duration: 0.7 })   // hold – kéo dài pin mà màu đã chuyển xong
   }, sectionEl.value)
 })
@@ -102,8 +106,10 @@ onUnmounted(() => {
   color: rgb(104, 25, 39);
 }
 @media (min-width: 701px) {
-  .custom-section {
+  .custom-section.bg-anim {
     background: transparent;    /* trong suốt – hiện lớp nền chung đổi màu */
+  }
+  .custom-section {
     min-height: 80vh;          /* ngắn lại xíu – hiệu ứng chuyển màu nền vẫn giữ */
     display: flex;
     align-items: flex-start;   /* tiêu đề lên đầu – sát FabricShowcase bên trên */
@@ -153,7 +159,7 @@ onUnmounted(() => {
 }
 
 .step {
-  background: #F2F2F2;          /* xám rất nhạt – gần trắng, nổi nhẹ nhàng */
+  background: #FFFFFF;          /* trạng thái cuối; desktop GSAP chạy từ #DEDEDE lên */
   border-radius: 12px;
   padding: 36px 26px 64px;     /* to chiều dài ra xíu */
   min-height: 380px;

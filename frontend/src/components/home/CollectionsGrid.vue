@@ -1,5 +1,5 @@
 <template>
-  <section class="features-section" ref="sectionEl">
+  <section class="features-section" :class="{ 'bg-anim': bgAnim }" ref="sectionEl">
     <div class="features-inner">
       <!-- Left title -->
       <div class="features-title">
@@ -28,6 +28,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const sectionEl = ref(null)
+/* true khi timeline đổi nền thật sự chạy → mới cho section trong suốt.
+   Nếu không (mobile / prefers-reduced-motion) giữ nền xám đặc. */
+const bgAnim = ref(false)
 let ctx = null
 
 function prefersReducedMotion() {
@@ -61,27 +64,30 @@ const features = [
   },
 ]
 
-/* Pin ~0.9 viewport: nền maroon → xám, nội dung fade lên đồng bộ
-   (đảm bảo dễ đọc khi nền đã xám). */
+/* KHÔNG pin. Chạy đúng trong đoạn section trôi từ đáy viewport lên mép trên
+   (start 'top bottom' = ngay khi QuoteSection nhả pin, end 'top top').
+   Trước đây pin + start 'top top' nên suốt 100vh đó nội dung vẫn opacity 0
+   và nền vẫn maroon → lộ ra một khoảng trống. */
 onMounted(() => {
   if (prefersReducedMotion()) return
   if (window.innerWidth <= 700) return
 
+  bgAnim.value = true
   ctx = gsap.context(() => {
     const tl = gsap.timeline({
       defaults: { ease: 'none' },
       scrollTrigger: {
         trigger: sectionEl.value,
-        start: 'top top',
-        end: '+=90%',          // scroll thêm – thời gian đọc 4 card + nền maroon→xám chậm
-        pin: true,
+        start: 'top bottom',
+        end: 'top top',
         scrub: 1,
       },
     })
     const pageBg = document.querySelector('[data-page-bg]')
-    // Nền maroon→xám NHANH (duration 0.3, ~1/3 đầu scroll); nội dung fade chậm hơn (0.8) → nền xám sẵn từ sớm.
-    tl.to(pageBg, { backgroundColor: '#DEDEDE', duration: 0.3 }, 0)
-      .from('.features-inner', { opacity: 0, y: 40, duration: 0.8 }, 0)
+    /* Thứ tự quan trọng: chữ cream của QuoteSection phải trôi hết đã rồi mới đổi nền
+       (cream trên xám = chìm), rồi mới fade nội dung tối của section này lên. */
+    tl.to(pageBg, { backgroundColor: '#DEDEDE', duration: 0.35 }, 0.45)
+      .from('.features-inner', { opacity: 0, y: 40, duration: 0.45 }, 0.55)
   }, sectionEl.value)
 })
 
@@ -96,8 +102,10 @@ onUnmounted(() => {
   padding: 80px 48px;
 }
 @media (min-width: 701px) {
-  .features-section {
+  .features-section.bg-anim {
     background: transparent;    /* hiện lớp nền chung đổi màu */
+  }
+  .features-section {
     min-height: 100vh;          /* to ra – đầy viewport khi pin đổi màu */
     display: flex;
     align-items: center;

@@ -1,5 +1,5 @@
 <template>
-  <section class="quote-section" ref="sectionEl">
+  <section class="quote-section" :class="{ 'bg-anim': bgAnim }" ref="sectionEl">
     <!-- Cột trái -->
     <div class="col col-left">
       <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" />
@@ -46,6 +46,9 @@ gsap.registerPlugin(ScrollTrigger)
    Scroll: chữ dần hết mờ → rõ, ảnh trôi lên đúng chỗ, CTA hiện cuối. */
 const sectionEl = ref(null)
 const centerInner = ref(null)
+/* true khi timeline đổi nền thật sự chạy → mới cho section trong suốt.
+   Nếu không (mobile / prefers-reduced-motion) giữ nền maroon đặc. */
+const bgAnim = ref(false)
 let ctx = null
 
 /* Khoảng cách từ vị trí căn giữa lên sát mép trên của cột giữa.
@@ -92,6 +95,7 @@ onMounted(() => {
   if (prefersReducedMotion()) return
   if (window.innerWidth <= 700) return   // mobile: hiển thị thường, không pin
 
+  bgAnim.value = true
   ctx = gsap.context(() => {
     // chia ký tự trước khi tạo timeline
     sectionEl.value.querySelectorAll('.quote-line').forEach(splitChars)
@@ -101,26 +105,47 @@ onMounted(() => {
       scrollTrigger: {
         trigger: sectionEl.value,
         start: 'top top',
-        end: '+=84%',         // scroll gấp rưỡi (56%→84%)
+        end: '+=165%',        // dài theo timeline (sóng chữ ×1.5) → tốc độ scroll giữ nguyên
         pin: true,
         scrub: 1,
         invalidateOnRefresh: true,   // tính lại topOffset khi resize/ảnh load xong
       },
     })
 
-    // Chữ: mờ (opacity .2) → rõ TỪNG KÝ TỰ, sớm – rút ngắn stagger/duration để text rõ hết trong ~1/3 đầu
-    tl.from('.qchar', { opacity: 0.2, duration: 0.22, stagger: 0.005 }, 0)
-    // Khối chữ + CTA: bắt đầu sát mép trên → trôi xuống giữa cùng lúc ảnh hiện lên
-    tl.from('.center-inner', { y: () => -topOffset(), duration: 0.9 }, 1.3)
-    // Hình: hiện muộn hơn (sau khi chữ gần rõ hết)
-    tl.from('.img', { y: 240, opacity: 0, duration: 0.5, stagger: 0.08 }, 1.5)
+    /* Chữ: mờ (opacity .5) → rõ TỪNG KÝ TỰ.
+       stagger = nhịp giữa 2 ký tự, duration = thời gian 1 ký tự sáng lên.
+       duration < stagger×7 → mỗi lúc chỉ ~7 ký tự đang sáng ⇒ sóng chạy theo ký tự,
+       không phải cả dòng sáng cùng lúc. Cả hai ×1.5 so với bản trước → sóng chậm hơn. */
+    const CHAR_STAGGER = 0.018
+    tl.from('.qchar', { opacity: 0.5, duration: 0.12, stagger: CHAR_STAGGER }, 0)
+
+    /* Ảnh chỉ bắt đầu trồi lên SAU KHI nền đã chuyển xong sang #681927.
+       Tween nền ở dưới là (position 0, duration 1.0) → mốc này = 1.0. */
+    const BG_DURATION = 1.0
+    const IMG_START = BG_DURATION
+
+    /* Màu chữ: lúc nền còn xám #DEDEDE thì dùng tông tối cho dễ đọc,
+       chuyển dần về cream/gold đúng lúc nền ngả sang maroon (kết thúc cùng nền). */
+    tl.from('.quote-line.cream', { color: '#3A1219', duration: 0.85 }, 0.15)
+    tl.from('.quote-line.gold, .quote-line .gold', { color: '#7A5A16', duration: 0.85 }, 0.15)
+    // Khối chữ + CTA: bắt đầu sát mép trên → trôi xuống giữa cùng lúc ảnh trồi lên
+    tl.from('.center-inner', { y: () => -topOffset(), duration: 1.2 }, IMG_START)
+    /* Hình: KHÔNG fade – luôn opacity 1, nằm sẵn dưới mép section (overflow:hidden che),
+       scroll thì trượt thẳng từ dưới lên đúng chỗ.
+       y phải > 1 viewport: img-3 có margin-top -80 nên đỉnh nó nằm TRÊN mép section,
+       lấy 0.9vh là chưa đủ đẩy khỏi màn → nó lấp ló sẵn từ đầu. +160 cho dư. */
+    tl.from('.img', {
+      y: () => window.innerHeight + 160,
+      duration: 1.2,
+      stagger: 0.12,
+    }, IMG_START)
     // CTA cuối
     tl.from('.quote-cta', { opacity: 0, y: 18, duration: 0.5 })
 
     /* Nền (lớp chung) xám→maroon, NHANH (~1/3 đầu scroll) giống CollectionsGrid.
        Dùng 'to' (không fromTo) để khi chưa tới range không ép giá trị. */
     const pageBg = document.querySelector('[data-page-bg]')
-    tl.to(pageBg, { backgroundColor: '#6E1F31', duration: 1.0 }, 0)
+    tl.to(pageBg, { backgroundColor: '#681927', duration: BG_DURATION }, 0)
 
     ScrollTrigger.refresh()
     // Ảnh load xong có thể đổi layout → tính lại trigger.
@@ -136,7 +161,7 @@ onUnmounted(() => {
 
 <style scoped>
 .quote-section {
-  --bg-maroon: #6E1F31;
+  --bg-maroon: #681927;
   --text-cream: #F5F0E8;
   --accent-gold: #E8D5A8;
 
@@ -150,7 +175,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 @media (min-width: 701px) {
-  .quote-section { background: transparent; }   /* hiện lớp nền chung đổi màu */
+  .quote-section.bg-anim { background: transparent; }   /* hiện lớp nền chung đổi màu */
 }
 
 .col {
