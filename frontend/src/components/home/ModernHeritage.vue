@@ -74,7 +74,7 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 .about-card {
   max-width: none;
   margin: 0;
-  background: #000000;
+  background: var(--brand-red);   /* viền/khung đỏ – khớp màu chữ trong panel */
   border-radius: 0;
   display: grid;
   grid-template-columns: 1.45fr 1fr;
@@ -90,7 +90,7 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 /* ── Photo ticker ── */
 .photo-ticker {
   overflow: hidden;
-  background: #000000;
+  background: var(--brand-red);
   border-radius: 10px;
   padding: 10px;
   display: flex;

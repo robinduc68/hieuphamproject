@@ -77,7 +77,7 @@ const { currentIndex, animate, next, prev, reset } = useInfiniteCarousel(
 
 function computeVisible() {
   const w = window.innerWidth
-  return w > 980 ? 4 : (w > 620 ? 3 : 2)
+  return w > 1200 ? 5 : (w > 980 ? 4 : (w > 620 ? 3 : 2))
 }
 
 function updateItemWidth() {
