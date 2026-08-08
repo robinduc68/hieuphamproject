@@ -18,7 +18,13 @@
             @mouseenter="menuOpen = true"
             @mouseleave="menuOpen = false"
           >
-            <button class="nav-link" :class="{ 'nav-link--open': menuOpen }">Sản phẩm</button>
+            <!-- Click = về trang shop không filter; hover vẫn mở mega menu -->
+            <RouterLink
+              to="/cua-hang"
+              class="nav-link"
+              :class="{ 'nav-link--open': menuOpen }"
+              @click="menuOpen = false"
+            >Sản phẩm</RouterLink>
             <MegaMenu
               :open="menuOpen"
               :categories="megaMenu"
