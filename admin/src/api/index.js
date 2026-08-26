@@ -15,7 +15,7 @@ export const statsApi = {
 export const productsApi = {
   list:   (params) => client.get('/products/', { params }),
   get:    (slug)   => client.get(`/products/${slug}`),
-  create: (data)   => client.post('/products', data),
+  create: (data)   => client.post('/products/', data),
   update: (id, data) => client.put(`/products/${id}`, data),
   remove: (id)     => client.delete(`/products/${id}`),
 

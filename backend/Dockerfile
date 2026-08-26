@@ -21,4 +21,5 @@ EXPOSE 8000
 CMD ["sh", "-c", \
   "python -u -m app.migrations.runner upgrade && \
    python -u -m app.seed && \
-   python -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+   python -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000 \
+     --proxy-headers --forwarded-allow-ips='*'"]
