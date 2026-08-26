@@ -10,23 +10,7 @@ from app.models.product   import Product, ProductImage, ProductSize
 from app.models.collection import Collection
 from app.models.user       import User
 from app.auth              import hash_password
-
-
-# ── Categories ────────────────────────────────────────────────────────────
-CATEGORIES = [
-    {"name": "Modern Heritage",       "slug": "modern-heritage",      "sort_order": 0},
-    {"name": "Áo Dài Madame",         "slug": "ao-dai-madame",        "sort_order": 1, "parent_slug": "modern-heritage"},
-    {"name": "Áo Dài FirstLady",      "slug": "ao-dai-firstlady",     "sort_order": 2, "parent_slug": "modern-heritage"},
-    {"name": "Bà Ba Mademoiselle",    "slug": "ao-ba-ba-mademoiselle","sort_order": 3, "parent_slug": "modern-heritage"},
-    {"name": "Bà Ba Gabriella",       "slug": "ba-ba-gabriella",      "sort_order": 4, "parent_slug": "modern-heritage"},
-    {"name": "WomenSwear",            "slug": "womenswear",           "sort_order": 5},
-    {"name": "Clothing – Women",      "slug": "clothing-womenwear",   "sort_order": 0, "parent_slug": "womenswear"},
-    {"name": "Bags – Women",          "slug": "bags-womenwear",       "sort_order": 1, "parent_slug": "womenswear"},
-    {"name": "Shoes – Women",         "slug": "shoes-womenwear",      "sort_order": 2, "parent_slug": "womenswear"},
-    {"name": "Eyewear – Women",       "slug": "eyewear-womenwear",    "sort_order": 3, "parent_slug": "womenswear"},
-    {"name": "MenSwear",              "slug": "menswear",             "sort_order": 6},
-    {"name": "Eyewear – Men",         "slug": "eyewear-menwear",      "sort_order": 0, "parent_slug": "menswear"},
-]
+from app.taxonomy          import TAXONOMY, LEGACY_PRODUCT_CATEGORY
 
 # ── Products ──────────────────────────────────────────────────────────────
 PRODUCTS = [
@@ -386,27 +370,17 @@ def run():
         # 1. Categories (top-level) + SubCategories
         cat_by_slug: dict[str, Category] = {}
         sub_by_slug: dict[str, SubCategory] = {}
-        for c in CATEGORIES:
-            if c.get("parent_slug"):
-                parent = cat_by_slug[c["parent_slug"]]
+        for order, (slug, name, subs) in enumerate(TAXONOMY):
+            cat, _ = Category.get_or_create(
+                slug=slug, defaults={"name": name, "sort_order": order},
+            )
+            cat_by_slug[slug] = cat
+            for sub_order, (sub_slug, sub_name) in enumerate(subs):
                 sub, _ = SubCategory.get_or_create(
-                    slug=c["slug"],
-                    defaults={
-                        "category": parent,
-                        "name": c["name"],
-                        "sort_order": c.get("sort_order", 0),
-                    },
+                    slug=sub_slug,
+                    defaults={"category": cat, "name": sub_name, "sort_order": sub_order},
                 )
-                sub_by_slug[c["slug"]] = sub
-            else:
-                cat, _ = Category.get_or_create(
-                    slug=c["slug"],
-                    defaults={
-                        "name": c["name"],
-                        "sort_order": c.get("sort_order", 0),
-                    },
-                )
-                cat_by_slug[c["slug"]] = cat
+                sub_by_slug[sub_slug] = sub
         print(f"[seed]   {len(cat_by_slug)} categories, {len(sub_by_slug)} subcategories ready.")
 
         # 2. Products + Images + Sizes
@@ -414,7 +388,13 @@ def run():
             print("[seed]   Products already present – skipping product rows.")
         else:
             for p in PRODUCTS:
-                sub = sub_by_slug[p["category_slug"]]
+                # Dữ liệu demo còn ghi danh mục con theo tên cũ → quy về danh mục
+                # cha trong cây hiện tại, danh mục con để admin chọn lại.
+                old_slug = p["category_slug"]
+                sub      = sub_by_slug.get(old_slug)
+                category = sub.category if sub else cat_by_slug[
+                    LEGACY_PRODUCT_CATEGORY.get(old_slug, TAXONOMY[0][0])
+                ]
                 product = Product.create(
                     name=p["name"],
                     slug=p["slug"],
@@ -423,7 +403,7 @@ def run():
                     fabric=p.get("fabric"),
                     care_instructions=p.get("care_instructions"),
                     shipping_info=p.get("shipping_info"),
-                    category=sub.category,
+                    category=category,
                     subcategory=sub,
                     primary_color=p.get("color_hex"),
                     is_new=p.get("is_new", False),

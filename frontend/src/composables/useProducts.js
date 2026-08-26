@@ -1,6 +1,10 @@
 import { ref, watch } from 'vue'
 import { productsApi } from '@/api'
-import { mockProduct, mockRelated } from '@/data/mockProducts'
+
+/** Thông báo lỗi đọc được thay vì [object Object] */
+function apiError(e, fallback) {
+  return e?.response?.data?.detail || e?.message || fallback
+}
 
 /** Paginated product list with filters */
 export function useProducts(initialParams = {}) {
@@ -15,11 +19,13 @@ export function useProducts(initialParams = {}) {
     error.value   = null
     try {
       const data      = await productsApi.list(params.value)
-      products.value  = data.results
-      total.value     = data.total
+      products.value  = data.results ?? []
+      total.value     = data.total ?? 0
     } catch (e) {
-      products.value = mockRelated
-      total.value    = mockRelated.length
+      products.value = []
+      total.value    = 0
+      error.value    = apiError(e, 'Không tải được danh sách sản phẩm.')
+      console.error('[useProducts]', e)
     } finally {
       loading.value = false
     }
@@ -45,8 +51,9 @@ export function useProduct(slug) {
         typeof slug === 'string' ? slug : slug.value
       )
     } catch (e) {
-      // API chưa có → dùng mock data để xem UI
-      product.value = mockProduct
+      product.value = null
+      error.value   = apiError(e, 'Không tìm thấy sản phẩm.')
+      console.error('[useProduct]', e)
     } finally {
       loading.value = false
     }
@@ -72,7 +79,9 @@ export function useNewArrivals(limit = 10) {
     try {
       products.value = await productsApi.newArrivals(limit)
     } catch (e) {
-      products.value = mockRelated
+      products.value = []
+      error.value    = apiError(e, 'Không tải được sản phẩm mới.')
+      console.error('[useNewArrivals]', e)
     } finally {
       loading.value = false
     }
@@ -91,6 +100,9 @@ export function useFeaturedProducts(limit = 4) {
     loading.value = true
     try {
       products.value = await productsApi.featured(limit)
+    } catch (e) {
+      products.value = []
+      console.error('[useFeaturedProducts]', e)
     } finally {
       loading.value = false
     }

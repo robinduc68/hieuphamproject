@@ -27,7 +27,7 @@
             >Sản phẩm</RouterLink>
             <MegaMenu
               :open="menuOpen"
-              :categories="megaMenu"
+              :categories="categories"
               @close="menuOpen = false"
               @keep="menuOpen = true"
             />
@@ -96,7 +96,8 @@ import { useRouter } from 'vue-router'
 import CartDrawer from '@/components/ui/CartDrawer.vue'
 import MegaMenu  from '@/components/layout/MegaMenu.vue'
 import LogoBrand  from '@/components/ui/LogoBrand.vue'
-import { useCartStore } from '@/stores/cart'
+import { useCartStore }  from '@/stores/cart'
+import { useCategories } from '@/composables/useCategories'
 
 const props = defineProps({
   overlay: { type: Boolean, default: false },
@@ -104,41 +105,8 @@ const props = defineProps({
 
 const menuOpen = ref(false)
 
-const megaMenu = [
-  {
-    label: 'Áo dài',
-    slug:  'ao-dai',
-    subs:  [
-      { label: 'Áo dài 2 tà',      slug: 'ao-dai-2-ta' },
-      { label: 'Áo dài 4 tà',      slug: 'ao-dai-4-ta' },
-      { label: 'Áo dài thêu tay',  slug: 'ao-dai-theu-tay' },
-    ],
-  },
-  {
-    label: 'Pháp phục',
-    slug:  'phap-phuc',
-    subs:  [],
-  },
-  {
-    label: 'Đầm lụa',
-    slug:  'dam-lua',
-    subs:  [],
-  },
-  {
-    label: 'Khăn lụa',
-    slug:  'khan-lua',
-    subs:  [
-      { label: 'Khăn lụa vẽ tay cao cấp',    slug: 'khan-lua-ve-tay-cao-cap' },
-      { label: 'Khăn lụa loang tia cao cấp', slug: 'khan-lua-loang-tia-cao-cap' },
-      { label: 'Khăn lụa trơn cao cấp',      slug: 'khan-lua-tron-cao-cap' },
-    ],
-  },
-  {
-    label: 'Lụa tơ tằm',
-    slug:  'lua-to-tam',
-    subs:  [],
-  },
-]
+// Menu danh mục lấy thẳng từ API — admin thêm/sửa danh mục là menu đổi theo
+const { categories } = useCategories()
 
 const cartStore   = useCartStore()
 const router      = useRouter()

@@ -38,6 +38,33 @@
             <input v-model.number="form.compare_at_price" type="number" min="0" class="form-input" placeholder="Để trống nếu không khuyến mãi" />
             <span class="form-hint">Hiển thị gạch ngang nếu đang sale</span>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Danh mục *</label>
+              <select v-model="form.category_id" class="form-select" @change="onCategoryChange">
+                <option value="">Chọn danh mục</option>
+                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+              <span v-if="!categories.length" class="form-hint" style="color:var(--brand)">
+                Chưa có danh mục nào — vào trang Danh mục tạo trước.
+              </span>
+              <span v-else class="form-hint">Quyết định sản phẩm nằm ở mục nào trên website</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Danh mục con{{ subcategories.length ? ' *' : '' }}</label>
+              <select v-model="form.subcategory_id" class="form-select" :disabled="!subcategories.length">
+                <option value="">{{ form.category_id ? 'Chọn danh mục con' : 'Chọn danh mục trước' }}</option>
+                <option v-for="s in subcategories" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+              <span class="form-hint">
+                {{ !form.category_id
+                    ? 'Chọn danh mục ở ô bên trái trước'
+                    : (subcategories.length
+                        ? 'Danh mục này có mục con — phải chọn một mục.'
+                        : 'Danh mục này không có mục con.') }}
+              </span>
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">Mô tả</label>
             <textarea v-model="form.description" class="form-textarea" rows="4" placeholder="Mô tả ngắn gọn về sản phẩm..." />
@@ -132,23 +159,7 @@
       <div class="form-side">
 
         <div class="card form-section">
-          <div class="section-title">Phân loại</div>
-          <div class="form-group">
-            <label class="form-label">Danh mục</label>
-            <select v-model="form.category_id" class="form-select" @change="onCategoryChange">
-              <option value="">Chọn danh mục</option>
-              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-            <span v-if="!categories.length" class="form-hint" style="color:var(--brand)">Chưa có danh mục nào</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Danh mục con</label>
-            <select v-model="form.subcategory_id" class="form-select" :disabled="!subcategories.length">
-              <option value="">{{ form.category_id ? 'Chọn danh mục con' : 'Chọn danh mục trước' }}</option>
-              <option v-for="s in subcategories" :key="s.id" :value="s.id">{{ s.name }}</option>
-            </select>
-            <span class="form-hint">Hiện ở breadcrumb và nhãn ảnh trên trang sản phẩm</span>
-          </div>
+          <div class="section-title">Hiển thị</div>
           <div class="form-group">
             <label class="form-label">Màu chính (HEX)</label>
             <div style="display:flex;gap:8px;align-items:center">
@@ -311,6 +322,14 @@ async function save() {
   if (!form.value.name.trim()) { saveError.value = 'Vui lòng nhập tên sản phẩm.'; return }
   if (!form.value.slug.trim()) { saveError.value = 'Vui lòng nhập slug.'; return }
   if (!form.value.price)       { saveError.value = 'Vui lòng nhập giá.'; return }
+  if (!form.value.category_id) {
+    saveError.value = 'Vui lòng chọn danh mục — sản phẩm không có danh mục sẽ không hiện ở mục nào trên website.'
+    return
+  }
+  if (subcategories.value.length && !form.value.subcategory_id) {
+    saveError.value = 'Danh mục này có danh mục con, vui lòng chọn một danh mục con.'
+    return
+  }
 
   saving.value = true
   try {

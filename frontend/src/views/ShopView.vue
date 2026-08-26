@@ -1,7 +1,7 @@
 <template>
   <div class="shop-page">
 
-    <h1 class="page-title">TẤT CẢ SẢN PHẨM</h1>
+    <h1 class="page-title">{{ pageTitle }}</h1>
 
     <div class="shop-layout">
 
@@ -11,51 +11,38 @@
         <div class="filter-section">
           <h3 class="filter-title">BỘ LỌC</h3>
 
-          <div class="category-list">
+          <div v-if="catsLoading && !categories.length" class="cat-loading">Đang tải danh mục…</div>
+
+          <div v-else class="category-list">
             <!-- Tất cả -->
             <label class="cat-item">
-              <input type="checkbox" :checked="!selectedCategory" @change="setCategory(null)" />
+              <input type="checkbox" :checked="!selectedSlug" @change="select(null)" />
               <span>Tất cả</span>
             </label>
 
-            <!-- Áo Dài -->
-            <label class="cat-item">
-              <input type="checkbox" :checked="selectedCategory === 'ao-dai'" @change="setCategory('ao-dai')" />
-              <span>Áo Dài</span>
-            </label>
+            <!-- Danh mục + danh mục con, lấy từ API -->
+            <template v-for="cat in filterCats" :key="cat.id">
+              <label class="cat-item">
+                <input type="checkbox" :checked="selectedSlug === cat.slug" @change="select(cat.slug)" />
+                <span>{{ cat.name }}</span>
+              </label>
+              <label
+                v-for="sub in cat.subcategories"
+                :key="sub.id"
+                class="cat-item cat-sub"
+              >
+                <input type="checkbox" :checked="selectedSlug === sub.slug" @change="select(sub.slug)" />
+                <span>{{ sub.name }}</span>
+              </label>
+            </template>
 
-            <!-- Pháp Phục -->
-            <label class="cat-item">
-              <input type="checkbox" :checked="selectedCategory === 'phap-phuc'" @change="setCategory('phap-phuc')" />
-              <span>Pháp Phục</span>
-            </label>
-
-            <!-- Đầm Lụa -->
-            <label class="cat-item">
-              <input type="checkbox" :checked="selectedCategory === 'dam-lua'" @change="setCategory('dam-lua')" />
-              <span>Đầm Lụa</span>
-            </label>
-
-            <!-- Khăn Lụa + 3 sub -->
-            <label class="cat-item">
-              <input type="checkbox" :checked="selectedCategory === 'khan-lua'" @change="setCategory('khan-lua')" />
-              <span>Khăn Lụa</span>
-            </label>
-            <label class="cat-item cat-sub">
-              <input type="checkbox" :checked="selectedCategory === 'khan-lua-ve-tay-cao-cap'" @change="setCategory('khan-lua-ve-tay-cao-cap')" />
-              <span>Khăn lụa vẽ tay cao cấp</span>
-            </label>
-            <label class="cat-item cat-sub">
-              <input type="checkbox" :checked="selectedCategory === 'khan-lua-loang-tia-cao-cap'" @change="setCategory('khan-lua-loang-tia-cao-cap')" />
-              <span>Khăn lụa loang tia cao cấp</span>
-            </label>
-            <label class="cat-item cat-sub">
-              <input type="checkbox" :checked="selectedCategory === 'khan-lua-tron-cao-cap'" @change="setCategory('khan-lua-tron-cao-cap')" />
-              <span>Khăn lụa trơn cao cấp</span>
-            </label>
-
-            <!-- Lụa Tơ Tằm — chỉ là link, không checkbox -->
-            <RouterLink to="/lua-to-tam" class="lua-link">Chọn mẫu Lụa Tơ Tằm</RouterLink>
+            <!-- Danh mục có trang riêng (Lụa tơ tằm) — link, không checkbox -->
+            <RouterLink
+              v-for="cat in directCats"
+              :key="cat.id"
+              :to="DIRECT_ROUTES[cat.slug]"
+              class="lua-link"
+            >Chọn mẫu {{ cat.name }}</RouterLink>
           </div>
         </div>
 
@@ -136,26 +123,74 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProducts }   from '@/composables/useProducts'
+import { useCategories, resolveSlug, DIRECT_ROUTES } from '@/composables/useCategories'
 
 const route  = useRoute()
 const router = useRouter()
 
-// Filter state — khởi tạo từ URL query
-const selectedCategory = ref(route.query.category || null)
+const { categories, loading: catsLoading } = useCategories()
+
+// Slug đang chọn — có thể là danh mục cha hoặc danh mục con
+const selectedSlug = ref(route.query.category || null)
+const searchTerm   = ref(route.query.search   || '')
 
 const { products, total, loading, error, params, fetch } = useProducts({
   page:     Number(route.query.page) || 1,
   per_page: 12,
-  category: selectedCategory.value || undefined,
+  // Đoán là danh mục cha để lần fetch đầu đã đúng cho trường hợp phổ biến;
+  // khi danh mục nạp xong, applyFromRoute() sẽ chỉnh lại nếu là danh mục con.
+  category: selectedSlug.value || undefined,
+  search:   searchTerm.value   || undefined,
 })
 
-// Khi menu header navigate vào /cua-hang?category=xxx thì tự apply
-watch(() => route.query.category, (newCat) => {
-  selectedCategory.value = newCat || null
-  params.value = { ...params.value, category: newCat || undefined, page: 1 }
-})
+/**
+ * Dựng params gọi API từ state hiện tại. Slug được phân giải theo cây danh mục:
+ * là danh mục con thì gửi `subcategory`, còn lại gửi `category`.
+ */
+function buildParams(page) {
+  const next = {
+    page,
+    per_page:    params.value.per_page,
+    category:    undefined,
+    subcategory: undefined,
+    search:      searchTerm.value || undefined,
+  }
+  if (selectedSlug.value) {
+    const { type } = resolveSlug(selectedSlug.value, categories.value)
+    // type === null khi danh mục chưa nạp xong → tạm coi là danh mục cha
+    if (type === 'subcategory') next.subcategory = selectedSlug.value
+    else                        next.category    = selectedSlug.value
+  }
+  return next
+}
+
+/** Chỉ gán khi thực sự khác, tránh fetch lại thừa */
+function setParams(next) {
+  if (JSON.stringify(next) !== JSON.stringify(params.value)) params.value = next
+}
+
+/** Dựng lại params từ URL + cây danh mục hiện có */
+function applyFromRoute() {
+  selectedSlug.value = route.query.category || null
+  searchTerm.value   = route.query.search   || ''
+  setParams(buildParams(Number(route.query.page) || 1))
+}
+
+// Menu header điều hướng vào /cua-hang?category=… hoặc ?search=…
+watch(() => [route.query.category, route.query.search, route.query.page], applyFromRoute)
+// Danh mục nạp xong → phân giải lại slug (cha hay con)
+watch(categories, applyFromRoute)
 
 // ── Computed ──────────────────────────────────────────────────────────────
+const filterCats = computed(() => categories.value.filter(c => !DIRECT_ROUTES[c.slug]))
+const directCats = computed(() => categories.value.filter(c =>  DIRECT_ROUTES[c.slug]))
+
+const pageTitle = computed(() => {
+  if (searchTerm.value) return `KẾT QUẢ CHO “${searchTerm.value}”`
+  const { category, subcategory } = resolveSlug(selectedSlug.value, categories.value)
+  return (subcategory?.name || category?.name || 'Tất cả sản phẩm').toUpperCase()
+})
+
 const totalPages = computed(() => Math.ceil(total.value / params.value.per_page))
 const pageNumbers = computed(() => {
   const pages = [], cur = params.value.page, last = totalPages.value
@@ -164,29 +199,37 @@ const pageNumbers = computed(() => {
 })
 
 // ── Actions ───────────────────────────────────────────────────────────────
-function setCategory(slug) {
-  selectedCategory.value = slug
+/**
+ * Đưa state lên URL rồi lọc luôn. Không chờ watcher vì nếu query không đổi
+ * thì router.replace là no-op và watcher sẽ không chạy.
+ */
+function syncQuery(page = 1) {
+  const q = {}
+  if (selectedSlug.value) q.category = selectedSlug.value
+  if (searchTerm.value)   q.search   = searchTerm.value
+  if (page > 1)           q.page     = page
+  router.replace({ query: q })
+  setParams(buildParams(page))
+}
+
+// Tick vào là lọc luôn, không phải bấm nút mới thấy đổi
+function select(slug) {
+  selectedSlug.value = slug === selectedSlug.value ? null : slug
+  syncQuery(1)
 }
 
 function applyFilter() {
-  params.value = { ...params.value, category: selectedCategory.value || undefined, page: 1 }
-  const q = {}
-  if (selectedCategory.value) q.category = selectedCategory.value
-  router.replace({ query: q })
+  syncQuery(1)
 }
 
 function resetFilters() {
-  selectedCategory.value = null
-  params.value = { page: 1, per_page: 12 }
-  router.replace({ query: {} })
+  selectedSlug.value = null
+  searchTerm.value   = ''
+  syncQuery(1)
 }
 
 function goPage(p) {
-  params.value = { ...params.value, page: p }
-  const q = {}
-  if (params.value.category) q.category = params.value.category
-  if (p > 1) q.page = p
-  router.replace({ query: q })
+  syncQuery(p)
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -257,6 +300,13 @@ function formatPrice(price) {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.cat-loading {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-medium);
+  padding: 8px 4px;
 }
 
 .cat-item {

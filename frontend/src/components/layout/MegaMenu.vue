@@ -10,8 +10,8 @@
           @mouseenter="activeCat = cat.slug"
           @click="navigate(cat); $emit('close')"
         >
-          <span>{{ cat.label }}</span>
-          <svg v-if="cat.subs.length" class="cat-arrow" viewBox="0 0 6 10" fill="none" stroke="currentColor" stroke-width="1.5">
+          <span>{{ cat.name }}</span>
+          <svg v-if="subsOf(cat).length" class="cat-arrow" viewBox="0 0 6 10" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M1 1l4 4-4 4"/>
           </svg>
         </div>
@@ -24,7 +24,7 @@
           :to="`/danh-muc/${sub.slug}`"
           class="mega-sub"
           @click="$emit('close')"
-        >{{ sub.label }}</RouterLink>
+        >{{ sub.name }}</RouterLink>
         <p v-if="!currentSubs.length" class="mega-empty">Xem tất cả</p>
       </div>
     </div>
@@ -32,8 +32,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { DIRECT_ROUTES } from '@/composables/useCategories'
 
 const props = defineProps({
   open:       { type: Boolean, default: false },
@@ -42,20 +43,27 @@ const props = defineProps({
 defineEmits(['close', 'keep'])
 
 const router = useRouter()
-const activeCat = ref(props.categories[0]?.slug ?? '')
+const activeCat = ref('')
 
-const directRoutes = { 'lua-to-tam': '/lua-to-tam' }
+const subsOf = (cat) => cat?.subcategories ?? []
+
+// Danh mục nạp bất đồng bộ → chốt mục đang active khi danh sách có dữ liệu
+watch(
+  () => props.categories,
+  (list) => {
+    if (!list.some(c => c.slug === activeCat.value)) activeCat.value = list[0]?.slug ?? ''
+  },
+  { immediate: true },
+)
 
 function navigate(cat) {
-  const direct = directRoutes[cat.slug]
-  if (direct) router.push(direct)
-  else router.push(`/danh-muc/${cat.slug}`)
+  const direct = DIRECT_ROUTES[cat.slug]
+  router.push(direct || `/danh-muc/${cat.slug}`)
 }
 
-const currentSubs = computed(() => {
-  const cat = props.categories.find(c => c.slug === activeCat.value)
-  return cat?.subs ?? []
-})
+const currentSubs = computed(() =>
+  subsOf(props.categories.find(c => c.slug === activeCat.value))
+)
 </script>
 
 <style scoped>

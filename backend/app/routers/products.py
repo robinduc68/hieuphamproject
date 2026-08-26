@@ -83,6 +83,17 @@ def _product_to_out(p: Product) -> dict:
     return data
 
 
+def _filter_by_category(qs, cat_id: int):
+    """Lọc theo danh mục cha — bắt cả sản phẩm chỉ được gán danh mục con của nó."""
+    sub_ids = [
+        s.id for s in SubCategory.select(SubCategory.id).where(SubCategory.category == cat_id)
+    ]
+    cond = Product.category == cat_id
+    if sub_ids:
+        cond = cond | (Product.subcategory << sub_ids)
+    return qs.where(cond)
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # CATEGORY endpoints
 # ══════════════════════════════════════════════════════════════════════════
@@ -134,13 +145,15 @@ def update_category(cat_id: int, data: CategoryUpdate):
 # ══════════════════════════════════════════════════════════════════════════
 @router.get("/", response_model=PaginatedProducts)
 def list_products(
-    page:        int            = Query(1, ge=1),
-    per_page:    int            = Query(12, ge=1, le=100),
-    category:    Optional[str]  = Query(None, description="category slug"),
-    category_id: Optional[int]  = Query(None, description="category id"),
-    search:      Optional[str]  = Query(None),
-    is_new:      Optional[bool] = Query(None),
-    is_featured: Optional[bool] = Query(None),
+    page:            int            = Query(1, ge=1),
+    per_page:        int            = Query(12, ge=1, le=100),
+    category:        Optional[str]  = Query(None, description="category slug"),
+    category_id:     Optional[int]  = Query(None, description="category id"),
+    subcategory:     Optional[str]  = Query(None, description="subcategory slug"),
+    subcategory_id:  Optional[int]  = Query(None, description="subcategory id"),
+    search:          Optional[str]  = Query(None),
+    is_new:          Optional[bool] = Query(None),
+    is_featured:     Optional[bool] = Query(None),
     _db=Depends(get_db),
 ):
     qs = (
@@ -149,13 +162,20 @@ def list_products(
         .order_by(Product.sort_order, Product.created_at.desc())
     )
     if category:
-        try:
-            cat = Category.get(Category.slug == category)
-            qs = qs.where(Product.category == cat)
-        except DoesNotExist:
-            raise HTTPException(status_code=404, detail="Category not found")
+        cat = Category.get_or_none(Category.slug == category)
+        if cat is None:
+            # slug không tồn tại → danh sách rỗng, không phải lỗi
+            return PaginatedProducts(total=0, page=page, per_page=per_page, results=[])
+        qs = _filter_by_category(qs, cat.id)
     if category_id:
-        qs = qs.where(Product.category == category_id)
+        qs = _filter_by_category(qs, category_id)
+    if subcategory:
+        sub = SubCategory.get_or_none(SubCategory.slug == subcategory)
+        if sub is None:
+            return PaginatedProducts(total=0, page=page, per_page=per_page, results=[])
+        qs = qs.where(Product.subcategory == sub.id)
+    if subcategory_id:
+        qs = qs.where(Product.subcategory == subcategory_id)
     if search:
         qs = qs.where(
             fn.LOWER(Product.name).contains(search.lower()) |
