@@ -2,7 +2,7 @@ from typing import Optional
 from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, status
-from peewee import fn, DoesNotExist
+from peewee import fn, DoesNotExist, IntegrityError
 
 from app.models.product import Product, ProductImage, ProductSize, Category
 from app.models.category import SubCategory
@@ -213,7 +213,21 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
     if color_hex:
         payload["primary_color"] = color_hex
     payload.pop("sub_category", None)
-    product = Product.create(**payload)
+
+    if Product.select().where(Product.slug == payload["slug"]).exists():
+        raise HTTPException(
+            status_code=409,
+            detail=f"Slug '{payload['slug']}' đã được dùng cho sản phẩm khác. "
+                   f"Vui lòng đổi slug (ví dụ thêm hậu tố: {payload['slug']}-2).",
+        )
+
+    try:
+        product = Product.create(**payload)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Slug '{payload['slug']}' đã tồn tại. Vui lòng chọn slug khác.",
+        )
 
     from app.storage import save_placeholder
     placeholder_url = save_placeholder(product.slug, product.name, color_hex)
@@ -237,9 +251,23 @@ def update_product(product_id: int, data: ProductUpdate, _db=Depends(get_db)):
         p = Product.get_by_id(product_id)
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Product not found")
-    for field, val in data.model_dump(exclude_none=True).items():
+    changes = data.model_dump(exclude_none=True)
+
+    new_slug = changes.get("slug")
+    if new_slug and new_slug != p.slug and (
+        Product.select().where(Product.slug == new_slug, Product.id != p.id).exists()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Slug '{new_slug}' đã được dùng cho sản phẩm khác. Vui lòng chọn slug khác.",
+        )
+
+    for field, val in changes.items():
         setattr(p, field, val)
-    p.save()
+    try:
+        p.save()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Slug đã tồn tại. Vui lòng chọn slug khác.")
     return ProductOut.model_validate(_product_to_out(p))
 
 
