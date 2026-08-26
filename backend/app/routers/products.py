@@ -37,6 +37,7 @@ def _product_to_out(p: Product) -> dict:
         "name":             p.name,
         "slug":             p.slug,
         "price":            Decimal(str(p.price)),
+        "compare_at_price": Decimal(str(p.compare_at_price)) if p.compare_at_price is not None else None,
         "description":      p.description,
         "fabric":           p.fabric,
         "care_instructions": p.care_instructions,
@@ -47,6 +48,7 @@ def _product_to_out(p: Product) -> dict:
         "is_featured":      p.is_featured,
         "sort_order":       p.sort_order,
         "category_id":      p.category_id,
+        "subcategory_id":   p.subcategory_id,
         "created_at":       p.created_at,
         "updated_at":       p.updated_at,
         "primary_color": p.primary_color,
@@ -144,7 +146,7 @@ def list_products(
     qs = (
         Product.select()
         .where(Product.is_active == True)
-        .order_by(Product.created_at.desc())
+        .order_by(Product.sort_order, Product.created_at.desc())
     )
     if category:
         try:
@@ -212,7 +214,20 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
     payload   = data.model_dump(exclude={"sizes", "color_hex", "primary_color"})
     if color_hex:
         payload["primary_color"] = color_hex
-    payload.pop("sub_category", None)
+    payload.pop("sub_category", None)   # field chỉ để đọc, tên sub lấy từ FK
+
+    sub_id = payload.pop("subcategory_id", None)
+    if sub_id:
+        try:
+            sub = SubCategory.get_by_id(sub_id)
+        except DoesNotExist:
+            raise HTTPException(status_code=400, detail="Danh mục con không tồn tại.")
+        if payload.get("category_id") and sub.category_id != payload["category_id"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Danh mục con không thuộc danh mục đã chọn.",
+            )
+        payload["subcategory"] = sub_id
 
     if Product.select().where(Product.slug == payload["slug"]).exists():
         raise HTTPException(
@@ -252,6 +267,21 @@ def update_product(product_id: int, data: ProductUpdate, _db=Depends(get_db)):
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Product not found")
     changes = data.model_dump(exclude_none=True)
+    changes.pop("sub_category", None)   # field chỉ để đọc
+
+    sub_id = changes.pop("subcategory_id", None)
+    if sub_id is not None:
+        try:
+            sub = SubCategory.get_by_id(sub_id)
+        except DoesNotExist:
+            raise HTTPException(status_code=400, detail="Danh mục con không tồn tại.")
+        target_cat = changes.get("category_id", p.category_id)
+        if target_cat and sub.category_id != target_cat:
+            raise HTTPException(
+                status_code=400,
+                detail="Danh mục con không thuộc danh mục đã chọn.",
+            )
+        changes["subcategory"] = sub_id
 
     new_slug = changes.get("slug")
     if new_slug and new_slug != p.slug and (

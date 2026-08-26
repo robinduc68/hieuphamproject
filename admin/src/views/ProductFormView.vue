@@ -135,11 +135,19 @@
           <div class="section-title">Phân loại</div>
           <div class="form-group">
             <label class="form-label">Danh mục</label>
-            <select v-model="form.category_id" class="form-select">
+            <select v-model="form.category_id" class="form-select" @change="onCategoryChange">
               <option value="">Chọn danh mục</option>
               <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
             <span v-if="!categories.length" class="form-hint" style="color:var(--brand)">Chưa có danh mục nào</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Danh mục con</label>
+            <select v-model="form.subcategory_id" class="form-select" :disabled="!subcategories.length">
+              <option value="">{{ form.category_id ? 'Chọn danh mục con' : 'Chọn danh mục trước' }}</option>
+              <option v-for="s in subcategories" :key="s.id" :value="s.id">{{ s.name }}</option>
+            </select>
+            <span class="form-hint">Hiện ở breadcrumb và nhãn ảnh trên trang sản phẩm</span>
           </div>
           <div class="form-group">
             <label class="form-label">Màu chính (HEX)</label>
@@ -209,9 +217,22 @@ const newSize   = ref('')
 const form = ref({
   name: '', slug: '', price: null, compare_at_price: null,
   description: '', fabric: '', care_instructions: '', shipping_info: '',
-  category_id: '', primary_color: '', sort_order: 0,
+  category_id: '', subcategory_id: '', primary_color: '', sort_order: 0,
   is_active: true, is_new: false, is_featured: false,
 })
+
+// Danh mục con của danh mục đang chọn
+const subcategories = computed(() => {
+  const cat = categories.value.find(c => c.id === Number(form.value.category_id))
+  return cat?.subcategories ?? []
+})
+
+// Đổi danh mục cha thì bỏ danh mục con cũ (tránh gửi lên sub không thuộc cat).
+// Gắn vào @change chứ không dùng watch: watch sẽ chạy cả lúc preload form khi sửa
+// và xoá mất subcategory_id vừa nạp.
+function onCategoryChange() {
+  form.value.subcategory_id = ''
+}
 
 // ── Vietnamese slug generator ─────────────────────────────────────────────
 const VI_MAP = {
@@ -262,6 +283,7 @@ async function loadData() {
         care_instructions: p.care_instructions || '',
         shipping_info:     p.shipping_info     || '',
         category_id:       p.category_id       || '',
+        subcategory_id:    p.subcategory_id    || '',
         primary_color:     p.primary_color     || p.images?.[0]?.color_hex || '',
         sort_order:        p.sort_order        || 0,
         is_active:         p.is_active  ?? true,
@@ -294,6 +316,7 @@ async function save() {
   try {
     const data = { ...form.value }
     if (!data.category_id)      delete data.category_id
+    if (!data.subcategory_id)   delete data.subcategory_id
     if (!data.compare_at_price) delete data.compare_at_price
 
     if (isEdit.value) {

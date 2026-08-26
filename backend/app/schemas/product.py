@@ -93,6 +93,7 @@ class ProductBase(BaseModel):
     name:              str
     slug:              str
     price:             Decimal
+    compare_at_price:  Optional[Decimal] = None
     description:       Optional[str] = None
     fabric:            Optional[str] = None
     care_instructions: Optional[str] = None
@@ -105,6 +106,7 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     category_id:     Optional[int] = None
+    subcategory_id:  Optional[int] = None
     sizes:           list[str]     = []
     color_hex:       Optional[str] = None
     primary_color:   Optional[str] = None   # alias cho color_hex, frontend gửi field này
@@ -120,6 +122,7 @@ class ProductUpdate(BaseModel):
     shipping_info:     Optional[str]     = None
     sub_category:      Optional[str]     = None
     category_id:       Optional[int]     = None
+    subcategory_id:    Optional[int]     = None
     primary_color:     Optional[str]     = None
     is_new:            Optional[bool]    = None
     is_active:         Optional[bool]    = None
@@ -130,6 +133,7 @@ class ProductOut(ProductBase):
     model_config = ConfigDict(from_attributes=True)
     id:            int
     category_id:   Optional[int]         = None
+    subcategory_id: Optional[int]        = None
     category:      Optional[CategoryOut] = None
     primary_color: Optional[str]         = None
     images:        list[ProductImageOut] = []
@@ -148,6 +152,7 @@ class ProductListOut(BaseModel):
     name:         str
     slug:         str
     price:        Decimal
+    compare_at_price: Optional[Decimal] = None
     is_new:       bool
     is_featured:  bool
     sub_category: Optional[str] = None

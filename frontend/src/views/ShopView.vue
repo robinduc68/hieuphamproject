@@ -107,7 +107,12 @@
               <span v-if="p.is_new" class="badge-new">Mới</span>
             </div>
             <p class="product-name">{{ p.name }}</p>
-            <p class="product-price">{{ formatPrice(p.price) }}</p>
+            <p class="product-price">
+              {{ formatPrice(p.price) }}
+              <span v-if="Number(p.compare_at_price) > Number(p.price)" class="product-price-old">
+                {{ formatPrice(p.compare_at_price) }}
+              </span>
+            </p>
           </RouterLink>
         </div>
 
@@ -406,6 +411,12 @@ function formatPrice(price) {
   font-size: 12px;
   color: var(--text-medium);
   text-align: center;
+}
+
+.product-price-old {
+  margin-left: 6px;
+  color: var(--text-light, #9a9a9a);
+  text-decoration: line-through;
 }
 
 /* ── Skeleton ── */

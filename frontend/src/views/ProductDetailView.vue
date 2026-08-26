@@ -98,7 +98,11 @@
 
           <!-- Tên & giá -->
           <h1 class="pd-name">{{ product.name.toUpperCase() }}</h1>
-          <p class="pd-price">{{ displayPrice }}</p>
+          <p class="pd-price">
+            {{ displayPrice }}
+            <span v-if="hasDiscount" class="pd-price-old">{{ formatPrice(product.compare_at_price) }}</span>
+            <span v-if="hasDiscount" class="pd-price-off">-{{ discountPercent }}%</span>
+          </p>
 
           <!-- ── Lựa chọn hình thức may ── -->
           <div class="pd-option">
@@ -382,6 +386,17 @@ const displayPrice = computed(() => {
   if (!customizationGroups.value.length || maxAdj === 0) return formatPrice(base)
   return `${formatPrice(base)} – ${formatPrice(base + maxAdj)}`
 })
+const hasDiscount = computed(() => {
+  const old = Number(product.value?.compare_at_price ?? 0)
+  return old > Number(product.value?.price ?? 0)
+})
+
+const discountPercent = computed(() => {
+  if (!hasDiscount.value) return 0
+  const old = Number(product.value.compare_at_price)
+  return Math.round((old - Number(product.value.price)) / old * 100)
+})
+
 const displayImages = computed(() => product.value?.images ?? [])
 
 function isPlaceholderImg(img) {
@@ -395,11 +410,18 @@ const descriptionParagraphs = computed(() => {
 
 const tabs = computed(() => {
   if (!product.value) return []
-  return [
-    { key: 'desc',     label: 'Mô tả',              content: product.value.description        ?? product.value.fabric ?? '—' },
-    { key: 'care',     label: 'Hướng dẫn chăm sóc', content: product.value.care_instructions  ?? '—' },
-    { key: 'shipping', label: 'Giao hàng & Đổi trả', content: product.value.shipping_info     ?? '—' },
+  const t = [
+    { key: 'desc',     label: 'Mô tả',               content: product.value.description       ?? product.value.fabric ?? '—' },
   ]
+  // Chất liệu chỉ là fallback của Mô tả trước đây -> điền cả hai thì không bao giờ hiện.
+  if (product.value.fabric && product.value.fabric !== product.value.description) {
+    t.push({ key: 'fabric', label: 'Chất liệu', content: product.value.fabric })
+  }
+  t.push(
+    { key: 'care',     label: 'Hướng dẫn chăm sóc',  content: product.value.care_instructions ?? '—' },
+    { key: 'shipping', label: 'Giao hàng & Đổi trả', content: product.value.shipping_info     ?? '—' },
+  )
+  return t
 })
 
 const related = computed(() => {
@@ -684,6 +706,24 @@ onUnmounted(() => {
   color: var(--brand-red);
   margin-bottom: 28px;
   letter-spacing: 0;
+}
+
+.pd-price-old {
+  margin-left: 10px;
+  font-size: 15px;
+  color: var(--text-2, #8a8a8a);
+  text-decoration: line-through;
+}
+
+.pd-price-off {
+  margin-left: 8px;
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: var(--brand-red);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 1px 6px;
+  vertical-align: 2px;
 }
 
 /* ── Option sections ─────────────────────────────────────────────────────── */
