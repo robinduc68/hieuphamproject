@@ -11,7 +11,11 @@ const error      = ref(null)
 let inflight     = null
 
 /** Danh mục có trang riêng thay vì lọc trong /cua-hang */
-export const DIRECT_ROUTES = { 'lua-to-tam': '/lua-to-tam' }
+export const DIRECT_ROUTES = {
+  'lua-to-tam':              '/lua-to-tam',
+  'lua-nha-xa-thong-dung':   '/lua-to-tam',
+  'lua-nha-xa-100-to-tam':   '/lua-nha-xa-100-to-tam',
+}
 
 function load(force = false) {
   if (inflight && !force) return inflight

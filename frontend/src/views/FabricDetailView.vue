@@ -2,7 +2,7 @@
   <div class="fd-page">
     <div v-if="!fabric" class="fd-error">
       <p>Không tìm thấy mẫu vải.</p>
-      <RouterLink to="/lua-to-tam" class="back-link">← Về kho lụa</RouterLink>
+      <RouterLink :to="basePath" class="back-link">← Về kho lụa</RouterLink>
     </div>
 
     <template v-else>
@@ -11,7 +11,7 @@
         <nav class="breadcrumb" aria-label="Breadcrumb">
           <RouterLink to="/">Home Page</RouterLink>
           <span class="sep">/</span>
-          <RouterLink to="/lua-to-tam">Kho lụa</RouterLink>
+          <RouterLink :to="basePath">Kho lụa</RouterLink>
           <span class="sep">/</span>
           <span class="breadcrumb-current">{{ fabric.name }}</span>
         </nav>
@@ -44,7 +44,8 @@
             <ul class="fd-specs">
               <li>Mã sản phẩm: {{ fabric.code }}</li>
               <li>Chất liệu: Lụa tơ tằm Nha Xá - Hàng loại 1</li>
-              <li>Quy cách: 70% Tơ Tằm &amp; 30% Tơ Rayon Viscose (Chi Số Tơ 32-33)</li>
+              <li v-if="isPureSilk">Quy cách: 100% Tơ Tằm (Chi Số Tơ 32-33)</li>
+              <li v-else>Quy cách: 70% Tơ Tằm &amp; 30% Tơ Rayon Viscose (Chi Số Tơ 32-33)</li>
               <li>Khổ vải: 90cm</li>
             </ul>
 
@@ -60,32 +61,37 @@
               </button>
             </div>
 
-            <!-- Tabs -->
-            <div class="fd-tabs">
-              <button
-                v-for="t in tabs"
-                :key="t.key"
-                class="fd-tab"
-                :class="{ active: openTab === t.key }"
-                @click="openTab = t.key"
-              >{{ t.label }}</button>
-            </div>
-            <div class="fd-tab-body">
-              <p>{{ tabs.find(t => t.key === openTab)?.content }}</p>
-            </div>
           </div>
         </div>
+
+        <!-- Thông tin mẫu vải: card có tab ở header -->
+        <section class="fd-info-card">
+          <div class="fd-info-tabs" role="tablist">
+            <button
+              v-for="t in tabs"
+              :key="t.key"
+              class="fd-info-tab"
+              :class="{ active: openTab === t.key }"
+              role="tab"
+              :aria-selected="openTab === t.key"
+              @click="openTab = t.key"
+            >{{ t.label }}</button>
+          </div>
+          <div class="fd-info-body" role="tabpanel">
+            <p>{{ tabs.find(t => t.key === openTab)?.content }}</p>
+          </div>
+        </section>
       </div>
 
       <!-- Related fabrics -->
       <section class="fd-related">
         <div class="fd-related-inner">
-          <h2 class="related-title">MẪU VẢI LIÊN QUAN</h2>
+          <h2 class="related-title">SẢN PHẨM LIÊN QUAN</h2>
           <div class="related-grid">
             <RouterLink
               v-for="f in related"
               :key="f.id"
-              :to="`/lua-to-tam/${f.id}`"
+              :to="`${basePath}/${f.id}`"
               class="rel-card"
             >
               <div class="rel-img" :style="{ background: fabricGradient(f.color1, f.color2) }" />
@@ -101,7 +107,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { fabrics, getFabric, fabricGradient } from '@/data/fabrics'
+import { getFabric, collectionOf, pureSilkFabrics, fabricGradient } from '@/data/fabrics'
 import { useCartStore } from '@/stores/cart'
 
 const route = useRoute()
@@ -122,8 +128,15 @@ const tabs = computed(() => [
   { key: 'ship',  label: 'Giao hàng & Đổi trả', content: 'Giao hàng toàn quốc 2-5 ngày. Đổi trả trong 7 ngày với vải chưa cắt, còn nguyên tem mác.' },
 ])
 
+const isPureSilk = computed(() =>
+  pureSilkFabrics.some(f => String(f.id) === String(route.params.id))
+)
+const basePath = computed(() =>
+  isPureSilk.value ? '/lua-nha-xa-100-to-tam' : '/lua-to-tam'
+)
+
 const related = computed(() =>
-  fabrics.filter(f => f.id !== fabric.value?.id).slice(0, 4)
+  collectionOf(route.params.id).filter(f => f.id !== fabric.value?.id).slice(0, 4)
 )
 
 function formatPrice(p) {
@@ -135,7 +148,7 @@ function addToCart() {
   cart.addItem(
     {
       id:     'fabric-' + fabric.value.id,
-      slug:   `lua-to-tam/${fabric.value.id}`,
+      slug:   `${basePath.value.slice(1)}/${fabric.value.id}`,
       name:   fabric.value.name,
       price:  fabric.value.price,
       images: [{ color_hex: fabric.value.color1 }],
@@ -224,19 +237,54 @@ function addToCart() {
 .add-to-cart-btn:hover { background: var(--brand-dark); }
 .add-to-cart-btn.added { background: #2a5a2a; }
 
-/* Tabs */
-.fd-tabs { display: flex; gap: 32px; border-bottom: 1px solid var(--border); }
-.fd-tab {
-  background: none; border: none; padding: 12px 0; cursor: pointer;
-  font-family: var(--font-display); font-size: 15px; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--text-muted);
-  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--transition);
+/* Card thông tin (tab ở header) */
+.fd-info-card {
+  margin: 48px 0 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
 }
-.fd-tab.active { color: var(--brand-red); border-bottom-color: var(--brand-red); }
-.fd-tab-body { padding: 20px 0; }
-.fd-tab-body p {
-  font-family: var(--font-display); font-size: 15px; font-style: italic;
-  line-height: 1.85; color: var(--text-muted);
+.fd-info-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: var(--warm-white, #faf8f5);
+}
+.fd-info-tab {
+  flex: 0 0 auto;
+  padding: 18px 28px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+.fd-info-tab:hover { color: var(--text-dark); }
+.fd-info-tab.active {
+  color: var(--brand-red);
+  border-bottom-color: var(--brand-red);
+  background: #fff;
+}
+.fd-info-body { padding: 28px 32px 32px; }
+.fd-info-body p {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text-dark);
+}
+
+@media (max-width: 640px) {
+  .fd-info-tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .fd-info-tab  { padding: 15px 18px; font-size: 12px; }
+  .fd-info-body { padding: 22px 20px 26px; }
 }
 
 /* Related */

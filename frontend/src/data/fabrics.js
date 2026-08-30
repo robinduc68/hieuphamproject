@@ -41,10 +41,44 @@ export const colors = [
   { name: 'Xám',      hex: '#9E9E9E' },
 ]
 
+/* ── Lụa Nha Xá 100% tơ tằm ─────────────────────────────
+   Bộ lọc theo loại lụa (không lọc theo họa tiết như trang thông dụng). */
+export const silkTypes = [
+  'Lụa Loang màu 100% tơ tằm',
+  'Lụa Trơn 100% tơ tằm',
+  'Lụa họa tiết 100% tơ tằm',
+]
+
+export const pureSilkFabrics = [
+  { id: 101, code: 'LM01', name: 'LOANG MÀU - HỒNG ĐÀO',   color1: '#F0B8C0', color2: '#C98A98', silkType: 'Lụa Loang màu 100% tơ tằm', pattern: 'Loang màu', colorTag: 'Hồng',    price: 285000 },
+  { id: 102, code: 'LM02', name: 'LOANG MÀU - XANH NGỌC',  color1: '#7FC4B8', color2: '#3F8F84', silkType: 'Lụa Loang màu 100% tơ tằm', pattern: 'Loang màu', colorTag: 'Xanh lá', price: 285000 },
+  { id: 103, code: 'LM03', name: 'LOANG MÀU - TÍM KHÓI',   color1: '#A98CC0', color2: '#7A5F96', silkType: 'Lụa Loang màu 100% tơ tằm', pattern: 'Loang màu', colorTag: 'Tím',     price: 285000 },
+  { id: 104, code: 'LM04', name: 'LOANG MÀU - CAM SAN HÔ', color1: '#F0A070', color2: '#D07040', silkType: 'Lụa Loang màu 100% tơ tằm', pattern: 'Loang màu', colorTag: 'Cam',     price: 290000 },
+
+  { id: 111, code: 'LT01', name: 'TRƠN - TRẮNG NGÀ',       color1: '#F7F3EA', color2: '#E6DFD0', silkType: 'Lụa Trơn 100% tơ tằm',      pattern: 'Trơn',      colorTag: 'Trắng',   price: 265000 },
+  { id: 112, code: 'LT02', name: 'TRƠN - ĐỎ ĐÔ',           color1: '#C0374A', color2: '#8E2333', silkType: 'Lụa Trơn 100% tơ tằm',      pattern: 'Trơn',      colorTag: 'Đỏ',      price: 268000 },
+  { id: 113, code: 'LT03', name: 'TRƠN - VÀNG HOÀNG YẾN',  color1: '#E8CA72', color2: '#CFAC4C', silkType: 'Lụa Trơn 100% tơ tằm',      pattern: 'Trơn',      colorTag: 'Vàng',    price: 265000 },
+  { id: 114, code: 'LT04', name: 'TRƠN - XANH LAM ĐÊM',    color1: '#3B4A8C', color2: '#232F63', silkType: 'Lụa Trơn 100% tơ tằm',      pattern: 'Trơn',      colorTag: 'Xanh lam',price: 268000 },
+  { id: 115, code: 'LT05', name: 'TRƠN - ĐEN HUYỀN',       color1: '#3A3A3A', color2: '#1E1E1E', silkType: 'Lụa Trơn 100% tơ tằm',      pattern: 'Trơn',      colorTag: 'Đen',     price: 268000 },
+
+  { id: 121, code: 'LH01', name: 'HỌA TIẾT - LONG PHỤNG ĐỎ',   color1: '#CE4C5C', color2: '#A02E3E', silkType: 'Lụa họa tiết 100% tơ tằm', pattern: 'Long Phụng',  colorTag: 'Đỏ',    price: 320000 },
+  { id: 122, code: 'LH02', name: 'HỌA TIẾT - CÚC ĐẠI ĐÓA VÀNG', color1: '#DCB962', color2: '#BE9840', silkType: 'Lụa họa tiết 100% tơ tằm', pattern: 'Cúc Đại Đóa', colorTag: 'Vàng',  price: 315000 },
+  { id: 123, code: 'LH03', name: 'HỌA TIẾT - SEN TRÒN XANH',    color1: '#4F926A', color2: '#357350', silkType: 'Lụa họa tiết 100% tơ tằm', pattern: 'Sen Tròn',    colorTag: 'Xanh lá', price: 315000 },
+  { id: 124, code: 'LH04', name: 'HỌA TIẾT - THỌ DƠI HỒNG',     color1: '#EBB0BA', color2: '#CE8C99', silkType: 'Lụa họa tiết 100% tơ tằm', pattern: 'Thọ Dơi',     colorTag: 'Hồng',  price: 315000 },
+]
+
 export function fabricGradient(c1, c2) {
   return `linear-gradient(145deg, ${c1} 0%, ${c2} 60%, ${c1}CC 100%)`
 }
 
+/** Tất cả mẫu vải của cả 2 trang — dùng cho trang chi tiết. */
+export const allFabrics = [...fabrics, ...pureSilkFabrics]
+
 export function getFabric(id) {
-  return fabrics.find(f => String(f.id) === String(id)) || null
+  return allFabrics.find(f => String(f.id) === String(id)) || null
+}
+
+/** Bộ sưu tập chứa mẫu vải này (thông dụng hay 100% tơ tằm). */
+export function collectionOf(id) {
+  return pureSilkFabrics.some(f => String(f.id) === String(id)) ? pureSilkFabrics : fabrics
 }

@@ -21,7 +21,7 @@
         <RouterLink
           v-for="sub in currentSubs"
           :key="sub.slug"
-          :to="`/danh-muc/${sub.slug}`"
+          :to="DIRECT_ROUTES[sub.slug] || `/danh-muc/${sub.slug}`"
           class="mega-sub"
           @click="$emit('close')"
         >{{ sub.name }}</RouterLink>

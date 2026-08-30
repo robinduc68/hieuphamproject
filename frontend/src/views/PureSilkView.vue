@@ -4,8 +4,8 @@
     <!-- ── Page header ─────────────────────────────────── -->
     <header class="fabric-header">
       <h1 class="fabric-header-title">
-        Lụa Nha Xá thông dụng
-        <span class="fabric-header-sub">(Được dệt từ sợi tơ tằm &amp; sợi tự nhiên)</span>
+        Lụa Nha Xá 100% tơ tằm
+        <span class="fabric-header-sub">(Được dệt hoàn toàn bằng sợi tơ tằm)</span>
       </h1>
     </header>
 
@@ -14,25 +14,17 @@
       <!-- ── Sidebar ─────────────────────────────────────── -->
       <aside class="fabric-sidebar">
 
-        <!-- HỌA TIẾT -->
+        <!-- LOẠI LỤA -->
         <div class="filter-section">
-          <h3 class="filter-title">HỌA TIẾT</h3>
-          <input
-            v-model="patternSearch"
-            class="filter-search"
-            type="text"
-            placeholder="Tùy chọn tìm kiếm..."
-          />
           <div class="pattern-list">
             <label
-              v-for="p in filteredPatterns"
-              :key="p"
+              v-for="t in silkTypes"
+              :key="t"
               class="pattern-item"
             >
-              <input type="checkbox" v-model="selectedPatterns" :value="p" />
-              <span>{{ p }}</span>
+              <input type="checkbox" v-model="selectedTypes" :value="t" />
+              <span>{{ t }}</span>
             </label>
-            <p v-if="!filteredPatterns.length" class="pattern-empty">Không tìm thấy họa tiết.</p>
           </div>
         </div>
 
@@ -70,7 +62,7 @@
           <RouterLink
             v-for="fabric in displayedFabrics"
             :key="fabric.id"
-            :to="`/lua-to-tam/${fabric.id}`"
+            :to="`/lua-nha-xa-100-to-tam/${fabric.id}`"
             class="fabric-card"
           >
             <div class="fabric-img" :style="{ background: fabricGradient(fabric.color1, fabric.color2) }">
@@ -87,20 +79,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { fabrics as allFabrics, patterns, colors, fabricGradient } from '@/data/fabrics'
+import { pureSilkFabrics, silkTypes, colors, fabricGradient } from '@/data/fabrics'
 
-const patternSearch   = ref('')
-const selectedPatterns = ref([])
-const selectedColors  = ref([])
-
-const filteredPatterns = computed(() =>
-  patterns.filter(p => p.toLowerCase().includes(patternSearch.value.toLowerCase()))
-)
+const selectedTypes  = ref([])
+const selectedColors = ref([])
 
 const displayedFabrics = computed(() => {
-  let list = allFabrics
-  if (selectedPatterns.value.length)
-    list = list.filter(f => selectedPatterns.value.includes(f.pattern))
+  let list = pureSilkFabrics
+  if (selectedTypes.value.length)
+    list = list.filter(f => selectedTypes.value.includes(f.silkType))
   if (selectedColors.value.length)
     list = list.filter(f => selectedColors.value.includes(f.colorTag))
   return list
@@ -115,9 +102,8 @@ function toggleColor(name) {
 function applyFilter() { /* filter is already reactive */ }
 
 function resetFilter() {
-  selectedPatterns.value = []
-  selectedColors.value   = []
-  patternSearch.value    = ''
+  selectedTypes.value  = []
+  selectedColors.value = []
 }
 
 </script>
@@ -206,8 +192,6 @@ function resetFilter() {
   display: flex;
   flex-direction: column;
   gap: var(--pattern-gap);
-  /* Xem trước 8 họa tiết, còn lại cuộn trong khung */
-  max-height: calc(var(--pattern-row) * 8 + var(--pattern-gap) * 7);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -232,7 +216,7 @@ function resetFilter() {
 
 .pattern-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 8px 4px;
   line-height: 20px;

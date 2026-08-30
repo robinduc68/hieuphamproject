@@ -9,7 +9,9 @@ import CheckoutView     from './views/CheckoutView.vue'
 import ShopView         from './views/ShopView.vue'
 import FabricView       from './views/FabricView.vue'
 import FabricDetailView from './views/FabricDetailView.vue'
+import PureSilkView     from './views/PureSilkView.vue'
 import FaqView          from './views/FaqView.vue'
+import AccountView      from './views/AccountView.vue'
 import NewsView         from './views/NewsView.vue'
 import NewsDetailView   from './views/NewsDetailView.vue'
 import '@/assets/base.css'
@@ -23,7 +25,10 @@ const router = createRouter({
     { path: '/cua-hang',       component: ShopView,          name: 'shop' },
     { path: '/lua-to-tam',     component: FabricView,        name: 'fabric' },
     { path: '/lua-to-tam/:id', component: FabricDetailView,  name: 'fabric-detail' },
+    { path: '/lua-nha-xa-100-to-tam',     component: PureSilkView,      name: 'pure-silk' },
+    { path: '/lua-nha-xa-100-to-tam/:id', component: FabricDetailView,  name: 'pure-silk-detail' },
     { path: '/faq',            component: FaqView,           name: 'faq' },
+    { path: '/tai-khoan',      component: AccountView,       name: 'account' },
     { path: '/tin-tuc',           component: NewsView,          name: 'news' },
     { path: '/tin-tuc/:slug',     component: NewsDetailView,    name: 'news-detail' },
     { path: '/san-pham/:slug', component: ProductDetailView, name: 'product-detail' },

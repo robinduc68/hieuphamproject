@@ -23,7 +23,10 @@ TAXONOMY = [
         ("khan-lua-loang-tia-cao-cap", "Khăn lụa loang tia cao cấp"),
         ("khan-lua-tron-cao-cap",      "Khăn lụa trơn cao cấp"),
     ]),
-    ("lua-to-tam", "Lụa tơ tằm", []),
+    ("lua-to-tam", "Lụa tơ tằm", [
+        ("lua-nha-xa-thong-dung",  "Lụa Nha Xá thông dụng"),
+        ("lua-nha-xa-100-to-tam",  "Lụa Nha Xá 100% tơ tằm"),
+    ]),
 ]
 
 # Danh mục của bộ dữ liệu demo cũ, đã bỏ. Giữ lại để script đồng bộ biết

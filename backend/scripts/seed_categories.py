@@ -6,7 +6,7 @@ Seed danh mục sản phẩm theo đúng cây danh mục đang hiển thị trê
     Pháp phục
     Đầm lụa
     Khăn lụa    → Khăn lụa vẽ tay / loang tia / trơn cao cấp
-    Lụa tơ tằm
+    Lụa tơ tằm  → Lụa Nha Xá thông dụng / Lụa Nha Xá 100% tơ tằm
 
 Script chạy được nhiều lần (idempotent): khớp theo slug, có thì cập nhật tên,
 chưa có thì tạo mới. Không đụng tới các danh mục khác mà admin tự thêm.

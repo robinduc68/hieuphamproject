@@ -187,30 +187,26 @@
             </span>
           </button>
 
-          <!-- ── Accordion ── -->
-          <div class="pd-accordion">
-            <div v-for="tab in tabs" :key="tab.key" class="accordion-item">
-              <button
-                class="accordion-trigger"
-                :aria-expanded="openTab === tab.key"
-                @click="openTab = openTab === tab.key ? null : tab.key"
-              >
-                {{ tab.label }}
-                <svg class="accordion-icon" :class="{ rotated: openTab === tab.key }"
-                  viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M1 1l5 5 5-5"/>
-                </svg>
-              </button>
-              <Transition name="accordion">
-                <div v-if="openTab === tab.key" class="accordion-body">
-                  <p>{{ tab.content }}</p>
-                </div>
-              </Transition>
-            </div>
-          </div>
-
         </div>
         </div><!-- end pd-layout -->
+
+        <!-- ── Thông tin sản phẩm: card có tab ở header ── -->
+        <section v-if="tabs.length" class="pd-info-card">
+          <div class="pd-info-tabs" role="tablist">
+            <button
+              v-for="tab in tabs"
+              :key="tab.key"
+              class="pd-info-tab"
+              :class="{ active: activeTab === tab.key }"
+              role="tab"
+              :aria-selected="activeTab === tab.key"
+              @click="activeTab = tab.key"
+            >{{ tab.label }}</button>
+          </div>
+          <div class="pd-info-body" role="tabpanel">
+            <p v-for="(para, i) in activeTabParagraphs" :key="i">{{ para }}</p>
+          </div>
+        </section>
       </div><!-- end pd-wrapper -->
 
       <!-- Related products carousel -->
@@ -319,7 +315,7 @@ const customizationGroups = ref([])  // [{ group_key, group_label, options: [{op
 const activeImg        = ref(0)
 const selectedSize     = ref(null)
 const sizeError        = ref(false)
-const openTab          = ref(null)
+const activeTab        = ref('desc')
 const justAdded        = ref(false)
 const sizeGuideOpen    = ref(false)
 const customizeOpen    = ref(false)
@@ -333,7 +329,7 @@ watch(product, () => {
   activeImg.value       = 0
   selectedSize.value    = null
   sizeError.value       = false
-  openTab.value         = null
+  activeTab.value       = 'desc'
   tailoringMethod.value = null
   liningType.value      = null
   colorOption.value     = null
@@ -422,6 +418,16 @@ const tabs = computed(() => {
     { key: 'shipping', label: 'Giao hàng & Đổi trả', content: product.value.shipping_info     ?? '—' },
   )
   return t
+})
+
+// Tab đang mở luôn phải nằm trong danh sách tab hiện có
+watch(tabs, (list) => {
+  if (list.length && !list.some(t => t.key === activeTab.value)) activeTab.value = list[0].key
+})
+
+const activeTabParagraphs = computed(() => {
+  const content = tabs.value.find(t => t.key === activeTab.value)?.content ?? ''
+  return String(content).split('\n\n').filter(Boolean)
 })
 
 const related = computed(() => {
@@ -914,55 +920,59 @@ onUnmounted(() => {
   gap: 8px;
 }
 
-/* ── Accordion ───────────────────────────────────────────────────────────── */
-.pd-accordion { margin-top: 8px; }
+/* ── Card thông tin sản phẩm (tab ở header) ──────────────────────────────── */
+.pd-info-card {
+  margin: 56px 0 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-.accordion-item { border-bottom: none; }
-
-.accordion-trigger {
-  width: 100%;
+.pd-info-tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--warm-white, #faf8f5);
+}
+
+.pd-info-tab {
+  flex: 0 0 auto;
+  padding: 18px 28px;
   background: none;
   border: none;
+  border-bottom: 2px solid transparent;
   font-family: var(--font-body);
-  font-size: 10px;
-  letter-spacing: 2.5px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
-  color: var(--charcoal);
+  color: var(--text-muted);
   cursor: pointer;
-  text-align: left;
-  transition: color var(--transition);
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
 }
-.accordion-trigger:hover { color: var(--gold); }
-
-.accordion-icon {
-  width: 12px; height: 8px;
-  flex-shrink: 0;
-  transition: transform var(--transition);
-  color: var(--text-muted);
+.pd-info-tab:hover { color: var(--charcoal); }
+.pd-info-tab.active {
+  color: var(--brand-red);
+  border-bottom-color: var(--brand-red);
+  background: #fff;
 }
-.accordion-icon.rotated { transform: rotate(180deg); }
 
-.accordion-body { padding: 0 0 18px; }
-.accordion-body p {
+.pd-info-body { padding: 28px 32px 32px; }
+.pd-info-body p {
   font-family: var(--font-display);
-  font-size: 15px;
-  font-style: italic;
-  line-height: 1.85;
-  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text-dark);
 }
+.pd-info-body p + p { margin-top: 14px; }
 
-.accordion-enter-active, .accordion-leave-active {
-  transition: max-height .3s ease, opacity .25s ease;
-  overflow: hidden;
-  max-height: 300px;
-}
-.accordion-enter-from, .accordion-leave-to {
-  max-height: 0;
-  opacity: 0;
+@media (max-width: 640px) {
+  .pd-info-tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .pd-info-tab  { padding: 15px 18px; font-size: 12px; }
+  .pd-info-body { padding: 22px 20px 26px; }
 }
 
 /* ── Related products carousel ───────────────────────────────────────────── */
