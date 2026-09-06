@@ -31,6 +31,11 @@ export const productsApi = {
   deleteSize: (id, sizeId)    => client.delete(`/products/${id}/sizes/${sizeId}`),
 }
 
+// ── Uploads (ảnh chèn trong nội dung) ─────────────────────────────────────
+export const uploadsApi = {
+  image: (formData) => client.post('/uploads/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+}
+
 // ── Categories ────────────────────────────────────────────────────────────
 export const categoriesApi = {
   list:   ()       => client.get('/categories/', { params: { active_only: false } }),

@@ -67,6 +67,20 @@
         <p class="fabric-desc">Chọn mẫu vải để thiết kế bộ áo dài, pháp phục của riêng bạn.</p>
 
         <div class="fabric-grid">
+          <!-- Vải thật tạo từ trang admin (bộ lọc họa tiết/màu chỉ áp dụng cho mẫu demo) -->
+          <RouterLink
+            v-for="p in shownProducts"
+            :key="`p-${p.id}`"
+            :to="`/san-pham/${p.slug}`"
+            class="fabric-card"
+          >
+            <div class="fabric-img" :style="{ background: productGradient(p) }">
+              <img v-if="productImage(p)" :src="productImage(p)" :alt="p.name" class="fabric-photo" />
+              <div v-else class="fabric-shimmer" />
+            </div>
+            <p class="fabric-name">{{ p.name }}</p>
+          </RouterLink>
+
           <RouterLink
             v-for="fabric in displayedFabrics"
             :key="fabric.id"
@@ -88,6 +102,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { fabrics as allFabrics, patterns, colors, fabricGradient } from '@/data/fabrics'
+import { useFabricProducts, productImage, productGradient } from '@/composables/useFabricProducts'
+
+const { common: fabricProducts } = useFabricProducts()
 
 const patternSearch   = ref('')
 const selectedPatterns = ref([])
@@ -105,6 +122,11 @@ const displayedFabrics = computed(() => {
     list = list.filter(f => selectedColors.value.includes(f.colorTag))
   return list
 })
+
+// Sản phẩm thật chưa có thuộc tính họa tiết/màu để lọc → ẩn khi đang bật bộ lọc.
+const shownProducts = computed(() =>
+  (selectedPatterns.value.length || selectedColors.value.length) ? [] : fabricProducts.value
+)
 
 function toggleColor(name) {
   const i = selectedColors.value.indexOf(name)
@@ -354,6 +376,14 @@ function resetFilter() {
 .fabric-card:hover .fabric-img {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+
+.fabric-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .fabric-shimmer {

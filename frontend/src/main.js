@@ -15,6 +15,7 @@ import AccountView      from './views/AccountView.vue'
 import NewsView         from './views/NewsView.vue'
 import NewsDetailView   from './views/NewsDetailView.vue'
 import '@/assets/base.css'
+import '@/assets/rich-text.css'
 import { vTypewriter } from './directives/typewriter'
 
 const router = createRouter({

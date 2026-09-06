@@ -21,6 +21,32 @@ sub_router = APIRouter(prefix="/api/subcategories", tags=["SubCategories"])
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
+FABRIC_CATEGORY_SLUG = "lua-to-tam"
+
+
+def _is_fabric_category(category_id: Optional[int], subcategory_id: Optional[int]) -> bool:
+    """Sản phẩm có nằm trong nhánh danh mục 'Lụa tơ tằm' hay không."""
+    if category_id:
+        cat = Category.get_or_none(Category.id == category_id)
+        if cat and cat.slug == FABRIC_CATEGORY_SLUG:
+            return True
+    if subcategory_id:
+        sub = SubCategory.get_or_none(SubCategory.id == subcategory_id)
+        if sub:
+            cat = Category.get_or_none(Category.id == sub.category_id)
+            if cat and cat.slug == FABRIC_CATEGORY_SLUG:
+                return True
+    return False
+
+
+def _resolve_product_type(p: Product) -> str:
+    """Sản phẩm cũ (tạo trước khi có field này) → suy ra từ danh mục."""
+    ptype = getattr(p, "product_type", None)
+    if ptype:
+        return ptype
+    return "fabric" if _is_fabric_category(p.category_id, p.subcategory_id) else "apparel"
+
+
 def _product_to_out(p: Product) -> dict:
     images = list(
         ProductImage.select()
@@ -52,6 +78,11 @@ def _product_to_out(p: Product) -> dict:
         "created_at":       p.created_at,
         "updated_at":       p.updated_at,
         "primary_color": p.primary_color,
+        "product_type":     _resolve_product_type(p),
+        "sku_code":         p.sku_code,
+        "specification":    p.specification,
+        "fabric_width":     p.fabric_width,
+        "unit_label":       p.unit_label,
         "images": [
             {
                 "id": i.id,
@@ -248,6 +279,14 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
                 detail="Danh mục con không thuộc danh mục đã chọn.",
             )
         payload["subcategory"] = sub_id
+
+    # Không chọn loại → suy ra từ danh mục (nhánh "Lụa tơ tằm" = vải)
+    if not payload.get("product_type"):
+        payload["product_type"] = (
+            "fabric"
+            if _is_fabric_category(payload.get("category_id"), sub_id)
+            else "apparel"
+        )
 
     if Product.select().where(Product.slug == payload["slug"]).exists():
         raise HTTPException(

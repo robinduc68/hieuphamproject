@@ -1,0 +1,84 @@
+/* Nội dung soạn ở trang admin (mô tả sản phẩm…) render bằng v-html.
+   Không dùng scoped style được vì HTML sinh động → khai báo global ở đây. */
+
+.rich-text {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text-dark);
+}
+
+.rich-text > *:first-child { margin-top: 0; }
+.rich-text > *:last-child  { margin-bottom: 0; }
+
+.rich-text h1,
+.rich-text h2,
+.rich-text h3,
+.rich-text h4 {
+  font-family: var(--font-display);
+  color: var(--brand-red);
+  line-height: 1.3;
+  margin: 24px 0 12px;
+}
+.rich-text h1 { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+.rich-text h2 { font-size: 21px; font-weight: 700; }
+.rich-text h3 { font-size: 17px; font-weight: 600; color: var(--charcoal); }
+.rich-text h4 { font-size: 15px; font-weight: 600; color: var(--charcoal); }
+
+.rich-text p { margin: 0 0 14px; }
+.rich-text strong, .rich-text b { font-weight: 700; color: var(--charcoal); }
+.rich-text em, .rich-text i     { font-style: italic; }
+.rich-text u                    { text-decoration: underline; text-underline-offset: 2px; }
+
+.rich-text ul,
+.rich-text ol { margin: 0 0 14px; padding-left: 22px; }
+.rich-text li { margin-bottom: 6px; }
+
+.rich-text a {
+  color: var(--brand-red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 18px 0;
+}
+
+.rich-text blockquote {
+  margin: 18px 0;
+  padding: 4px 0 4px 18px;
+  border-left: 2px solid var(--brand-red);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.rich-text hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+.rich-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.rich-text th,
+.rich-text td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+.rich-text th { background: var(--cream-dark); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .rich-text    { font-size: 15px; }
+  .rich-text h1 { font-size: 22px; }
+  .rich-text h2 { font-size: 19px; }
+}

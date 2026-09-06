@@ -103,8 +103,15 @@ class ProductBase(BaseModel):
     is_active:         bool = True
     is_featured:       bool = False
     sort_order:        int  = 0
+    product_type:      str = "apparel"          # 'apparel' | 'fabric'
+    sku_code:          Optional[str] = None     # Mã sản phẩm (vải)
+    specification:     Optional[str] = None     # Quy cách (vải)
+    fabric_width:      Optional[str] = None     # Khổ vải
+    unit_label:        Optional[str] = None     # Đơn vị bán, VD "mét"
 
 class ProductCreate(ProductBase):
+    # None = để backend tự suy ra từ danh mục (vải hay quần áo)
+    product_type:    Optional[str] = None
     category_id:     Optional[int] = None
     subcategory_id:  Optional[int] = None
     sizes:           list[str]     = []
@@ -128,6 +135,11 @@ class ProductUpdate(BaseModel):
     is_active:         Optional[bool]    = None
     is_featured:       Optional[bool]    = None
     sort_order:        Optional[int]     = None
+    product_type:      Optional[str]     = None
+    sku_code:          Optional[str]     = None
+    specification:     Optional[str]     = None
+    fabric_width:      Optional[str]     = None
+    unit_label:        Optional[str]     = None
 
 class ProductOut(ProductBase):
     model_config = ConfigDict(from_attributes=True)
@@ -155,6 +167,8 @@ class ProductListOut(BaseModel):
     compare_at_price: Optional[Decimal] = None
     is_new:       bool
     is_featured:  bool
+    product_type: str = "apparel"
+    unit_label:   Optional[str] = None
     sub_category: Optional[str] = None
     category_id:  Optional[int] = None
     category:     Optional[CategoryOut] = None

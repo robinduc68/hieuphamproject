@@ -25,6 +25,13 @@
       <RouterLink to="/" class="back-link">← Về trang chủ</RouterLink>
     </div>
 
+    <!-- Sản phẩm vải: layout riêng (bán theo mét, có thông số vải) -->
+    <FabricProductDetail
+      v-else-if="product && isFabric"
+      :product="product"
+      :related="related"
+    />
+
     <!-- Product loaded -->
     <template v-else-if="product">
       <div class="pd-wrapper">
@@ -203,9 +210,8 @@
               @click="activeTab = tab.key"
             >{{ tab.label }}</button>
           </div>
-          <div class="pd-info-body" role="tabpanel">
-            <p v-for="(para, i) in activeTabParagraphs" :key="i">{{ para }}</p>
-          </div>
+          <!-- Nội dung soạn ở trang admin (đã lọc HTML trong renderRichText) -->
+          <div class="pd-info-body rich-text" role="tabpanel" v-html="activeTabHtml" />
         </section>
       </div><!-- end pd-wrapper -->
 
@@ -298,8 +304,10 @@ import { useRoute }             from 'vue-router'
 import { useProduct }           from '@/composables/useProducts'
 import { useNewArrivals }       from '@/composables/useProducts'
 import { useCartStore }         from '@/stores/cart'
-import { customizationApi }     from '@/api'
+import { customizationApi, productsApi } from '@/api'
 import ProductCard              from '@/components/ui/ProductCard.vue'
+import FabricProductDetail      from '@/components/product/FabricProductDetail.vue'
+import { renderRichText }       from '@/utils/richtext'
 
 const route      = useRoute()
 const cartStore  = useCartStore()
@@ -399,9 +407,13 @@ function isPlaceholderImg(img) {
   return !img?.url || img.url.includes('/placeholder/')
 }
 
-const descriptionParagraphs = computed(() => {
-  if (!product.value?.description) return []
-  return product.value.description.split('\n\n').filter(Boolean)
+// Sản phẩm vải dùng layout riêng. Sản phẩm cũ chưa có product_type → suy ra từ
+// danh mục "Lụa tơ tằm" (backend cũng làm y hệt trong _resolve_product_type).
+const isFabric = computed(() => {
+  const p = product.value
+  if (!p) return false
+  if (p.product_type) return p.product_type === 'fabric'
+  return p.category?.slug === 'lua-to-tam'
 })
 
 const tabs = computed(() => {
@@ -425,14 +437,27 @@ watch(tabs, (list) => {
   if (list.length && !list.some(t => t.key === activeTab.value)) activeTab.value = list[0].key
 })
 
-const activeTabParagraphs = computed(() => {
-  const content = tabs.value.find(t => t.key === activeTab.value)?.content ?? ''
-  return String(content).split('\n\n').filter(Boolean)
+const activeTabHtml = computed(() =>
+  renderRichText(tabs.value.find(t => t.key === activeTab.value)?.content)
+)
+
+// Ưu tiên sản phẩm cùng danh mục (vải gợi ý vải, áo dài gợi ý áo dài),
+// không có thì quay về danh sách hàng mới.
+const categoryProducts = ref([])
+
+watch(product, async (p) => {
+  categoryProducts.value = []
+  if (!p?.category_id) return
+  try {
+    const data = await productsApi.list({ category_id: p.category_id, per_page: 8 })
+    categoryProducts.value = data.results ?? []
+  } catch { /* không có gợi ý cùng danh mục → dùng hàng mới */ }
 })
 
 const related = computed(() => {
   if (!product.value) return []
-  return allProducts.value
+  const pool = categoryProducts.value.length ? categoryProducts.value : allProducts.value
+  return pool
     .filter(p => p.slug !== product.value.slug)
     .slice(0, 4)
 })

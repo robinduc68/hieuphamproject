@@ -24,6 +24,13 @@ class Product(BaseModel):
     is_featured       = BooleanField(default=False)
     sort_order        = IntegerField(default=0)
     primary_color     = CharField(max_length=20, null=True)
+    # 'apparel' = quần áo (trang chi tiết có size/tuỳ chỉnh may),
+    # 'fabric'  = vải     (trang chi tiết bán theo mét, có thông số vải)
+    product_type      = CharField(max_length=20, default="apparel")
+    sku_code          = CharField(max_length=60, null=True)   # Mã sản phẩm
+    specification     = TextField(null=True)                   # Quy cách
+    fabric_width      = CharField(max_length=60, null=True)   # Khổ vải
+    unit_label        = CharField(max_length=30, null=True)   # Đơn vị bán (mét, cái…)
 
     class Meta:
         table_name = "products"

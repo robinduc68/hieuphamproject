@@ -67,7 +67,8 @@
           </div>
           <div class="form-group">
             <label class="form-label">Mô tả</label>
-            <textarea v-model="form.description" class="form-textarea" rows="4" placeholder="Mô tả ngắn gọn về sản phẩm..." />
+            <RichTextEditor v-model="form.description" placeholder="Mô tả sản phẩm — có thể thêm tiêu đề H1/H2, in đậm, in nghiêng và chèn ảnh..." :min-height="180" />
+            <span class="form-hint">Dùng thanh công cụ để thêm tiêu đề, in đậm/nghiêng, danh sách, liên kết và ảnh.</span>
           </div>
         </div>
 
@@ -76,15 +77,45 @@
           <div class="section-title">Chi tiết sản phẩm</div>
           <div class="form-group">
             <label class="form-label">Chất liệu vải</label>
-            <textarea v-model="form.fabric" class="form-textarea" rows="2" placeholder="Lụa tơ tằm 100%..." />
+            <RichTextEditor v-model="form.fabric" placeholder="Lụa tơ tằm 100%..." :min-height="110" />
           </div>
           <div class="form-group">
             <label class="form-label">Hướng dẫn bảo quản</label>
-            <textarea v-model="form.care_instructions" class="form-textarea" rows="2" placeholder="Giặt tay, không vắt..." />
+            <RichTextEditor v-model="form.care_instructions" placeholder="Giặt tay, không vắt..." :min-height="110" />
           </div>
           <div class="form-group">
             <label class="form-label">Thông tin giao hàng</label>
-            <textarea v-model="form.shipping_info" class="form-textarea" rows="2" placeholder="Giao hàng 3-5 ngày..." />
+            <RichTextEditor v-model="form.shipping_info" placeholder="Giao hàng 3-5 ngày..." :min-height="110" />
+          </div>
+        </div>
+
+        <!-- Thông số vải (chỉ hiện với sản phẩm vải) -->
+        <div v-if="isFabric" class="card form-section">
+          <div class="section-title">Thông số vải</div>
+          <div class="create-note" style="margin-bottom:16px">
+            🧵 Sản phẩm loại <strong>Vải</strong> dùng trang chi tiết riêng ngoài website:
+            bán theo đơn vị (mét), không có chọn size / hình thức may.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mã sản phẩm</label>
+              <input v-model="form.sku_code" class="form-input" placeholder="VD: TD01" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Khổ vải</label>
+              <input v-model="form.fabric_width" class="form-input" placeholder="VD: 90cm" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Quy cách</label>
+              <input v-model="form.specification" class="form-input" placeholder="VD: 100% Tơ Tằm (Chi Số Tơ 32-33)" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Đơn vị bán</label>
+              <input v-model="form.unit_label" class="form-input" placeholder="mét" />
+              <span class="form-hint">Hiện dưới giá: “Đơn giá trên 1 {{ form.unit_label || 'mét' }} vải”</span>
+            </div>
           </div>
         </div>
 
@@ -98,20 +129,37 @@
 
           <template v-else>
             <!-- Danh sách ảnh hiện tại -->
-            <div class="images-grid" v-if="images.length">
-              <div v-for="img in images" :key="img.id" class="img-item" :class="{primary: img.is_primary}">
-                <img :src="img.url" :alt="img.alt_text || ''" />
-                <div class="img-overlay">
-                  <button class="img-btn" @click="setPrimary(img)" title="Đặt làm ảnh chính">
-                    <svg viewBox="0 0 16 16" fill="currentColor" style="width:13px;height:13px"><path d="M8 1l2 4h4l-3 3 1 5L8 11l-4 2 1-5L2 5h4z"/></svg>
-                  </button>
-                  <button class="img-btn danger" @click="deleteImage(img)" title="Xoá ảnh">
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
-                  </button>
-                </div>
-                <div class="img-primary-tag" v-if="img.is_primary">Ảnh chính</div>
+            <template v-if="images.length">
+              <div class="reorder-hint">
+                ↕ Kéo thả ảnh để đổi thứ tự hiển thị ngoài website (ảnh đầu tiên đứng đầu thư viện).
+                <span v-if="savingOrder" class="reorder-saving">Đang lưu thứ tự…</span>
               </div>
-            </div>
+              <div class="images-grid">
+                <div
+                  v-for="(img, i) in images"
+                  :key="img.id"
+                  class="img-item"
+                  :class="{ primary: img.is_primary, dragging: dragIndex === i, 'drop-target': dropIndex === i && dragIndex !== i }"
+                  draggable="true"
+                  @dragstart="onImgDragStart(i, $event)"
+                  @dragover.prevent="onImgDragOver(i)"
+                  @drop.prevent="onImgDrop"
+                  @dragend="onImgDragEnd"
+                >
+                  <img :src="img.url" :alt="img.alt_text || ''" draggable="false" />
+                  <div class="img-order">{{ i + 1 }}</div>
+                  <div class="img-overlay">
+                    <button class="img-btn" @click="setPrimary(img)" title="Đặt làm ảnh chính">
+                      <svg viewBox="0 0 16 16" fill="currentColor" style="width:13px;height:13px"><path d="M8 1l2 4h4l-3 3 1 5L8 11l-4 2 1-5L2 5h4z"/></svg>
+                    </button>
+                    <button class="img-btn danger" @click="deleteImage(img)" title="Xoá ảnh">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
+                    </button>
+                  </div>
+                  <div class="img-primary-tag" v-if="img.is_primary">Ảnh chính</div>
+                </div>
+              </div>
+            </template>
             <div v-else class="empty-state" style="padding:24px;font-size:13px">Chưa có ảnh nào</div>
 
             <!-- Upload -->
@@ -161,16 +209,61 @@
         <div class="card form-section">
           <div class="section-title">Hiển thị</div>
           <div class="form-group">
+            <label class="form-label">Loại sản phẩm</label>
+            <select v-model="form.product_type" class="form-select">
+              <option value="apparel">Quần áo / phụ kiện</option>
+              <option value="fabric">Vải (bán theo mét)</option>
+            </select>
+            <span class="form-hint">
+              Quyết định trang chi tiết ngoài website: <strong>Vải</strong> dùng layout riêng
+              (thông số vải, mua theo mét), <strong>Quần áo</strong> có chọn size &amp; hình thức may.
+              Tự đặt theo danh mục, có thể sửa lại.
+            </span>
+          </div>
+          <div class="form-group">
             <label class="form-label">Màu chính (HEX)</label>
             <div style="display:flex;gap:8px;align-items:center">
               <input v-model="form.primary_color" type="color" style="width:40px;height:36px;padding:2px;border:1px solid var(--border);border-radius:6px;cursor:pointer" />
               <input v-model="form.primary_color" class="form-input" placeholder="#B8965A" />
             </div>
+            <span class="form-hint">
+              Màu nền/ô màu của sản phẩm ngoài website (trang chi tiết, giỏ hàng, thanh toán)
+              và màu nền ảnh placeholder khi chưa có ảnh thật. Không đổi gì trong trang admin này.
+            </span>
           </div>
           <div class="form-group">
             <label class="form-label">Thứ tự hiển thị</label>
             <input v-model.number="form.sort_order" type="number" class="form-input" placeholder="0" />
+            <span class="form-hint">
+              Số nhỏ đứng trước khi liệt kê ở trang Cửa hàng / danh mục. Bằng nhau thì sản phẩm mới hơn đứng trước.
+            </span>
           </div>
+        </div>
+
+        <!-- Khoảng giá hiển thị ngoài web -->
+        <div class="card form-section">
+          <div class="section-title">Giá hiển thị ngoài web</div>
+          <div class="price-preview">
+            <span class="price-preview-val">{{ pricePreview }}</span>
+          </div>
+          <p v-if="isFabric" class="form-hint" style="margin-top:10px">
+            Sản phẩm vải hiển thị đúng một mức giá — phụ thu tuỳ chỉnh chỉ áp dụng cho quần áo.
+          </p>
+          <template v-else>
+            <p class="form-hint" style="margin-top:10px">
+              Không có ô “giá tối đa”: mức cao nhất được cộng tự động từ phụ thu đắt nhất của các nhóm
+              tuỳ chỉnh (hình thức may, tà trong, màu sắc). Khách chọn xong tuỳ chọn thì chỉ còn một giá.
+            </p>
+            <div v-if="maxAdjustment > 0" class="adj-list">
+              <div v-for="g in adjustmentBreakdown" :key="g.key" class="adj-row">
+                <span>{{ g.label }}</span>
+                <span>+{{ formatVnd(g.max) }}</span>
+              </div>
+            </div>
+            <RouterLink to="/customization" class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:12px">
+              Sửa mức phụ thu →
+            </RouterLink>
+          </template>
         </div>
 
         <div class="card form-section">
@@ -203,8 +296,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { productsApi, categoriesApi } from '@/api/index.js'
+import { productsApi, categoriesApi, customizationApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import RichTextEditor from '@/components/RichTextEditor.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -230,7 +324,10 @@ const form = ref({
   description: '', fabric: '', care_instructions: '', shipping_info: '',
   category_id: '', subcategory_id: '', primary_color: '', sort_order: 0,
   is_active: true, is_new: false, is_featured: false,
+  product_type: 'apparel', sku_code: '', specification: '', fabric_width: '', unit_label: '',
 })
+
+const isFabric = computed(() => form.value.product_type === 'fabric')
 
 // Danh mục con của danh mục đang chọn
 const subcategories = computed(() => {
@@ -238,12 +335,53 @@ const subcategories = computed(() => {
   return cat?.subcategories ?? []
 })
 
+// Slug danh mục vải — khớp với backend (app/routers/products.py FABRIC_CATEGORY_SLUG)
+const FABRIC_CATEGORY_SLUG = 'lua-to-tam'
+
 // Đổi danh mục cha thì bỏ danh mục con cũ (tránh gửi lên sub không thuộc cat).
 // Gắn vào @change chứ không dùng watch: watch sẽ chạy cả lúc preload form khi sửa
 // và xoá mất subcategory_id vừa nạp.
 function onCategoryChange() {
   form.value.subcategory_id = ''
+  const cat = categories.value.find(c => c.id === Number(form.value.category_id))
+  form.value.product_type = cat?.slug === FABRIC_CATEGORY_SLUG ? 'fabric' : 'apparel'
 }
+
+// ── Khoảng giá hiển thị ngoài web ─────────────────────────────────────────
+// Không có ô "giá tối đa": mức max = giá + phụ thu cao nhất của từng nhóm tuỳ
+// chỉnh (quản lý ở trang Tuỳ chỉnh). Hiện ở đây để admin biết web đang show gì.
+const customizationGroups = ref([])
+
+const CUSTOMIZATION_GROUP_LABELS = {
+  tailoring_method: 'Hình thức may',
+  lining_type:      'Tà trong',
+  color_option:     'Màu sắc',
+}
+
+const adjustmentBreakdown = computed(() =>
+  Object.entries(CUSTOMIZATION_GROUP_LABELS).map(([key, label]) => {
+    const group = customizationGroups.value.find(g => g.group_key === key)
+    const max = group?.options?.length
+      ? Math.max(...group.options.map(o => Number(o.price_adjustment) || 0))
+      : 0
+    return { key, label, max }
+  }).filter(g => g.max > 0)
+)
+
+const maxAdjustment = computed(() =>
+  adjustmentBreakdown.value.reduce((sum, g) => sum + g.max, 0)
+)
+
+function formatVnd(n) {
+  return Number(n || 0).toLocaleString('vi-VN') + ' đ'
+}
+
+const pricePreview = computed(() => {
+  const base = Number(form.value.price) || 0
+  if (!base) return 'Chưa nhập giá'
+  if (isFabric.value || maxAdjustment.value === 0) return formatVnd(base)
+  return `${formatVnd(base)} – ${formatVnd(base + maxAdjustment.value)}`
+})
 
 // ── Vietnamese slug generator ─────────────────────────────────────────────
 const VI_MAP = {
@@ -282,6 +420,11 @@ async function loadData() {
     const cats = await categoriesApi.list()
     categories.value = Array.isArray(cats) ? cats : (cats?.results ?? [])
 
+    try {
+      const groups = await customizationApi.listGrouped()
+      customizationGroups.value = Array.isArray(groups) ? groups : []
+    } catch { /* không lấy được phụ thu → chỉ hiện 1 mức giá */ }
+
     if (isEdit.value) {
       const p = await productsApi.get(productId.value)
       Object.assign(form.value, {
@@ -300,6 +443,11 @@ async function loadData() {
         is_active:         p.is_active  ?? true,
         is_new:            p.is_new     ?? false,
         is_featured:       p.is_featured ?? false,
+        product_type:      p.product_type  || 'apparel',
+        sku_code:          p.sku_code      || '',
+        specification:     p.specification || '',
+        fabric_width:      p.fabric_width  || '',
+        unit_label:        p.unit_label    || '',
       })
       images.value = p.images || []
       sizes.value  = p.sizes  || []
@@ -378,6 +526,53 @@ async function uploadFiles(files) {
   if (images.value.length) toast.success('Upload ảnh thành công')
 }
 
+// ── Kéo thả đổi thứ tự ảnh ────────────────────────────────────────────────
+const dragIndex   = ref(null)
+const dropIndex   = ref(null)
+const savingOrder = ref(false)
+
+function onImgDragStart(i, e) {
+  dragIndex.value = i
+  e.dataTransfer.effectAllowed = 'move'
+  // Firefox chỉ bắt đầu kéo khi dataTransfer có dữ liệu
+  e.dataTransfer.setData('text/plain', String(i))
+}
+
+function onImgDragOver(i) {
+  dropIndex.value = i
+}
+
+function onImgDrop() {
+  const from = dragIndex.value
+  const to   = dropIndex.value
+  onImgDragEnd()
+  if (from === null || to === null || from === to) return
+
+  const next = [...images.value]
+  next.splice(to, 0, next.splice(from, 1)[0])
+  images.value = next
+  persistImageOrder()
+}
+
+function onImgDragEnd() {
+  dragIndex.value = null
+  dropIndex.value = null
+}
+
+async function persistImageOrder() {
+  savingOrder.value = true
+  const payload = images.value.map((img, i) => ({ id: img.id, sort_order: i }))
+  try {
+    await productsApi.reorderImages(productId.value, payload)
+    images.value.forEach((img, i) => { img.sort_order = i; img.position = i })
+  } catch (e) {
+    toast.error('Không lưu được thứ tự ảnh: ' + e)
+    await loadData()   // nạp lại thứ tự thật từ server
+  } finally {
+    savingOrder.value = false
+  }
+}
+
 async function setPrimary(img) {
   try {
     await productsApi.updateImage(productId.value, img.id, { is_primary: true })
@@ -438,8 +633,35 @@ async function deleteSize(s) {
 }
 
 /* Images */
+.reorder-hint {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  font-size: 12px; color: var(--text-2); margin-bottom: 10px;
+}
+.reorder-saving { color: var(--brand); font-weight: 500; }
+
 .images-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
-.img-item { position: relative; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; border: 2px solid transparent; }
+.img-item { position: relative; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: grab; }
+.img-item:active { cursor: grabbing; }
+.img-item.dragging { opacity: .4; }
+.img-item.drop-target { border-color: var(--blue); }
+.img-order {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 10px; background: rgba(0,0,0,.6); color: #fff;
+  font-size: 11px; font-weight: 600; line-height: 20px; text-align: center;
+}
+
+/* Giá hiển thị */
+.price-preview {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px; text-align: center;
+}
+.price-preview-val { font-size: 15px; font-weight: 600; color: var(--brand); }
+.adj-list { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.adj-row {
+  display: flex; justify-content: space-between; gap: 8px;
+  font-size: 12px; color: var(--text-2); padding: 3px 0;
+}
 .img-item.primary { border-color: var(--brand); }
 .img-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .img-overlay {

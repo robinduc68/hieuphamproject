@@ -56,6 +56,34 @@ def upload_file(file_bytes: bytes, original_filename: str, product_id: int,
         return f"/media/products/{product_id}/{filename}"
 
 
+def upload_content_file(file_bytes: bytes, original_filename: str,
+                        content_type: str = "image/jpeg") -> str:
+    """
+    Upload ảnh chèn trong nội dung (mô tả sản phẩm, bài viết…), trả về public URL.
+    Key trên R2: content/{uuid}_{filename}
+    """
+    ext      = Path(original_filename).suffix.lower() or ".jpg"
+    uid      = uuid.uuid4().hex[:8]
+    filename = f"{uid}_{Path(original_filename).stem[:40]}{ext}"
+    key      = f"content/{filename}"
+
+    if settings.use_r2:
+        client = _r2_client()
+        client.put_object(
+            Bucket=settings.r2_bucket_name,
+            Key=key,
+            Body=file_bytes,
+            ContentType=content_type,
+        )
+        base = settings.r2_public_url.rstrip("/")
+        return f"{base}/{key}"
+
+    save_dir = Path(settings.media_dir) / "content"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    (save_dir / filename).write_bytes(file_bytes)
+    return f"/media/content/{filename}"
+
+
 def _contrast_text_color(hex_color: str) -> str:
     hex_color = hex_color.lstrip("#")
     if len(hex_color) != 6:
