@@ -17,6 +17,7 @@ const routes = [
       { path: 'categories',    name: 'categories',    component: () => import('@/views/CategoriesView.vue') },
       { path: 'users',         name: 'users',         component: () => import('@/views/UsersView.vue') },
       { path: 'customization', name: 'customization', component: () => import('@/views/CustomizationView.vue') },
+      { path: 'settings',      name: 'settings',      component: () => import('@/views/SettingsView.vue') },
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },

@@ -57,6 +57,10 @@
             <li v-for="s in specs" :key="s.label">{{ s.label }}: {{ s.value }}</li>
           </ul>
 
+          <div class="fd-links">
+            <button class="fd-link" @click="guideOpen = true">Định mức may đo</button>
+          </div>
+
           <div class="fd-buy">
             <div class="qty-stepper">
               <button class="qty-btn" @click="qty > 1 && qty--" aria-label="Giảm">−</button>
@@ -113,6 +117,13 @@
         </div>
       </div>
     </section>
+
+    <!-- Định mức may đo — nội dung admin sửa ở trang admin → Nội dung web -->
+    <GuideModal
+      v-model="guideOpen"
+      :title="guide.title" :note="guide.note"
+      :columns="guide.columns" :rows="guide.rows"
+    />
   </div>
 </template>
 
@@ -120,6 +131,8 @@
 import { ref, computed, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { renderRichText, richTextToPlain } from '@/utils/richtext'
+import { useSiteSettings, guideTable } from '@/composables/useSiteSettings'
+import GuideModal from '@/components/ui/GuideModal.vue'
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -132,6 +145,27 @@ const activeImg = ref(0)
 const qty       = ref(1)
 const justAdded = ref(false)
 const openTab   = ref('desc')
+const guideOpen = ref(false)
+
+// Bảng định mức may đo: admin sửa ở trang admin → Nội dung web, dưới đây là
+// bản mặc định khi chưa cấu hình.
+const { settings } = useSiteSettings()
+
+const GUIDE_FALLBACK = {
+  title: 'Định Mức May Đo',
+  note: '* Định mức tham khảo với khổ vải 90cm. Số đo lớn hoặc kiểu dáng cầu kỳ có thể cần thêm vải.',
+  columns: ['Sản phẩm', 'Chiều cao', 'Định mức vải (mét)'],
+  rows: [
+    ['Áo dài 2 tà', 'Dưới 1m60',     '2.4 – 2.6'],
+    ['Áo dài 2 tà', '1m60 – 1m70',   '2.6 – 2.8'],
+    ['Áo dài 4 tà', 'Dưới 1m60',     '2.8 – 3.0'],
+    ['Áo dài 4 tà', '1m60 – 1m70',   '3.0 – 3.2'],
+    ['Pháp phục',   'Mọi chiều cao', '3.0 – 3.5'],
+    ['Quần lụa',    'Mọi chiều cao', '1.6 – 1.8'],
+  ],
+}
+
+const guide = computed(() => guideTable(settings.value.fabric_tailoring_guide, GUIDE_FALLBACK))
 
 watch(() => props.product?.id, () => {
   activeImg.value = 0
@@ -267,6 +301,15 @@ function addToCart() {
   width: 5px; height: 5px; border-radius: 50%; background: var(--brand-red);
 }
 
+.fd-links { display: flex; justify-content: flex-start; margin: -18px 0 26px; }
+.fd-link {
+  background: none; border: none; padding: 0;
+  font-family: var(--font-body); font-size: 12px; color: var(--charcoal);
+  text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer; transition: color var(--transition);
+}
+.fd-link:hover { color: var(--brand-red); }
+
 .fd-buy { display: flex; gap: 14px; margin-bottom: 14px; }
 .qty-stepper {
   display: flex; align-items: center; border: 1px solid var(--border);
@@ -336,6 +379,8 @@ function addToCart() {
   font-family: var(--font-body); font-size: 12px;
   text-align: center; color: var(--text-muted); margin-top: 4px;
 }
+
+/* Modal định mức nằm trong components/ui/GuideModal.vue */
 
 @media (max-width: 860px) {
   .fd-wrapper { padding: 0 20px; }

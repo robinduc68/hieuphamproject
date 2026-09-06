@@ -26,9 +26,15 @@
             class="product-card"
             :style="{ width: itemWidth + 'px' }"
           >
-            <RouterLink :to="`/san-pham/${product.slug}`" class="card-link">
-              <div class="card-img">
-                <img :src="product.image" :alt="product.name" />
+            <RouterLink :to="product.slug ? `/san-pham/${product.slug}` : '/cua-hang'" class="card-link">
+              <!-- Ảnh hỏng/thiếu vẫn giữ khung màu sản phẩm, không vỡ layout -->
+              <div class="card-img" :style="{ background: swatch(product.color) }">
+                <img
+                  v-if="product.image && !brokenImages[product.image]"
+                  :src="product.image"
+                  :alt="product.name"
+                  @error="brokenImages[product.image] = true"
+                />
               </div>
               <div class="card-info">
                 <p class="card-name">{{ product.name }}</p>
@@ -50,31 +56,61 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useInfiniteCarousel } from '@/composables/useInfiniteCarousel'
+import { useFeaturedProducts } from '@/composables/useProducts'
+import { formatPrice } from '@/utils/price'
 
-const products = [
-  { id: 1, name: 'TÊN SẢN PHẨM', slug: 'san-pham-1', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/e8e4dc/888?text=Sản+phẩm+1' },
-  { id: 2, name: 'TÊN SẢN PHẨM', slug: 'san-pham-2', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/ddd8cf/888?text=Sản+phẩm+2' },
-  { id: 3, name: 'TÊN SẢN PHẨM', slug: 'san-pham-3', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/e4dfd6/888?text=Sản+phẩm+3' },
-  { id: 4, name: 'TÊN SẢN PHẨM', slug: 'san-pham-4', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/d8d3ca/888?text=Sản+phẩm+4' },
-  { id: 5, name: 'TÊN SẢN PHẨM', slug: 'san-pham-5', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/e0dbd2/888?text=Sản+phẩm+5' },
-  { id: 6, name: 'TÊN SẢN PHẨM', slug: 'san-pham-6', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/dbd6cd/888?text=Sản+phẩm+6' },
-  { id: 7, name: 'TÊN SẢN PHẨM', slug: 'san-pham-7', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/e6e1d8/888?text=Sản+phẩm+7' },
-  { id: 8, name: 'TÊN SẢN PHẨM', slug: 'san-pham-8', price: '0.000.000 - 0.000.000 Đ', image: 'https://placehold.co/400x520/d6d1c8/888?text=Sản+phẩm+8' },
-]
+// Sản phẩm admin tick "Nổi bật" (API /products/featured).
+const { products: featured } = useFeaturedProducts(8)
+
+// Chưa có sản phẩm nổi bật nào → giữ khung mẫu để trang chủ không bị trống.
+const PLACEHOLDERS = Array.from({ length: 8 }, (_, i) => ({
+  id: `ph-${i + 1}`,
+  name: 'TÊN SẢN PHẨM',
+  slug: '',
+  price: '0.000.000 - 0.000.000 Đ',
+  image: null,
+  color: null,
+}))
+
+const products = computed(() => {
+  if (!featured.value.length) return PLACEHOLDERS
+  return featured.value.map(p => ({
+    id:    p.id,
+    name:  p.name?.toUpperCase() ?? '',
+    slug:  p.slug,
+    price: formatPrice(p.price),
+    image: p.images?.[0]?.url || null,
+    color: p.images?.[0]?.color_hex || null,
+  }))
+})
+
+// Ảnh 404 (file placeholder chưa sinh) → chỉ hiện nền màu thay vì icon vỡ
+const brokenImages = ref({})
+
+function swatch(hex) {
+  if (!hex) return 'linear-gradient(160deg, #ece5d5, #d4c8b0)'
+  return `linear-gradient(160deg, ${hex}22 0%, ${hex}55 100%)`
+}
 
 // Render 2× để carousel vô tận trượt mượt (real + clone)
-const loopProducts = [...products, ...products]
+const loopProducts = computed(() => [...products.value, ...products.value])
 
 const GAP        = 20
 const viewportEl = ref(null)
 const itemWidth  = ref(300)
 
 const { currentIndex, animate, next, prev, reset } = useInfiniteCarousel(
-  () => products.length,
+  () => products.value.length,
   () => itemWidth.value + GAP
 )
+
+// Danh sách đổi (API trả về sau khi mount) → tính lại kích thước & về đầu
+watch(products, () => {
+  nextTick(update)
+  reset()
+})
 
 /* Số ảnh hiện cùng lúc (desktop = 4, không bị lấn nửa ảnh) */
 function computeVisible() {

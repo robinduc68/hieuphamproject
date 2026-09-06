@@ -18,8 +18,15 @@ const ALLOWED_TAGS = new Set([
 
 const ALLOWED_ATTRS = {
   A:   ['href', 'title', 'target', 'rel'],
-  IMG: ['src', 'alt', 'title', 'width', 'height'],
+  IMG: ['src', 'alt', 'title', 'width', 'height', 'class'],
 }
+
+// Chỉ nhận class cỡ/căn ảnh do trình soạn thảo admin đặt — class lạ bị bỏ,
+// tránh việc nội dung nhúng ăn theo class của giao diện.
+const ALLOWED_IMG_CLASSES = new Set([
+  'rt-img-25', 'rt-img-50', 'rt-img-75', 'rt-img-100',
+  'rt-img-left', 'rt-img-center', 'rt-img-right',
+])
 
 const SAFE_URL = /^(https?:|mailto:|tel:|\/|#)/i
 
@@ -67,6 +74,12 @@ function cleanElement(el) {
       }
       if ((name === 'href' || name === 'src') && !SAFE_URL.test(attr.value.trim())) {
         child.removeAttribute(attr.name)
+        continue
+      }
+      if (name === 'class') {
+        const kept = attr.value.split(/\s+/).filter(c => ALLOWED_IMG_CLASSES.has(c))
+        if (kept.length) child.setAttribute('class', kept.join(' '))
+        else child.removeAttribute('class')
       }
     }
     if (child.tagName === 'A' && child.getAttribute('target') === '_blank') {

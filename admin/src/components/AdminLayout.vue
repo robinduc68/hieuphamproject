@@ -66,6 +66,7 @@ const navItems = [
   { to: '/categories', label: 'Danh mục',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14M3 10h10M3 15h6"/></svg>' },
   { to: '/users',         label: 'Người dùng',   icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3"/><path d="M3 17a7 7 0 0114 0"/></svg>' },
   { to: '/customization', label: 'Tùy chỉnh',    icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/></svg>' },
+  { to: '/settings',      label: 'Nội dung web', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M8 8.5l4 2.5-4 2.5z"/></svg>' },
 ]
 
 const pageTitles = {
@@ -77,6 +78,7 @@ const pageTitles = {
   categories:    'Danh mục',
   users:         'Người dùng',
   customization: 'Tùy chỉnh sản phẩm',
+  settings:      'Nội dung website',
 }
 
 const pageTitle = computed(() => pageTitles[currentRoute.name] || 'Admin')

@@ -38,7 +38,7 @@
       <!-- Info -->
       <div class="product-info">
         <h3 class="product-name">{{ product.name }}</h3>
-        <p class="product-price">{{ product.price }}</p>
+        <p class="product-price">{{ formatPrice(product.price) }}</p>
       </div>
     </RouterLink>
 
@@ -58,6 +58,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatPrice } from '@/utils/price'
 
 const props = defineProps({
   product: { type: Object, required: true },

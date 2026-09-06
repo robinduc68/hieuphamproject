@@ -29,6 +29,23 @@
       <input ref="imgInput" type="file" accept="image/*" style="display:none" @change="onImageSelected" />
     </div>
 
+    <!-- Thanh chỉnh ảnh: hiện khi bấm vào một ảnh trong nội dung -->
+    <div v-if="selectedImage" class="rte-imgbar">
+      <span class="rte-imgbar-label">Cỡ ảnh:</span>
+      <button
+        v-for="s in IMAGE_SIZES" :key="s.cls"
+        type="button" class="rte-btn"
+        :class="{ active: selectedSizeClass === s.cls }"
+        @mousedown.prevent="setImageSize(s.cls)"
+      >{{ s.label }}</button>
+      <span class="rte-sep" />
+      <button type="button" class="rte-btn" title="Căn trái"  :class="{ active: selectedAlign === 'left' }"   @mousedown.prevent="setImageAlign('left')">⇤</button>
+      <button type="button" class="rte-btn" title="Căn giữa"  :class="{ active: selectedAlign === 'center' }" @mousedown.prevent="setImageAlign('center')">↔</button>
+      <button type="button" class="rte-btn" title="Căn phải"  :class="{ active: selectedAlign === 'right' }"  @mousedown.prevent="setImageAlign('right')">⇥</button>
+      <span class="rte-sep" />
+      <button type="button" class="rte-btn danger" @mousedown.prevent="removeImage">Xoá ảnh</button>
+    </div>
+
     <div
       ref="editor"
       class="rte-body"
@@ -39,6 +56,7 @@
       @paste="onPaste"
       @keyup="syncState"
       @mouseup="syncState"
+      @click="onBodyClick"
       @focus="focused = true"
       @blur="focused = false"
     />
@@ -94,10 +112,17 @@ function normalize(html) {
   return stripped || hasMedia ? html : ''
 }
 
+/** HTML sạch để lưu: bỏ dấu chọn ảnh (chỉ phục vụ lúc soạn, không lưu vào DB). */
+function cleanHtml() {
+  const clone = editor.value.cloneNode(true)
+  clone.querySelectorAll('[data-rte-selected]').forEach(el => el.removeAttribute('data-rte-selected'))
+  return normalize(clone.innerHTML)
+}
+
 let lastEmitted = null
 
 function onInput() {
-  const html = normalize(editor.value.innerHTML)
+  const html = cleanHtml()
   lastEmitted = html
   emit('update:modelValue', html)
   syncState()
@@ -160,12 +185,72 @@ async function onImageSelected(e) {
     const fd = new FormData()
     fd.append('file', file)
     const { url } = await uploadsApi.image(fd)
-    exec('insertImage', url)
+    // Mặc định cỡ vừa (50%) — ảnh gốc thường rất to nếu để nguyên
+    exec('insertHTML', `<img src="${url}" alt="" class="rt-img-50">`)
+    toast.success('Đã chèn ảnh — bấm vào ảnh để đổi cỡ')
   } catch (err) {
     toast.error('Lỗi upload ảnh: ' + err)
   } finally {
     uploading.value = false
   }
+}
+
+// ── Chỉnh ảnh đã chèn ─────────────────────────────────────────────────────
+const IMAGE_SIZES = [
+  { cls: 'rt-img-25',  label: 'Nhỏ 25%' },
+  { cls: 'rt-img-50',  label: 'Vừa 50%' },
+  { cls: 'rt-img-75',  label: 'Lớn 75%' },
+  { cls: 'rt-img-100', label: 'Tràn 100%' },
+]
+const ALIGN_CLASSES = { left: 'rt-img-left', center: 'rt-img-center', right: 'rt-img-right' }
+
+const selectedImage     = ref(null)
+const selectedSizeClass = ref('')
+const selectedAlign     = ref('center')
+
+function onBodyClick(e) {
+  if (e.target.tagName === 'IMG') selectImage(e.target)
+  else deselectImage()
+}
+
+function selectImage(img) {
+  deselectImage()
+  selectedImage.value = img
+  img.setAttribute('data-rte-selected', '')
+  selectedSizeClass.value = IMAGE_SIZES.find(s => img.classList.contains(s.cls))?.cls || 'rt-img-100'
+  selectedAlign.value =
+    Object.entries(ALIGN_CLASSES).find(([, cls]) => img.classList.contains(cls))?.[0] || 'center'
+}
+
+function deselectImage() {
+  selectedImage.value?.removeAttribute('data-rte-selected')
+  selectedImage.value = null
+}
+
+function setImageSize(cls) {
+  const img = selectedImage.value
+  if (!img) return
+  IMAGE_SIZES.forEach(s => img.classList.remove(s.cls))
+  img.classList.add(cls)
+  selectedSizeClass.value = cls
+  onInput()
+}
+
+function setImageAlign(align) {
+  const img = selectedImage.value
+  if (!img) return
+  Object.values(ALIGN_CLASSES).forEach(cls => img.classList.remove(cls))
+  img.classList.add(ALIGN_CLASSES[align])
+  selectedAlign.value = align
+  onInput()
+}
+
+function removeImage() {
+  const img = selectedImage.value
+  if (!img) return
+  selectedImage.value = null
+  img.remove()
+  onInput()
 }
 
 // Dán từ Word/web mang theo style rác → dán dạng text thuần, giữ xuống dòng.
@@ -234,6 +319,26 @@ function onPaste(e) {
 .rte-body :deep(h3) { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
 .rte-body :deep(p)  { margin: 0 0 8px; }
 .rte-body :deep(ul), .rte-body :deep(ol) { margin: 0 0 8px; padding-left: 22px; }
-.rte-body :deep(img) { max-width: 100%; height: auto; border-radius: 6px; margin: 8px 0; }
+.rte-body :deep(img) {
+  max-width: 100%; height: auto; border-radius: 6px;
+  margin: 8px 0; cursor: pointer; display: block;
+}
+/* Cỡ ảnh — khớp với CSS ngoài website (frontend/src/assets/rich-text.css) */
+.rte-body :deep(img.rt-img-25)  { width: 25%; }
+.rte-body :deep(img.rt-img-50)  { width: 50%; }
+.rte-body :deep(img.rt-img-75)  { width: 75%; }
+.rte-body :deep(img.rt-img-100) { width: 100%; }
+.rte-body :deep(img.rt-img-left)   { margin-right: auto; }
+.rte-body :deep(img.rt-img-center) { margin-left: auto; margin-right: auto; }
+.rte-body :deep(img.rt-img-right)  { margin-left: auto; }
+.rte-body :deep(img[data-rte-selected]) { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.rte-imgbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  padding: 6px 8px; background: #F4F7FB; border-bottom: 1px solid var(--border);
+}
+.rte-imgbar-label { font-size: 12px; color: var(--text-2); margin-right: 4px; }
+.rte-btn.danger { color: #DC2626; }
+.rte-btn.danger:hover { background: #FEF2F2; }
 .rte-body :deep(a) { color: var(--blue); text-decoration: underline; }
 </style>

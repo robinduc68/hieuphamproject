@@ -137,7 +137,7 @@
             </div>
             <div class="opt-links">
               <button class="opt-link" @click="sizeGuideOpen = true">Hướng dẫn chọn size</button>
-              <button class="opt-link">Hướng dẫn lấy số đo &amp; đặt may</button>
+              <button class="opt-link" @click="measureGuideOpen = true">Hướng dẫn lấy số đo &amp; đặt may</button>
             </div>
             <p v-if="sizeError" class="opt-error" role="alert">Vui lòng chọn size hoặc chọn may theo số đo</p>
           </div>
@@ -165,7 +165,7 @@
               >{{ opt.option_label }}</button>
             </div>
             <div class="opt-links opt-links--end">
-              <button class="opt-link">Hướng dẫn chọn màu &amp; đặt may</button>
+              <button class="opt-link" @click="colorGuideOpen = true">Hướng dẫn chọn màu &amp; đặt may</button>
             </div>
           </div>
 
@@ -248,7 +248,12 @@
                   </div>
                   <div class="rel-info">
                     <h3 class="rel-name">{{ p.name.toUpperCase() }}</h3>
-                    <p class="rel-price">{{ typeof p.price === 'number' ? formatPrice(p.price) : p.price }}</p>
+                    <p class="rel-price">
+                      {{ formatPrice(p.price) }}
+                      <span v-if="Number(p.compare_at_price) > Number(p.price)" class="rel-price-old">
+                        {{ formatPrice(p.compare_at_price) }}
+                      </span>
+                    </p>
                   </div>
                 </RouterLink>
               </div>
@@ -264,37 +269,14 @@
       </section>
     </template>
 
-    <!-- Size Guide Modal -->
-    <Teleport to="body">
-      <Transition name="overlay">
-        <div v-if="sizeGuideOpen" class="modal-overlay" @click="sizeGuideOpen = false" />
-      </Transition>
-      <Transition name="modal">
-        <div v-if="sizeGuideOpen" class="modal" role="dialog" aria-modal="true" aria-label="Size guide">
-          <div class="modal-header">
-            <h3 class="modal-title">Hướng Dẫn Chọn Size</h3>
-            <button class="modal-close" @click="sizeGuideOpen = false" aria-label="Đóng">✕</button>
-          </div>
-          <div class="modal-body">
-            <table class="size-table">
-              <thead>
-                <tr><th>Size</th><th>Ngực (cm)</th><th>Eo (cm)</th><th>Hông (cm)</th><th>Chiều cao (cm)</th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in sizeGuideRows" :key="row.size">
-                  <td>{{ row.size }}</td>
-                  <td>{{ row.chest }}</td>
-                  <td>{{ row.waist }}</td>
-                  <td>{{ row.hip }}</td>
-                  <td>{{ row.height }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="size-note">* Số đo tính theo cm. Nếu số đo nằm giữa 2 size, chọn size lớn hơn.</p>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Ba dialog hướng dẫn — nội dung admin sửa ở trang admin → Nội dung web -->
+    <GuideModal
+      v-model="sizeGuideOpen"
+      :title="sizeGuide.title" :note="sizeGuide.note"
+      :columns="sizeGuide.columns" :rows="sizeGuide.rows"
+    />
+    <GuideModal v-model="measureGuideOpen" :title="measureGuide.title" :html="measureGuide.html" />
+    <GuideModal v-model="colorGuideOpen"   :title="colorGuide.title"   :html="colorGuide.html" />
   </div>
 </template>
 
@@ -305,9 +287,12 @@ import { useProduct }           from '@/composables/useProducts'
 import { useNewArrivals }       from '@/composables/useProducts'
 import { useCartStore }         from '@/stores/cart'
 import { customizationApi, productsApi } from '@/api'
-import ProductCard              from '@/components/ui/ProductCard.vue'
 import FabricProductDetail      from '@/components/product/FabricProductDetail.vue'
+import GuideModal               from '@/components/ui/GuideModal.vue'
 import { renderRichText }       from '@/utils/richtext'
+import { useSiteSettings, guideTable } from '@/composables/useSiteSettings'
+
+const { settings } = useSiteSettings()
 
 const route      = useRoute()
 const cartStore  = useCartStore()
@@ -326,6 +311,8 @@ const sizeError        = ref(false)
 const activeTab        = ref('desc')
 const justAdded        = ref(false)
 const sizeGuideOpen    = ref(false)
+const measureGuideOpen = ref(false)
+const colorGuideOpen   = ref(false)
 const customizeOpen    = ref(false)
 const tailoringMethod  = ref(null)   // 'size' | 'custom'
 const liningType       = ref(null)   // 'yem_roi' | 'lien_ta'
@@ -498,20 +485,35 @@ function handleAddToCart() {
   setTimeout(() => { justAdded.value = false }, 2000)
 }
 
-function handleRelatedAdd(p) {
-  // Quick-add without size (open product page instead)
-  window.location.href = `/san-pham/${p.slug}`
+// ── Hướng dẫn chọn size ──────────────────────────────────────────────────
+// Admin sửa được ở trang admin → Nội dung web; dưới đây là bản mặc định khi
+// chưa cấu hình gì (hoặc API settings lỗi).
+const SIZE_GUIDE_FALLBACK = {
+  title: 'Hướng Dẫn Chọn Size',
+  note: '* Số đo tính theo cm. Nếu số đo nằm giữa 2 size, chọn size lớn hơn.',
+  columns: ['Size', 'Ngực (cm)', 'Eo (cm)', 'Hông (cm)', 'Chiều cao (cm)'],
+  rows: [
+    ['32', '76–80',   '60–64', '84–88',   '150–155'],
+    ['34', '81–85',   '65–69', '89–93',   '153–158'],
+    ['36', '86–90',   '70–74', '94–98',   '156–161'],
+    ['38', '91–95',   '75–79', '99–103',  '158–163'],
+    ['40', '96–100',  '80–84', '104–108', '160–165'],
+    ['42', '101–106', '85–90', '109–114', '162–167'],
+  ],
 }
 
-// ── Size guide data ──────────────────────────────────────────────────────
-const sizeGuideRows = [
-  { size: '32', chest: '76–80',   waist: '60–64',   hip: '84–88',   height: '150–155' },
-  { size: '34', chest: '81–85',   waist: '65–69',   hip: '89–93',   height: '153–158' },
-  { size: '36', chest: '86–90',   waist: '70–74',   hip: '94–98',   height: '156–161' },
-  { size: '38', chest: '91–95',   waist: '75–79',   hip: '99–103',  height: '158–163' },
-  { size: '40', chest: '96–100',  waist: '80–84',   hip: '104–108', height: '160–165' },
-  { size: '42', chest: '101–106', waist: '85–90',   hip: '109–114', height: '162–167' },
-]
+const sizeGuide = computed(() => guideTable(settings.value.size_guide, SIZE_GUIDE_FALLBACK))
+
+// Hai hướng dẫn dạng bài viết (admin soạn bằng trình soạn thảo)
+const measureGuide = computed(() => ({
+  title: settings.value.measure_guide?.title || 'Hướng Dẫn Lấy Số Đo & Đặt May',
+  html:  renderRichText(settings.value.measure_guide?.content) || '<p>Nội dung đang được cập nhật.</p>',
+}))
+
+const colorGuide = computed(() => ({
+  title: settings.value.color_guide?.title || 'Hướng Dẫn Chọn Màu & Đặt May',
+  html:  renderRichText(settings.value.color_guide?.content) || '<p>Nội dung đang được cập nhật.</p>',
+}))
 
 // ── Related carousel ─────────────────────────────────────────────────────
 const VISIBLE      = 3
@@ -1119,6 +1121,11 @@ onUnmounted(() => {
   color: var(--charcoal);
   letter-spacing: 0.3px;
 }
+.rel-price-old {
+  margin-left: 6px;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
 
 /* Arrows */
 .rel-arrow {
@@ -1212,86 +1219,5 @@ onUnmounted(() => {
 }
 .back-link:hover { color: var(--gold); }
 
-/* ── Modal ───────────────────────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(26,26,24,.5);
-  z-index: 1200;
-  backdrop-filter: blur(2px);
-}
-.modal {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 680px;
-  max-width: calc(100vw - 32px);
-  background: var(--warm-white);
-  z-index: 1201;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 28px 32px 20px;
-  border-bottom: 1px solid var(--border);
-}
-.modal-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: 1px;
-  color: var(--charcoal);
-}
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--text-muted);
-  line-height: 1;
-  transition: color var(--transition);
-}
-.modal-close:hover { color: var(--charcoal); }
-.modal-body { padding: 28px 32px; }
-
-.size-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.size-table th, .size-table td {
-  text-align: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.size-table th {
-  font-family: var(--font-body);
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: var(--cream-dark);
-  font-weight: 600;
-}
-.size-table tr:hover td { background: var(--cream); }
-.size-note {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 16px;
-  line-height: 1.6;
-  font-style: italic;
-}
-
-.overlay-enter-active, .overlay-leave-active { transition: opacity .3s; }
-.overlay-enter-from,   .overlay-leave-to     { opacity: 0; }
-.modal-enter-active, .modal-leave-active {
-  transition: opacity .3s ease, transform .3s ease;
-}
-.modal-enter-from, .modal-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -46%);
-}
+/* Modal hướng dẫn nằm trong components/ui/GuideModal.vue */
 </style>

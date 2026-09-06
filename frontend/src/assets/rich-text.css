@@ -48,6 +48,23 @@
   margin: 18px 0;
 }
 
+/* Cỡ & căn ảnh admin chọn trong trình soạn thảo (class rt-img-*).
+   Ảnh cũ chưa có class vẫn giữ nguyên cỡ gốc, tối đa bằng khung nội dung. */
+.rich-text img.rt-img-25  { width: 25%; }
+.rich-text img.rt-img-50  { width: 50%; }
+.rich-text img.rt-img-75  { width: 75%; }
+.rich-text img.rt-img-100 { width: 100%; }
+.rich-text img.rt-img-left   { margin-right: auto; }
+.rich-text img.rt-img-center { margin-left: auto; margin-right: auto; }
+.rich-text img.rt-img-right  { margin-left: auto; }
+
+/* Màn hình hẹp: ảnh nhỏ quá thì khó xem, nới lên tối thiểu 60% */
+@media (max-width: 640px) {
+  .rich-text img.rt-img-25,
+  .rich-text img.rt-img-50 { width: 60%; }
+  .rich-text img.rt-img-75 { width: 85%; }
+}
+
 .rich-text blockquote {
   margin: 18px 0;
   padding: 4px 0 4px 18px;

@@ -31,9 +31,20 @@ export const productsApi = {
   deleteSize: (id, sizeId)    => client.delete(`/products/${id}/sizes/${sizeId}`),
 }
 
-// ── Uploads (ảnh chèn trong nội dung) ─────────────────────────────────────
+// ── Uploads (ảnh chèn trong nội dung, video nền trang chủ) ────────────────
 export const uploadsApi = {
   image: (formData) => client.post('/uploads/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  video: (formData, onProgress) => client.post('/uploads/video', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 0,                       // video lớn, không giới hạn thời gian
+    onUploadProgress: onProgress,
+  }),
+}
+
+// ── Cấu hình nội dung website ─────────────────────────────────────────────
+export const settingsApi = {
+  list: ()            => client.get('/settings/'),
+  save: (key, value)  => client.put(`/settings/${key}`, { value }),
 }
 
 // ── Categories ────────────────────────────────────────────────────────────
