@@ -79,6 +79,7 @@ export const ordersApi = {
 // ── Users ─────────────────────────────────────────────────────────────────
 export const usersApi = {
   list:   (params)     => client.get('/admin/users', { params }),
+  create: (data)       => client.post('/admin/users', data),
   update: (id, data)   => client.put(`/admin/users/${id}`, data),
   remove: (id)         => client.delete(`/admin/users/${id}`),
 }

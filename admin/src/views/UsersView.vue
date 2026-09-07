@@ -5,13 +5,17 @@
         <div class="page-title">Người dùng</div>
         <div class="page-sub">{{ total }} tài khoản</div>
       </div>
+      <button class="btn btn-primary" @click="openCreate">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M8 2v12M2 8h12"/></svg>
+        Thêm tài khoản
+      </button>
     </div>
 
     <!-- Toolbar -->
     <div class="card toolbar">
       <input v-model="search" type="text" class="form-input" placeholder="Tìm email, tên..." style="max-width:280px" @keyup.enter="doSearch" />
       <select v-model="filterRole" class="form-select" style="max-width:160px" @change="doSearch">
-        <option value="">Tất cả</option>
+        <option value="">Tất cả vai trò</option>
         <option value="admin">Admin</option>
         <option value="user">Người dùng</option>
       </select>
@@ -30,16 +34,20 @@
               <th>Tên</th>
               <th>Email</th>
               <th>SĐT</th>
-              <th>Vai trò</th>
-              <th>Ngày đăng ký</th>
-              <th style="width:120px">Thao tác</th>
+              <th style="width:120px">Vai trò</th>
+              <th style="width:130px">Trạng thái</th>
+              <th style="width:110px">Ngày đăng ký</th>
+              <th style="width:210px">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="u in users" :key="u.id">
+            <tr v-for="u in users" :key="u.id" :class="{ 'row-locked': !u.is_active }">
               <td>{{ u.id }}</td>
               <td>
-                <div style="font-weight:500">{{ u.full_name || u.name || '—' }}</div>
+                <div style="font-weight:500">
+                  {{ u.full_name || '—' }}
+                  <span v-if="u.id === myId" class="self-tag">bạn</span>
+                </div>
               </td>
               <td>{{ u.email }}</td>
               <td>{{ u.phone || '—' }}</td>
@@ -48,11 +56,27 @@
                   {{ u.is_admin ? 'Admin' : 'Người dùng' }}
                 </span>
               </td>
+              <td>
+                <span class="badge" :class="u.is_active ? 'badge-shipped' : 'badge-cancelled'">
+                  {{ u.is_active ? 'Hoạt động' : 'Đã khoá' }}
+                </span>
+              </td>
               <td>{{ formatDate(u.created_at) }}</td>
               <td>
-                <div style="display:flex;gap:6px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <button class="btn btn-secondary btn-sm" @click="openEdit(u)">Sửa</button>
-                  <button class="btn btn-danger btn-sm" @click="confirmDelete(u)">Xoá</button>
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    :disabled="u.id === myId || busyId === u.id"
+                    :title="u.id === myId ? 'Không thể tự khoá tài khoản của mình' : ''"
+                    @click="toggleActive(u)"
+                  >{{ u.is_active ? 'Khoá' : 'Mở khoá' }}</button>
+                  <button
+                    class="btn btn-danger btn-sm"
+                    :disabled="u.id === myId"
+                    :title="u.id === myId ? 'Không thể xoá chính mình' : ''"
+                    @click="deleteTarget = u"
+                  >Xoá</button>
                 </div>
               </td>
             </tr>
@@ -67,49 +91,66 @@
       </div>
     </div>
 
-    <!-- Edit modal -->
-    <div v-if="editModal.open" class="modal-overlay" @click.self="editModal.open=false">
+    <!-- Modal tạo / sửa -->
+    <div v-if="formModal.open" class="modal-overlay" @click.self="formModal.open=false">
       <div class="modal">
         <div class="modal-header">
-          <div class="modal-title">Sửa người dùng</div>
-          <button class="modal-close" @click="editModal.open=false">✕</button>
+          <div class="modal-title">{{ isCreate ? 'Thêm tài khoản' : 'Sửa tài khoản' }}</div>
+          <button class="modal-close" @click="formModal.open=false">✕</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">Họ tên</label>
-            <input v-model="editForm.full_name" class="form-input" />
+            <input v-model="form.full_name" class="form-input" placeholder="Nguyễn Văn A" />
           </div>
           <div class="form-group">
-            <label class="form-label">Email</label>
-            <input v-model="editForm.email" class="form-input" type="email" />
+            <label class="form-label">Email *</label>
+            <input v-model="form.email" class="form-input" type="email" placeholder="ten@email.com" />
           </div>
           <div class="form-group">
             <label class="form-label">SĐT</label>
-            <input v-model="editForm.phone" class="form-input" />
+            <input v-model="form.phone" class="form-input" placeholder="09xxxxxxxx" />
           </div>
           <div class="form-group">
-            <label class="form-label">Mật khẩu mới <span style="color:var(--text-2);font-weight:400">(để trống nếu không đổi)</span></label>
-            <input v-model="editForm.password" class="form-input" type="password" placeholder="••••••••" />
-          </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-              <div class="toggle" :class="{active: editForm.is_admin}" @click="editForm.is_admin = !editForm.is_admin">
-                <div class="toggle-knob" />
-              </div>
-              <span class="form-label" style="margin:0">Quyền Admin</span>
+            <label class="form-label">
+              {{ isCreate ? 'Mật khẩu *' : 'Mật khẩu mới' }}
+              <span v-if="!isCreate" style="color:var(--text-2);font-weight:400">(để trống nếu không đổi)</span>
             </label>
+            <input v-model="form.password" class="form-input" type="password" placeholder="••••••••" />
+            <span class="form-hint">Tối thiểu {{ MIN_PASSWORD_LEN }} ký tự.</span>
           </div>
+
+          <div class="form-group">
+            <label class="form-label">Vai trò</label>
+            <select v-model="form.is_admin" class="form-select" :disabled="isSelf">
+              <option :value="false">Người dùng — chỉ mua hàng ngoài website</option>
+              <option :value="true">Admin — vào được trang quản trị</option>
+            </select>
+            <span v-if="isSelf" class="form-hint">Không thể tự bỏ quyền admin của chính mình.</span>
+            <span v-else class="form-hint">Admin có toàn quyền: sản phẩm, đơn hàng, tin tức, tài khoản.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Trạng thái</label>
+            <select v-model="form.is_active" class="form-select" :disabled="isSelf">
+              <option :value="true">Hoạt động — đăng nhập bình thường</option>
+              <option :value="false">Khoá — chặn đăng nhập, giữ nguyên dữ liệu</option>
+            </select>
+            <span v-if="isSelf" class="form-hint">Không thể tự khoá tài khoản của chính mình.</span>
+          </div>
+
+          <div v-if="formModal.error" class="error-box" style="margin-top:16px">{{ formModal.error }}</div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="editModal.open=false">Huỷ</button>
-          <button class="btn btn-primary" @click="saveUser" :disabled="editModal.saving">
-            {{ editModal.saving ? 'Đang lưu...' : 'Lưu' }}
+          <button class="btn btn-secondary" @click="formModal.open=false">Huỷ</button>
+          <button class="btn btn-primary" @click="submitForm" :disabled="formModal.saving">
+            {{ formModal.saving ? 'Đang lưu...' : (isCreate ? 'Tạo tài khoản' : 'Lưu') }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Delete confirm modal -->
+    <!-- Modal xoá -->
     <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget=null">
       <div class="modal">
         <div class="modal-header">
@@ -117,13 +158,20 @@
           <button class="modal-close" @click="deleteTarget=null">✕</button>
         </div>
         <div class="modal-body">
-          <p>Bạn có chắc muốn xoá tài khoản <strong>{{ deleteTarget.email }}</strong>?</p>
-          <p style="margin-top:8px;color:var(--text-2);font-size:13px">Hành động này không thể hoàn tác.</p>
+          <p>Xoá vĩnh viễn tài khoản <strong>{{ deleteTarget.email }}</strong>?</p>
+          <p style="margin-top:8px;color:var(--text-2);font-size:13px">
+            Tài khoản bị xoá hẳn khỏi database, không khôi phục được. Đơn hàng cũ của người này
+            vẫn giữ nguyên (đã lưu sẵn tên, email, địa chỉ lúc đặt) nhưng không còn gắn với tài khoản nào.
+          </p>
+          <p style="margin-top:8px;color:var(--text-2);font-size:13px">
+            Chỉ muốn chặn đăng nhập mà vẫn giữ tài khoản thì bấm <strong>Khoá</strong> thay vì xoá.
+          </p>
+          <div v-if="deleteError" class="error-box" style="margin-top:14px">{{ deleteError }}</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="deleteTarget=null">Huỷ</button>
           <button class="btn btn-danger" @click="doDelete" :disabled="deleting">
-            {{ deleting ? 'Đang xoá...' : 'Xoá tài khoản' }}
+            {{ deleting ? 'Đang xoá...' : 'Xoá vĩnh viễn' }}
           </button>
         </div>
       </div>
@@ -135,8 +183,12 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { usersApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const toast = useToastStore()
+const auth  = useAuthStore()
+
+const MIN_PASSWORD_LEN = 6   // khớp với backend (app/routers/admin.py)
 
 const users   = ref([])
 const total   = ref(0)
@@ -146,16 +198,24 @@ const PER_PAGE = 20
 
 const search     = ref('')
 const filterRole = ref('')
-const deleteTarget = ref(null)
-const deleting   = ref(false)
+const busyId     = ref(null)
 
-const editModal = reactive({ open: false, target: null, saving: false })
-const editForm  = reactive({ full_name: '', email: '', phone: '', password: '', is_admin: false })
+const deleteTarget = ref(null)
+const deleteError  = ref('')
+const deleting     = ref(false)
+
+const myId = computed(() => auth.user?.id)
+
+const formModal = reactive({ open: false, id: null, saving: false, error: '' })
+const form      = reactive({ full_name: '', email: '', phone: '', password: '', is_admin: false, is_active: true })
+
+const isCreate = computed(() => formModal.id === null)
+const isSelf   = computed(() => formModal.id !== null && formModal.id === myId.value)
 
 const totalPages = computed(() => Math.ceil(total.value / PER_PAGE))
 const pageNums   = computed(() => {
   const nums = [], c = page.value, l = totalPages.value
-  for (let i = Math.max(1, c-2); i <= Math.min(l, c+2); i++) nums.push(i)
+  for (let i = Math.max(1, c - 2); i <= Math.min(l, c + 2); i++) nums.push(i)
   return nums
 })
 
@@ -165,59 +225,108 @@ async function load() {
     const params = { page: page.value, per_page: PER_PAGE }
     if (search.value) params.search = search.value
     if (filterRole.value === 'admin') params.is_admin = true
-    if (filterRole.value === 'user') params.is_admin = false
+    if (filterRole.value === 'user')  params.is_admin = false
     const res = await usersApi.list(params)
     users.value = res.results ?? res
     total.value = res.total ?? res.length
   } catch (e) {
     console.error('[UsersView] load error:', e)
     users.value = []
+  } finally {
+    loading.value = false
   }
-  finally { loading.value = false }
 }
 
 function doSearch() { page.value = 1; load() }
 function goPage(p)  { page.value = p; load() }
 
-function openEdit(u) {
-  editModal.target = u
-  editForm.full_name = u.full_name || u.name || ''
-  editForm.email = u.email || ''
-  editForm.phone = u.phone || ''
-  editForm.password = ''
-  editForm.is_admin = !!u.is_admin
-  editModal.open = true
+function resetForm(u) {
+  form.full_name = u?.full_name || ''
+  form.email     = u?.email     || ''
+  form.phone     = u?.phone     || ''
+  form.password  = ''
+  form.is_admin  = !!u?.is_admin
+  form.is_active = u ? !!u.is_active : true
+  formModal.error = ''
 }
 
-async function saveUser() {
-  editModal.saving = true
+function openCreate() {
+  formModal.id = null
+  resetForm(null)
+  formModal.open = true
+}
+
+function openEdit(u) {
+  formModal.id = u.id
+  resetForm(u)
+  formModal.open = true
+}
+
+async function submitForm() {
+  formModal.error = ''
+  if (!form.email.trim()) { formModal.error = 'Vui lòng nhập email.'; return }
+  if (isCreate.value && form.password.length < MIN_PASSWORD_LEN) {
+    formModal.error = `Mật khẩu phải có ít nhất ${MIN_PASSWORD_LEN} ký tự.`
+    return
+  }
+  if (!isCreate.value && form.password && form.password.length < MIN_PASSWORD_LEN) {
+    formModal.error = `Mật khẩu mới phải có ít nhất ${MIN_PASSWORD_LEN} ký tự.`
+    return
+  }
+
+  formModal.saving = true
   try {
     const payload = {
-      full_name: editForm.full_name,
-      email: editForm.email,
-      phone: editForm.phone,
-      is_admin: editForm.is_admin,
+      full_name: form.full_name,
+      email:     form.email.trim(),
+      phone:     form.phone,
+      is_admin:  form.is_admin,
+      is_active: form.is_active,
     }
-    if (editForm.password) payload.password = editForm.password
-    await usersApi.update(editModal.target.id, payload)
-    toast.success('Cập nhật thành công')
-    editModal.open = false
+    if (isCreate.value) {
+      payload.password = form.password
+      await usersApi.create(payload)
+      toast.success('Đã tạo tài khoản')
+    } else {
+      if (form.password) payload.password = form.password
+      await usersApi.update(formModal.id, payload)
+      toast.success('Cập nhật thành công')
+    }
+    formModal.open = false
     load()
-  } catch (e) { toast.error(String(e)) }
-  finally { editModal.saving = false }
+  } catch (e) {
+    formModal.error = String(e)
+  } finally {
+    formModal.saving = false
+  }
 }
 
-function confirmDelete(u) { deleteTarget.value = u }
+async function toggleActive(u) {
+  busyId.value = u.id
+  try {
+    await usersApi.update(u.id, { is_active: !u.is_active })
+    toast.success(u.is_active ? `Đã khoá ${u.email}` : `Đã mở khoá ${u.email}`)
+    load()
+  } catch (e) {
+    toast.error(String(e))
+  } finally {
+    busyId.value = null
+  }
+}
 
 async function doDelete() {
   deleting.value = true
+  deleteError.value = ''
   try {
     await usersApi.remove(deleteTarget.value.id)
     toast.success('Đã xoá tài khoản')
     deleteTarget.value = null
     load()
-  } catch (e) { toast.error(String(e)) }
-  finally { deleting.value = false }
+  } catch (e) {
+    deleteError.value = String(e)
+  } finally {
+    deleting.value = false
+  }
 }
 
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—' }
@@ -228,24 +337,18 @@ onMounted(load)
 <style scoped>
 .toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
 
-.toggle {
-  width: 36px; height: 20px;
-  border-radius: 10px;
-  background: #D1D5DB;
-  position: relative;
-  cursor: pointer;
-  transition: background .2s;
-  flex-shrink: 0;
+.row-locked { opacity: .6; }
+
+.self-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-2);
 }
-.toggle.active { background: var(--brand); }
-.toggle-knob {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  transition: left .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
-}
-.toggle.active .toggle-knob { left: 18px; }
+
+.error-box { background: #fef2f2; color: #dc2626; padding: 12px 16px; border-radius: 6px; font-size: 13px; }
 </style>
