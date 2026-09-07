@@ -5,7 +5,13 @@
         <div class="page-title">{{ isEdit ? 'Chỉnh sửa bài viết' : 'Viết bài mới' }}</div>
         <div class="page-sub">{{ isEdit ? `ID: ${postId}` : 'Bài viết hiện ở trang Tin tức ngoài website' }}</div>
       </div>
-      <RouterLink to="/posts" class="btn btn-secondary">← Quay lại</RouterLink>
+      <div class="header-actions">
+        <a v-if="publicUrl" :href="publicUrl" target="_blank" rel="noopener"
+           class="btn btn-secondary" title="Mở bài viết ngoài website ở tab mới">
+          Xem trên web ↗
+        </a>
+        <RouterLink to="/posts" class="btn btn-secondary">← Quay lại</RouterLink>
+      </div>
     </div>
 
     <div v-if="loading" class="card empty-state">Đang tải...</div>
@@ -135,6 +141,7 @@ import { postsApi, uploadsApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { toSlug } from '@/utils/slug.js'
+import { siteUrl } from '@/utils/siteUrl.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -148,6 +155,11 @@ const saving    = ref(false)
 const uploading = ref(false)
 const saveError = ref('')
 const coverInput = ref(null)
+
+// Link sang bài viết ngoài web — xem được cả bài đang để nháp.
+const publicUrl = computed(() =>
+  isEdit.value && form.value.slug ? siteUrl(`/tin-tuc/${form.value.slug}`) : ''
+)
 
 const tagSuggestions = ['Kiến thức vải', 'Tips mặc đẹp', 'Xu hướng', 'Chăm sóc', 'Phong cách']
 
@@ -244,6 +256,8 @@ async function save() {
 </script>
 
 <style scoped>
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
 .form-layout { display: flex; gap: 20px; align-items: flex-start; }
 .form-main   { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .form-side   { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }

@@ -103,6 +103,7 @@
 import { ref, computed } from 'vue'
 import { fabrics as allFabrics, patterns, colors, fabricGradient } from '@/data/fabrics'
 import { useFabricProducts, productImage, productGradient } from '@/composables/useFabricProducts'
+import { useSiteSettings } from '@/composables/useSiteSettings'
 
 const { common: fabricProducts } = useFabricProducts()
 
@@ -110,12 +111,13 @@ const patternSearch   = ref('')
 const selectedPatterns = ref([])
 const selectedColors  = ref([])
 
-// Danh sách họa tiết = mẫu demo tĩnh + họa tiết admin nhập cho sản phẩm thật.
+// Danh sách họa tiết do admin quản lý (Nội dung web → Bộ lọc trang vải).
+// `patterns` trong data/fabrics.js chỉ là mặc định khi chưa có cấu hình.
+const { settings } = useSiteSettings()
+
 const allPatterns = computed(() => {
-  const extra = fabricProducts.value
-    .map(p => (p.pattern || '').trim())
-    .filter(p => p && !patterns.includes(p))
-  return [...patterns, ...new Set(extra)]
+  const configured = settings.value.fabric_filters?.patterns
+  return Array.isArray(configured) && configured.length ? configured : patterns
 })
 
 const filteredPatterns = computed(() =>

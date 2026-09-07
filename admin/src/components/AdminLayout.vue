@@ -36,9 +36,9 @@
     <div class="main-wrap">
       <header class="topbar">
         <div class="topbar-title">{{ pageTitle }}</div>
-        <RouterLink to="/" target="_blank" class="btn btn-secondary btn-sm">
+        <a :href="homeUrl" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
           Xem trang chủ ↗
-        </RouterLink>
+        </a>
       </header>
 
       <main class="content">
@@ -53,11 +53,14 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
+import { siteUrl } from '@/utils/siteUrl.js'
 
 const authStore = useAuthStore()
 const route     = useRouter()
 const router    = useRouter()
 const currentRoute = useRoute()
+
+const homeUrl = siteUrl('/')
 
 const navItems = [
   { to: '/dashboard',  label: 'Dashboard',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg>' },

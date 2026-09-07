@@ -121,6 +121,36 @@
         </button>
       </div>
 
+      <!-- ── Bộ lọc trang vải ──────────────────────────────────────────── -->
+      <div class="card form-section">
+        <div class="section-title">Bộ lọc trang vải — danh sách họa tiết</div>
+        <p class="form-hint" style="margin-bottom:14px">
+          Đây là các mục trong ô lọc <strong>HỌA TIẾT</strong> ở trang
+          <strong>Lụa Nha Xá thông dụng</strong>, đồng thời là danh sách chọn trong ô
+          “Họa tiết” khi thêm/sửa sản phẩm vải. Sửa tên ở đây thì phải mở lại sản phẩm
+          chọn tên mới, nếu không sản phẩm sẽ không khớp mục lọc nào.
+        </p>
+
+        <div v-if="!fabricPatterns.length" class="empty-state" style="padding:20px;font-size:13px">
+          Chưa có họa tiết nào
+        </div>
+
+        <div v-for="(p, i) in fabricPatterns" :key="i" class="pattern-row">
+          <span class="pattern-num">{{ i + 1 }}</span>
+          <input v-model="fabricPatterns[i]" class="form-input" placeholder="VD: Thọ Dơi" />
+          <button class="btn btn-icon btn-sm" title="Lên" :disabled="i === 0" @click="movePattern(i, -1)">↑</button>
+          <button class="btn btn-icon btn-sm" title="Xuống" :disabled="i === fabricPatterns.length - 1" @click="movePattern(i, 1)">↓</button>
+          <button class="btn btn-icon btn-sm" title="Xoá" @click="fabricPatterns.splice(i, 1)">✕</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-secondary" @click="fabricPatterns.push('')">+ Thêm họa tiết</button>
+          <button class="btn btn-primary" :disabled="saving.fabric_filters" @click="saveFabricFilters">
+            {{ saving.fabric_filters ? 'Đang lưu...' : 'Lưu danh sách họa tiết' }}
+          </button>
+        </div>
+      </div>
+
       <!-- ── Trang "Câu hỏi thường gặp" ────────────────────────────────── -->
       <div class="card form-section">
         <div class="section-title">Trang “Câu hỏi thường gặp”</div>
@@ -176,6 +206,7 @@ import { settingsApi, uploadsApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import TableEditor from '@/components/TableEditor.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
+import { PATTERNS as DEFAULT_PATTERNS } from '@/data/fabricOptions.js'
 
 const toast = useToastStore()
 
@@ -201,6 +232,24 @@ const fabricGuideTable = ref({ columns: [], rows: [] })
 // Hai hướng dẫn dạng bài viết (nội dung HTML soạn bằng trình soạn thảo)
 const measureGuide = ref({ title: '', content: '' })
 const colorGuide   = ref({ title: '', content: '' })
+
+// Danh sách họa tiết của bộ lọc trang vải
+const fabricPatterns = ref([])
+
+function movePattern(i, delta) {
+  const j = i + delta
+  if (j < 0 || j >= fabricPatterns.value.length) return
+  const list = fabricPatterns.value
+  ;[list[i], list[j]] = [list[j], list[i]]
+}
+
+// Bỏ mục trống và mục trùng trước khi lưu — danh sách này là nguồn cho cả
+// bộ lọc ngoài web lẫn ô chọn trong form sản phẩm.
+function saveFabricFilters() {
+  const cleaned = [...new Set(fabricPatterns.value.map(p => p.trim()).filter(Boolean))]
+  fabricPatterns.value = cleaned
+  save('fabric_filters', { patterns: cleaned })
+}
 
 // Trang "Câu hỏi thường gặp" — toàn bộ nội dung nằm ở một key duy nhất
 const faqPage = ref({ title: '', items: [] })
@@ -259,6 +308,10 @@ onMounted(async () => {
       title:   data.color_guide?.title   ?? 'Hướng Dẫn Chọn Màu & Đặt May',
       content: data.color_guide?.content ?? '',
     }
+
+    fabricPatterns.value = Array.isArray(data.fabric_filters?.patterns)
+      ? [...data.fabric_filters.patterns]
+      : [...DEFAULT_PATTERNS]
 
     faqPage.value = {
       title: data.faq_page?.title ?? 'CÂU HỎI THƯỜNG GẶP',
@@ -350,6 +403,10 @@ async function onPosterSelected(e) {
 .faq-row-num { font-size: 12px; font-weight: 600; color: var(--text-2); }
 .faq-row-actions { display: flex; gap: 6px; }
 .faq-answer { resize: vertical; font-family: inherit; line-height: 1.6; }
+
+.pattern-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pattern-row .form-input { flex: 1; }
+.pattern-num { width: 22px; font-size: 12px; color: var(--text-2); flex-shrink: 0; }
 
 .progress { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
 .progress-bar { height: 100%; background: var(--brand); transition: width .2s; }

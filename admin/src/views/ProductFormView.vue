@@ -5,7 +5,13 @@
         <div class="page-title">{{ isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới' }}</div>
         <div class="page-sub">{{ isEdit ? `ID: ${productId}` : 'Điền thông tin sản phẩm' }}</div>
       </div>
-      <RouterLink to="/products" class="btn btn-secondary">← Quay lại</RouterLink>
+      <div class="header-actions">
+        <a v-if="publicUrl" :href="publicUrl" target="_blank" rel="noopener"
+           class="btn btn-secondary" title="Mở trang sản phẩm ngoài website ở tab mới">
+          Xem trên web ↗
+        </a>
+        <RouterLink to="/products" class="btn btn-secondary">← Quay lại</RouterLink>
+      </div>
     </div>
 
     <div v-if="loading" class="card empty-state">Đang tải...</div>
@@ -66,9 +72,12 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Mô tả</label>
-            <RichTextEditor v-model="form.description" placeholder="Mô tả sản phẩm — có thể thêm tiêu đề H1/H2, in đậm, in nghiêng và chèn ảnh..." :min-height="180" />
-            <span class="form-hint">Dùng thanh công cụ để thêm tiêu đề, in đậm/nghiêng, danh sách, liên kết và ảnh.</span>
+            <label class="form-label">Chất liệu vải</label>
+            <RichTextEditor v-model="form.fabric" placeholder="Lụa tơ tằm 100%..." :min-height="140" />
+            <span class="form-hint">
+              Hiện ở dòng “Chất liệu” trong khối thông số ngay cạnh giá (chỉ lấy phần chữ),
+              và ở tab “Chất liệu” của card thông tin bên dưới.
+            </span>
           </div>
         </div>
 
@@ -76,8 +85,9 @@
         <div class="card form-section">
           <div class="section-title">Chi tiết sản phẩm</div>
           <div class="form-group">
-            <label class="form-label">Chất liệu vải</label>
-            <RichTextEditor v-model="form.fabric" placeholder="Lụa tơ tằm 100%..." :min-height="110" />
+            <label class="form-label">Mô tả</label>
+            <RichTextEditor v-model="form.description" placeholder="Mô tả sản phẩm — có thể thêm tiêu đề H1/H2, in đậm, in nghiêng và chèn ảnh..." :min-height="180" />
+            <span class="form-hint">Hiện ở tab “Mô tả” của card thông tin bên dưới trang chi tiết sản phẩm.</span>
           </div>
           <div class="form-group">
             <label class="form-label">Hướng dẫn bảo quản</label>
@@ -127,13 +137,16 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Họa tiết</label>
-              <input v-model="form.pattern" class="form-input" list="pattern-options" placeholder="VD: Thọ Dơi" />
-              <datalist id="pattern-options">
-                <option v-for="p in PATTERNS" :key="p" :value="p" />
-              </datalist>
+              <select v-model="form.pattern" class="form-select">
+                <option value="">— Không chọn —</option>
+                <option v-for="p in patternOptions" :key="p" :value="p">{{ p }}</option>
+                <option v-if="patternMissing" :value="form.pattern">
+                  {{ form.pattern }} (không còn trong danh sách)
+                </option>
+              </select>
               <span class="form-hint">
-                Chọn trong gợi ý để khớp với bộ lọc “HỌA TIẾT”. Gõ tên mới cũng được — tên mới sẽ
-                tự xuất hiện thành một mục lọc ngoài website.
+                Khớp với ô lọc “HỌA TIẾT” ngoài website. Thêm/bớt mục trong danh sách này ở
+                <RouterLink to="/settings">Nội dung web → Bộ lọc trang vải</RouterLink>.
               </span>
             </div>
             <div class="form-group">
@@ -335,11 +348,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { productsApi, categoriesApi, customizationApi } from '@/api/index.js'
+import { productsApi, categoriesApi, customizationApi, settingsApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { PATTERNS, COLOR_TAGS, SILK_TYPES } from '@/data/fabricOptions.js'
 import { toSlug } from '@/utils/slug.js'
+import { siteUrl } from '@/utils/siteUrl.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -369,7 +383,23 @@ const form = ref({
   pattern: '', color_tag: '', silk_type: '',
 })
 
+// Link sang trang sản phẩm ngoài web — chỉ có sau khi sản phẩm đã được lưu
+// (lúc tạo mới chưa có gì để xem).
+const publicUrl = computed(() =>
+  isEdit.value && form.value.slug ? siteUrl(`/san-pham/${form.value.slug}`) : ''
+)
+
 const isFabric = computed(() => form.value.product_type === 'fabric')
+
+// Danh sách họa tiết admin tự quản lý (Nội dung web → Bộ lọc trang vải).
+// PATTERNS chỉ là mặc định khi chưa có cấu hình.
+const patternOptions = ref([...PATTERNS])
+
+// Sản phẩm đang gắn họa tiết đã bị xoá khỏi danh sách → vẫn cho thấy giá trị cũ
+// thay vì lặng lẽ mất khi lưu lại.
+const patternMissing = computed(
+  () => !!form.value.pattern && !patternOptions.value.includes(form.value.pattern)
+)
 
 // Danh mục con của danh mục đang chọn
 const subcategories = computed(() => {
@@ -447,6 +477,13 @@ async function loadData() {
       const groups = await customizationApi.listGrouped()
       customizationGroups.value = Array.isArray(groups) ? groups : []
     } catch { /* không lấy được phụ thu → chỉ hiện 1 mức giá */ }
+
+    try {
+      const cfg = await settingsApi.list()
+      if (Array.isArray(cfg?.fabric_filters?.patterns) && cfg.fabric_filters.patterns.length) {
+        patternOptions.value = cfg.fabric_filters.patterns
+      }
+    } catch { /* không lấy được cấu hình → dùng danh sách mặc định */ }
 
     if (isEdit.value) {
       const p = await productsApi.get(productId.value)
@@ -641,6 +678,8 @@ async function deleteSize(s) {
 </script>
 
 <style scoped>
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
 .form-layout { display: flex; gap: 20px; align-items: flex-start; }
 .form-main   { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .form-side   { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
