@@ -1,5 +1,6 @@
-from peewee import CharField, BooleanField, TextField
+from peewee import CharField, BooleanField, TextField, ForeignKeyField
 from .base import BaseModel
+from .role import Role
 
 
 class User(BaseModel):
@@ -9,7 +10,9 @@ class User(BaseModel):
     phone         = CharField(max_length=30,  null=True)
     address       = TextField(null=True)
     is_active     = BooleanField(default=True)
-    is_admin      = BooleanField(default=False)
+    is_admin      = BooleanField(default=False)   # được vào trang quản trị
+    # Quyền cụ thể trong trang quản trị lấy từ vai trò này (app/permissions.py)
+    role          = ForeignKeyField(Role, backref="users", null=True, on_delete="SET NULL")
 
     class Meta:
         table_name = "users"

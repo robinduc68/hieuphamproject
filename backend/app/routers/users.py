@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from peewee import DoesNotExist, IntegrityError
 
 from app.models.user import User
-from app.schemas.user import UserRegister, UserLogin, UserUpdate, UserOut, TokenOut
+from app.schemas.user import UserRegister, UserLogin, UserUpdate, UserOut, TokenOut, user_out
 from app.auth import hash_password, verify_password, create_access_token, get_current_user
 from app.database import get_db
 
@@ -26,7 +26,7 @@ def register(data: UserRegister, _db=Depends(get_db)):
     token = create_access_token(user.id)
     return TokenOut(
         access_token=token,
-        user=UserOut.model_validate(user, from_attributes=True),
+        user=user_out(user),
     )
 
 
@@ -45,13 +45,13 @@ def login(data: UserLogin, _db=Depends(get_db)):
     token = create_access_token(user.id)
     return TokenOut(
         access_token=token,
-        user=UserOut.model_validate(user, from_attributes=True),
+        user=user_out(user),
     )
 
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
-    return UserOut.model_validate(current_user, from_attributes=True)
+    return user_out(current_user)
 
 
 @router.put("/me", response_model=UserOut)
@@ -59,7 +59,7 @@ def update_me(data: UserUpdate, current_user: User = Depends(get_current_user)):
     for field, val in data.model_dump(exclude_none=True).items():
         setattr(current_user, field, val)
     current_user.save()
-    return UserOut.model_validate(current_user, from_attributes=True)
+    return user_out(current_user)
 
 
 @router.put("/me/password", status_code=204)

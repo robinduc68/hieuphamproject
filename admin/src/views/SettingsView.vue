@@ -7,6 +7,10 @@
       </div>
     </div>
 
+    <div v-if="!canEdit" class="card readonly-note">
+      👀 Vai trò của bạn chỉ được <strong>xem</strong> nội dung website, không lưu được thay đổi.
+    </div>
+
     <div v-if="loading" class="card empty-state">Đang tải...</div>
 
     <template v-else>
@@ -39,10 +43,10 @@
             </div>
 
             <div class="upload-row">
-              <button class="btn btn-secondary" :disabled="uploading" @click="$refs.videoInput.click()">
+              <button class="btn btn-secondary" :disabled="uploading || !canEdit" @click="$refs.videoInput.click()">
                 {{ uploading ? `Đang tải lên ${uploadPct}%` : 'Tải video lên' }}
               </button>
-              <button class="btn btn-secondary" :disabled="uploading" @click="$refs.posterInput.click()">
+              <button class="btn btn-secondary" :disabled="uploading || !canEdit" @click="$refs.posterInput.click()">
                 Tải ảnh poster
               </button>
               <input ref="videoInput"  type="file" accept="video/*" style="display:none" @change="onVideoSelected" />
@@ -50,7 +54,7 @@
             </div>
             <div v-if="uploading" class="progress"><div class="progress-bar" :style="{ width: uploadPct + '%' }" /></div>
 
-            <button class="btn btn-primary" :disabled="saving.hero_video" @click="save('hero_video', heroVideo)">
+            <button class="btn btn-primary" :disabled="saving.hero_video || !canEdit" @click="save('hero_video', heroVideo)">
               {{ saving.hero_video ? 'Đang lưu...' : 'Lưu video trang chủ' }}
             </button>
           </div>
@@ -74,7 +78,7 @@
           </div>
         </div>
         <TableEditor v-model="sizeGuideTable" />
-        <button class="btn btn-primary" style="margin-top:14px" :disabled="saving.size_guide"
+        <button class="btn btn-primary" style="margin-top:14px" :disabled="saving.size_guide || !canEdit"
                 @click="save('size_guide', { ...sizeGuide, ...sizeGuideTable })">
           {{ saving.size_guide ? 'Đang lưu...' : 'Lưu hướng dẫn chọn size' }}
         </button>
@@ -93,7 +97,7 @@
           <RichTextEditor v-model="g.model.value.content" :min-height="200"
                           placeholder="Soạn nội dung hướng dẫn — có thể thêm tiêu đề, in đậm, danh sách và ảnh..." />
         </div>
-        <button class="btn btn-primary" :disabled="saving[g.key]" @click="save(g.key, g.model.value)">
+        <button class="btn btn-primary" :disabled="saving[g.key] || !canEdit" @click="save(g.key, g.model.value)">
           {{ saving[g.key] ? 'Đang lưu...' : 'Lưu ' + g.section.toLowerCase() }}
         </button>
       </div>
@@ -115,7 +119,7 @@
           </div>
         </div>
         <TableEditor v-model="fabricGuideTable" />
-        <button class="btn btn-primary" style="margin-top:14px" :disabled="saving.fabric_tailoring_guide"
+        <button class="btn btn-primary" style="margin-top:14px" :disabled="saving.fabric_tailoring_guide || !canEdit"
                 @click="save('fabric_tailoring_guide', { ...fabricGuide, ...fabricGuideTable })">
           {{ saving.fabric_tailoring_guide ? 'Đang lưu...' : 'Lưu định mức may đo' }}
         </button>
@@ -145,7 +149,7 @@
 
         <div style="display:flex;gap:8px;margin-top:14px">
           <button class="btn btn-secondary" @click="fabricPatterns.push('')">+ Thêm họa tiết</button>
-          <button class="btn btn-primary" :disabled="saving.fabric_filters" @click="saveFabricFilters">
+          <button class="btn btn-primary" :disabled="saving.fabric_filters || !canEdit" @click="saveFabricFilters">
             {{ saving.fabric_filters ? 'Đang lưu...' : 'Lưu danh sách họa tiết' }}
           </button>
         </div>
@@ -191,7 +195,7 @@
           <button class="btn btn-secondary" @click="faqPage.items.push({ question: '', answer: '' })">
             + Thêm câu hỏi
           </button>
-          <button class="btn btn-primary" :disabled="saving.faq_page" @click="save('faq_page', faqPage)">
+          <button class="btn btn-primary" :disabled="saving.faq_page || !canEdit" @click="save('faq_page', faqPage)">
             {{ saving.faq_page ? 'Đang lưu...' : 'Lưu câu hỏi thường gặp' }}
           </button>
         </div>
@@ -204,11 +208,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { settingsApi, uploadsApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 import TableEditor from '@/components/TableEditor.vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { PATTERNS as DEFAULT_PATTERNS } from '@/data/fabricOptions.js'
 
 const toast = useToastStore()
+const auth  = useAuthStore()
+const canEdit = computed(() => auth.can('content.update'))
 
 const loading   = ref(true)
 const uploading = ref(false)
@@ -403,6 +410,12 @@ async function onPosterSelected(e) {
 .faq-row-num { font-size: 12px; font-weight: 600; color: var(--text-2); }
 .faq-row-actions { display: flex; gap: 6px; }
 .faq-answer { resize: vertical; font-family: inherit; line-height: 1.6; }
+
+.readonly-note {
+  padding: 14px 16px; margin-bottom: 16px;
+  font-size: 13px; color: #92400E;
+  background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px;
+}
 
 .pattern-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .pattern-row .form-input { flex: 1; }

@@ -5,7 +5,7 @@
         <div class="page-title">Người dùng</div>
         <div class="page-sub">{{ total }} tài khoản</div>
       </div>
-      <button class="btn btn-primary" @click="openCreate">
+      <button v-if="auth.can('users.create')" class="btn btn-primary" @click="openCreate">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M8 2v12M2 8h12"/></svg>
         Thêm tài khoản
       </button>
@@ -15,9 +15,9 @@
     <div class="card toolbar">
       <input v-model="search" type="text" class="form-input" placeholder="Tìm email, tên..." style="max-width:280px" @keyup.enter="doSearch" />
       <select v-model="filterRole" class="form-select" style="max-width:160px" @change="doSearch">
-        <option value="">Tất cả vai trò</option>
+        <option value="">Tất cả tài khoản</option>
         <option value="admin">Admin</option>
-        <option value="user">Người dùng</option>
+        <option value="user">Khách</option>
       </select>
       <button class="btn btn-secondary" @click="doSearch">Tìm kiếm</button>
       <span style="font-size:13px;color:var(--text-2);margin-left:auto">{{ total }} kết quả</span>
@@ -53,7 +53,7 @@
               <td>{{ u.phone || '—' }}</td>
               <td>
                 <span class="badge" :class="u.is_admin ? 'badge-confirmed' : 'badge-refunded'">
-                  {{ u.is_admin ? 'Admin' : 'Người dùng' }}
+                  {{ u.is_admin ? (u.role_name || 'Admin (chưa có vai trò)') : 'Khách' }}
                 </span>
               </td>
               <td>
@@ -64,16 +64,16 @@
               <td>{{ formatDate(u.created_at) }}</td>
               <td>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button class="btn btn-secondary btn-sm" @click="openEdit(u)">Sửa</button>
+                  <button class="btn btn-secondary btn-sm" :disabled="!auth.can('users.update')" @click="openEdit(u)">Sửa</button>
                   <button
                     class="btn btn-secondary btn-sm"
-                    :disabled="u.id === myId || busyId === u.id"
+                    :disabled="u.id === myId || busyId === u.id || !auth.can('users.update')"
                     :title="u.id === myId ? 'Không thể tự khoá tài khoản của mình' : ''"
                     @click="toggleActive(u)"
                   >{{ u.is_active ? 'Khoá' : 'Mở khoá' }}</button>
                   <button
                     class="btn btn-danger btn-sm"
-                    :disabled="u.id === myId"
+                    :disabled="u.id === myId || !auth.can('users.delete')"
                     :title="u.id === myId ? 'Không thể xoá chính mình' : ''"
                     @click="deleteTarget = u"
                   >Xoá</button>
@@ -121,13 +121,29 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Vai trò</label>
+            <label class="form-label">Loại tài khoản</label>
             <select v-model="form.is_admin" class="form-select" :disabled="isSelf">
               <option :value="false">Người dùng — chỉ mua hàng ngoài website</option>
               <option :value="true">Admin — vào được trang quản trị</option>
             </select>
             <span v-if="isSelf" class="form-hint">Không thể tự bỏ quyền admin của chính mình.</span>
-            <span v-else class="form-hint">Admin có toàn quyền: sản phẩm, đơn hàng, tin tức, tài khoản.</span>
+            <span v-else class="form-hint">Tài khoản admin vào được trang quản trị; làm được gì thì tuỳ vai trò bên dưới.</span>
+          </div>
+
+          <div v-if="form.is_admin" class="form-group">
+            <label class="form-label">Vai trò *</label>
+            <select v-model="form.role_id" class="form-select" :disabled="isSelf">
+              <option :value="null">— Chọn vai trò —</option>
+              <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
+            </select>
+            <span class="form-hint">
+              <template v-if="selectedRole?.description">{{ selectedRole.description }}</template>
+              <template v-else>Quyết định tài khoản này vào được tab nào, bấm được nút nào.</template>
+              <template v-if="canManageRoles">
+                — sửa danh sách vai trò ở <RouterLink to="/roles">Vai trò & phân quyền</RouterLink>.
+              </template>
+            </span>
+            <span v-if="isSelf" class="form-hint">Không thể tự đổi vai trò của chính mình.</span>
           </div>
 
           <div class="form-group" style="margin-bottom:0">
@@ -181,7 +197,7 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
-import { usersApi } from '@/api/index.js'
+import { usersApi, rolesApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import { useAuthStore } from '@/stores/auth.js'
 
@@ -205,9 +221,13 @@ const deleteError  = ref('')
 const deleting     = ref(false)
 
 const myId = computed(() => auth.user?.id)
+const canManageRoles = computed(() => auth.can('roles.view'))
+
+const roles = ref([])
+const selectedRole = computed(() => roles.value.find(r => r.id === form.role_id) || null)
 
 const formModal = reactive({ open: false, id: null, saving: false, error: '' })
-const form      = reactive({ full_name: '', email: '', phone: '', password: '', is_admin: false, is_active: true })
+const form      = reactive({ full_name: '', email: '', phone: '', password: '', is_admin: false, is_active: true, role_id: null })
 
 const isCreate = computed(() => formModal.id === null)
 const isSelf   = computed(() => formModal.id !== null && formModal.id === myId.value)
@@ -218,6 +238,15 @@ const pageNums   = computed(() => {
   for (let i = Math.max(1, c - 2); i <= Math.min(l, c + 2); i++) nums.push(i)
   return nums
 })
+
+async function loadRoles() {
+  // Không có quyền xem vai trò thì vẫn cần danh sách để gán — bỏ qua nếu bị chặn
+  try {
+    roles.value = await rolesApi.list()
+  } catch {
+    roles.value = []
+  }
+}
 
 async function load() {
   loading.value = true
@@ -247,6 +276,7 @@ function resetForm(u) {
   form.password  = ''
   form.is_admin  = !!u?.is_admin
   form.is_active = u ? !!u.is_active : true
+  form.role_id   = u?.role_id ?? null
   formModal.error = ''
 }
 
@@ -273,6 +303,10 @@ async function submitForm() {
     formModal.error = `Mật khẩu mới phải có ít nhất ${MIN_PASSWORD_LEN} ký tự.`
     return
   }
+  if (form.is_admin && !form.role_id) {
+    formModal.error = 'Tài khoản admin phải được gán một vai trò.'
+    return
+  }
 
   formModal.saving = true
   try {
@@ -282,6 +316,7 @@ async function submitForm() {
       phone:     form.phone,
       is_admin:  form.is_admin,
       is_active: form.is_active,
+      role_id:   form.is_admin ? form.role_id : null,
     }
     if (isCreate.value) {
       payload.password = form.password
@@ -331,7 +366,7 @@ async function doDelete() {
 
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—' }
 
-onMounted(load)
+onMounted(() => { load(); loadRoles() })
 </script>
 
 <style scoped>

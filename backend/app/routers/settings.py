@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.auth import get_current_admin
+from app.auth import require
 from app.database import get_db
 from app.models.setting import SiteSetting
 
@@ -44,7 +44,7 @@ def get_setting(key: str, _db=Depends(get_db)):
     return {"key": setting.key, "value": _parse(setting.value)}
 
 
-@router.put("/{key}", dependencies=[Depends(get_current_admin)])
+@router.put("/{key}", dependencies=[Depends(require("content.update"))])
 def upsert_setting(key: str, data: SettingIn, _db=Depends(get_db)):
     raw = json.dumps(data.value, ensure_ascii=False)
     if len(raw.encode("utf-8")) > MAX_VALUE_BYTES:

@@ -62,16 +62,20 @@ const currentRoute = useRoute()
 
 const homeUrl = siteUrl('/')
 
-const navItems = [
-  { to: '/dashboard',  label: 'Dashboard',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg>' },
-  { to: '/products',   label: 'Sản phẩm',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3h14l-1.5 9H4.5L3 3z"/><circle cx="8" cy="17" r="1"/><circle cx="14" cy="17" r="1"/><path d="M1 1h2l.5 2"/></svg>' },
-  { to: '/orders',     label: 'Đơn hàng',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M7 8h6M7 11h4"/></svg>' },
-  { to: '/categories', label: 'Danh mục',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14M3 10h10M3 15h6"/></svg>' },
-  { to: '/users',         label: 'Người dùng',   icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3"/><path d="M3 17a7 7 0 0114 0"/></svg>' },
-  { to: '/customization', label: 'Tùy chỉnh',    icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/></svg>' },
-  { to: '/posts',         label: 'Tin tức',       icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10a1 1 0 011 1v11H4a1 1 0 01-1-1V4z"/><path d="M14 8h2a1 1 0 011 1v6a1 1 0 01-1 1h-2"/><path d="M6 7h4M6 10h4M6 13h3"/></svg>' },
-  { to: '/settings',      label: 'Nội dung web', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M8 8.5l4 2.5-4 2.5z"/></svg>' },
+const allNavItems = [
+  { to: '/dashboard',  label: 'Dashboard', perm: 'dashboard.view',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg>' },
+  { to: '/products',   label: 'Sản phẩm', perm: 'products.view',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3h14l-1.5 9H4.5L3 3z"/><circle cx="8" cy="17" r="1"/><circle cx="14" cy="17" r="1"/><path d="M1 1h2l.5 2"/></svg>' },
+  { to: '/orders',     label: 'Đơn hàng', perm: 'orders.view',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M7 8h6M7 11h4"/></svg>' },
+  { to: '/categories', label: 'Danh mục', perm: 'categories.view',      icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14M3 10h10M3 15h6"/></svg>' },
+  { to: '/roles',         label: 'Vai trò',      perm: 'roles.view', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2l6 3v5c0 3.5-2.4 6.4-6 8-3.6-1.6-6-4.5-6-8V5l6-3z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg>' },
+  { to: '/users',         label: 'Người dùng',   perm: 'users.view', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3"/><path d="M3 17a7 7 0 0114 0"/></svg>' },
+  { to: '/customization', label: 'Tùy chỉnh', perm: 'customization.view',    icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/></svg>' },
+  { to: '/posts',         label: 'Tin tức', perm: 'posts.view',       icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10a1 1 0 011 1v11H4a1 1 0 01-1-1V4z"/><path d="M14 8h2a1 1 0 011 1v6a1 1 0 01-1 1h-2"/><path d="M6 7h4M6 10h4M6 13h3"/></svg>' },
+  { to: '/settings',      label: 'Nội dung web', perm: 'content.view', icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M8 8.5l4 2.5-4 2.5z"/></svg>' },
 ]
+
+// Ẩn hẳn tab không có quyền — router cũng chặn khi gõ thẳng URL
+const navItems = computed(() => allNavItems.filter(i => !i.perm || authStore.can(i.perm)))
 
 const pageTitles = {
   dashboard:     'Dashboard',
@@ -81,6 +85,8 @@ const pageTitles = {
   orders:        'Đơn hàng',
   categories:    'Danh mục',
   users:         'Người dùng',
+  roles:         'Vai trò & phân quyền',
+  'no-access':     'Không có quyền',
   customization: 'Tùy chỉnh sản phẩm',
   posts:         'Tin tức',
   'post-new':      'Viết bài mới',

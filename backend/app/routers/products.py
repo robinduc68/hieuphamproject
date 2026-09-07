@@ -12,7 +12,7 @@ from app.schemas.product import (
     SubCategoryOut, SubCategoryCreate, SubCategoryUpdate,
     ProductImageUpdate, ProductSizeOut, SizeCreate, SizeUpdate,
 )
-from app.auth import get_current_admin
+from app.auth import require
 from app.database import get_db
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
@@ -155,14 +155,14 @@ def get_category(slug: str):
 
 
 @cat_router.post("/", response_model=CategoryOut, status_code=201,
-                 dependencies=[Depends(get_current_admin)])
+                 dependencies=[Depends(require("categories.create"))])
 def create_category(data: CategoryCreate):
     cat = Category.create(**data.model_dump())
     return CategoryOut.model_validate(cat, from_attributes=True)
 
 
 @cat_router.put("/{cat_id}", response_model=CategoryOut,
-                dependencies=[Depends(get_current_admin)])
+                dependencies=[Depends(require("categories.update"))])
 def update_category(cat_id: int, data: CategoryUpdate):
     try:
         cat = Category.get_by_id(cat_id)
@@ -261,7 +261,7 @@ def get_product(slug: str, _db=Depends(get_db)):
 
 
 @router.post("/", response_model=ProductOut, status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("products.create"))])
 def create_product(data: ProductCreate, _db=Depends(get_db)):
     sizes     = data.sizes
     color_hex = data.color_hex or data.primary_color  # accept both fields
@@ -322,7 +322,7 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
 
 
 @router.put("/{product_id}", response_model=ProductOut,
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("products.update"))])
 def update_product(product_id: int, data: ProductUpdate, _db=Depends(get_db)):
     try:
         p = Product.get_by_id(product_id)
@@ -364,7 +364,7 @@ def update_product(product_id: int, data: ProductUpdate, _db=Depends(get_db)):
 
 
 @router.delete("/{product_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("products.delete"))])
 def delete_product(product_id: int, _db=Depends(get_db)):
     try:
         p = Product.get_by_id(product_id)
@@ -375,7 +375,7 @@ def delete_product(product_id: int, _db=Depends(get_db)):
 
 
 @router.post("/{product_id}/images", status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("products.update"))])
 def upload_image(
     product_id: int,
     file:       UploadFile = File(...),
@@ -412,7 +412,7 @@ def upload_image(
 
 
 @router.put("/{product_id}/images/{img_id}",
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("products.update"))])
 def update_image(product_id: int, img_id: int, data: ProductImageUpdate, _db=Depends(get_db)):
     try:
         img = ProductImage.get(ProductImage.id == img_id, ProductImage.product == product_id)
@@ -430,7 +430,7 @@ def update_image(product_id: int, img_id: int, data: ProductImageUpdate, _db=Dep
 
 
 @router.patch("/{product_id}/images/reorder",
-              dependencies=[Depends(get_current_admin)])
+              dependencies=[Depends(require("products.update"))])
 def reorder_images(product_id: int, data: list[dict], _db=Depends(get_db)):
     """data = [{ id: int, sort_order: int }, ...]"""
     try:
@@ -446,7 +446,7 @@ def reorder_images(product_id: int, data: list[dict], _db=Depends(get_db)):
 
 
 @router.delete("/{product_id}/images/{img_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("products.update"))])
 def delete_image(product_id: int, img_id: int, _db=Depends(get_db)):
     from app.storage import delete_file
     try:
@@ -459,7 +459,7 @@ def delete_image(product_id: int, img_id: int, _db=Depends(get_db)):
 
 # ── Size endpoints ────────────────────────────────────────────────────────
 @router.post("/{product_id}/sizes", response_model=ProductSizeOut, status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("products.update"))])
 def add_size(product_id: int, data: SizeCreate, _db=Depends(get_db)):
     try:
         product = Product.get_by_id(product_id)
@@ -470,7 +470,7 @@ def add_size(product_id: int, data: SizeCreate, _db=Depends(get_db)):
 
 
 @router.put("/{product_id}/sizes/{size_id}", response_model=ProductSizeOut,
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("products.update"))])
 def update_size(product_id: int, size_id: int, data: SizeUpdate, _db=Depends(get_db)):
     try:
         s = ProductSize.get(ProductSize.id == size_id, ProductSize.product == product_id)
@@ -485,7 +485,7 @@ def update_size(product_id: int, size_id: int, data: SizeUpdate, _db=Depends(get
 
 
 @router.delete("/{product_id}/sizes/{size_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("products.update"))])
 def delete_size(product_id: int, size_id: int, _db=Depends(get_db)):
     try:
         s = ProductSize.get(ProductSize.id == size_id, ProductSize.product == product_id)
@@ -496,7 +496,7 @@ def delete_size(product_id: int, size_id: int, _db=Depends(get_db)):
 
 # ── Category DELETE ────────────────────────────────────────────────────────
 @cat_router.delete("/{cat_id}", status_code=204,
-                   dependencies=[Depends(get_current_admin)])
+                   dependencies=[Depends(require("categories.delete"))])
 def delete_category(cat_id: int, _db=Depends(get_db)):
     try:
         cat = Category.get_by_id(cat_id)
@@ -517,7 +517,7 @@ def list_subcategories(cat_id: int, _db=Depends(get_db)):
 
 
 @cat_router.post("/{cat_id}/subcategories", response_model=SubCategoryOut, status_code=201,
-                 dependencies=[Depends(get_current_admin)])
+                 dependencies=[Depends(require("categories.create"))])
 def create_subcategory(cat_id: int, data: SubCategoryCreate, _db=Depends(get_db)):
     try:
         cat = Category.get_by_id(cat_id)
@@ -528,7 +528,7 @@ def create_subcategory(cat_id: int, data: SubCategoryCreate, _db=Depends(get_db)
 
 
 @sub_router.put("/{sub_id}", response_model=SubCategoryOut,
-                dependencies=[Depends(get_current_admin)])
+                dependencies=[Depends(require("categories.update"))])
 def update_subcategory(sub_id: int, data: SubCategoryUpdate, _db=Depends(get_db)):
     try:
         sub = SubCategory.get_by_id(sub_id)
@@ -541,7 +541,7 @@ def update_subcategory(sub_id: int, data: SubCategoryUpdate, _db=Depends(get_db)
 
 
 @sub_router.delete("/{sub_id}", status_code=204,
-                   dependencies=[Depends(get_current_admin)])
+                   dependencies=[Depends(require("categories.delete"))])
 def delete_subcategory(sub_id: int, _db=Depends(get_db)):
     try:
         sub = SubCategory.get_by_id(sub_id)

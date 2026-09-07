@@ -14,7 +14,7 @@ from app.schemas.order import (
     OrderStatusUpdate, NewsletterSubscribe, NewsletterOut,
     PaginatedOrders,
 )
-from app.auth import get_current_user, get_current_admin, get_optional_user
+from app.auth import get_current_user, get_optional_user, require
 from app.database import get_db
 
 router    = APIRouter(prefix="/api/orders",     tags=["Orders"])
@@ -203,7 +203,7 @@ def get_order(
 
 
 # ── Admin: list all orders (paginated) ───────────────────────────────────
-@router.get("/", response_model=PaginatedOrders, dependencies=[Depends(get_current_admin)])
+@router.get("/", response_model=PaginatedOrders, dependencies=[Depends(require("orders.view"))])
 def list_all_orders(
     status:         Optional[str] = Query(None),
     payment_status: Optional[str] = Query(None),
@@ -227,7 +227,7 @@ def list_all_orders(
 
 
 @router.patch("/{order_id}/status", response_model=OrderOut,
-              dependencies=[Depends(get_current_admin)])
+              dependencies=[Depends(require("orders.update_status"))])
 def update_order_status(order_id: int, data: OrderStatusUpdate, _db=Depends(get_db)):
     try:
         order = Order.get_by_id(order_id)

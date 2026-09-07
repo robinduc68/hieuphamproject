@@ -8,6 +8,29 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value && user.value?.is_admin)
 
+  // Quyền do backend tính sẵn và trả kèm tài khoản (app/permissions.py).
+  const permissions = computed(() => user.value?.permissions ?? [])
+
+  /** can('products.create') — dùng để ẩn tab và nút trong trang admin. */
+  function can(...codes) {
+    return codes.some(code => permissions.value.includes(code))
+  }
+
+  /**
+   * Nạp lại tài khoản từ server. Cần cho phiên đăng nhập cũ: bản lưu trong
+   * localStorage chưa có danh sách quyền.
+   */
+  async function refresh() {
+    if (!token.value) return
+    try {
+      const me = await authApi.me()
+      user.value = me
+      localStorage.setItem('admin_user', JSON.stringify(me))
+    } catch {
+      // token hết hạn / bị khoá → client.js đã tự đẩy về /login
+    }
+  }
+
   async function login(email, password) {
     const data = await authApi.login({ email, password })
     if (!data.user.is_admin) throw new Error('Tài khoản không có quyền admin')
@@ -24,5 +47,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('admin_user')
   }
 
-  return { token, user, isLoggedIn, login, logout }
+  return { token, user, isLoggedIn, permissions, can, refresh, login, logout }
 })

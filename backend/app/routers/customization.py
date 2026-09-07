@@ -6,7 +6,7 @@ from app.schemas.customization import (
     CustomizationOptionOut, CustomizationGroupOut,
     CustomizationOptionCreate, CustomizationOptionUpdate,
 )
-from app.auth import get_current_admin
+from app.auth import require
 from app.database import get_db
 
 router = APIRouter(prefix="/api/customization-options", tags=["Customization"])
@@ -47,7 +47,7 @@ def list_grouped(_db=Depends(get_db)):
 
 # ── Admin: all options (including inactive) ───────────────────────────────
 @router.get("/all", response_model=list[CustomizationOptionOut],
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("customization.view"))])
 def list_all(_db=Depends(get_db)):
     opts = list(
         CustomizationOption.select()
@@ -57,7 +57,7 @@ def list_all(_db=Depends(get_db)):
 
 
 @router.post("/", response_model=CustomizationOptionOut, status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("customization.update"))])
 def create_option(data: CustomizationOptionCreate, _db=Depends(get_db)):
     try:
         opt = CustomizationOption.create(**data.model_dump())
@@ -67,7 +67,7 @@ def create_option(data: CustomizationOptionCreate, _db=Depends(get_db)):
 
 
 @router.put("/{option_id}", response_model=CustomizationOptionOut,
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("customization.update"))])
 def update_option(option_id: int, data: CustomizationOptionUpdate, _db=Depends(get_db)):
     try:
         opt = CustomizationOption.get_by_id(option_id)
@@ -80,7 +80,7 @@ def update_option(option_id: int, data: CustomizationOptionUpdate, _db=Depends(g
 
 
 @router.delete("/{option_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("customization.update"))])
 def delete_option(option_id: int, _db=Depends(get_db)):
     try:
         opt = CustomizationOption.get_by_id(option_id)

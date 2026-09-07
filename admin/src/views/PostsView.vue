@@ -5,7 +5,7 @@
         <div class="page-title">Tin tức</div>
         <div class="page-sub">{{ total }} bài viết</div>
       </div>
-      <RouterLink to="/posts/new" class="btn btn-primary">
+      <RouterLink v-if="auth.can('posts.create')" to="/posts/new" class="btn btn-primary">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M8 2v12M2 8h12"/></svg>
         Viết bài mới
       </RouterLink>
@@ -52,10 +52,10 @@
               </td>
               <td>
                 <div style="display:flex;gap:6px">
-                  <RouterLink :to="`/posts/${p.id}/edit`" class="btn btn-icon btn-sm" title="Sửa">
+                  <RouterLink v-if="auth.can('posts.update')" :to="`/posts/${p.id}/edit`" class="btn btn-icon btn-sm" title="Sửa">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M11 2l3 3L5 14H2v-3L11 2z"/></svg>
                   </RouterLink>
-                  <button class="btn btn-icon btn-sm" title="Xoá" @click="deleteTarget = p">
+                  <button v-if="auth.can('posts.delete')" class="btn btn-icon btn-sm" title="Xoá" @click="deleteTarget = p">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
                   </button>
                 </div>
@@ -102,8 +102,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { postsApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const toast = useToastStore()
+const auth = useAuthStore()
 
 const posts   = ref([])
 const total   = ref(0)

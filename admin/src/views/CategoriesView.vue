@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <div class="page-title">Danh mục</div>
-      <button class="btn btn-primary" @click="openCatModal()">+ Thêm danh mục</button>
+      <button v-if="auth.can('categories.create')" class="btn btn-primary" @click="openCatModal()">+ Thêm danh mục</button>
     </div>
 
     <div v-if="loading" class="card empty-state">Đang tải...</div>
@@ -18,7 +18,7 @@
           <div class="cat-actions">
             <button class="btn btn-secondary btn-sm" @click="openSubModal(cat)">+ Sub</button>
             <button class="btn btn-icon btn-sm" @click="openCatModal(cat)">✏️</button>
-            <button class="btn btn-danger btn-sm" @click="deleteCat(cat)">✕</button>
+            <button v-if="auth.can('categories.delete')" class="btn btn-danger btn-sm" @click="deleteCat(cat)">✕</button>
           </div>
         </div>
 
@@ -29,7 +29,7 @@
             <span class="sub-slug">{{ sub.slug }}</span>
             <div class="sub-actions">
               <button class="btn btn-icon btn-sm" @click="openSubModal(cat, sub)">✏️</button>
-              <button class="btn btn-danger btn-sm" @click="deleteSub(sub)">✕</button>
+              <button v-if="auth.can('categories.delete')" class="btn btn-danger btn-sm" @click="deleteSub(sub)">✕</button>
             </div>
           </div>
         </div>
@@ -99,6 +99,7 @@
 import { ref, onMounted, reactive } from 'vue'
 import { categoriesApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const toast      = useToastStore()
 const categories = ref([])

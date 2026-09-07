@@ -84,6 +84,15 @@ export const usersApi = {
   remove: (id)         => client.delete(`/admin/users/${id}`),
 }
 
+// ── Vai trò & phân quyền ──────────────────────────────────────────────────
+export const rolesApi = {
+  list:        ()        => client.get('/admin/roles'),
+  permissions: ()        => client.get('/admin/permissions'),
+  create:      (data)    => client.post('/admin/roles', data),
+  update:      (id, data) => client.put(`/admin/roles/${id}`, data),
+  remove:      (id)      => client.delete(`/admin/roles/${id}`),
+}
+
 // ── Customization options ─────────────────────────────────────────────────
 export const customizationApi = {
   listGrouped: ()          => client.get('/customization-options/'),

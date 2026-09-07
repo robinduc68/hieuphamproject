@@ -121,7 +121,7 @@
                 <label class="form-label">Mã vận đơn</label>
                 <input v-model="trackingCode" class="form-input" placeholder="VTL123456..." />
               </div>
-              <button class="btn btn-primary" @click="updateStatus" :disabled="updatingStatus">
+              <button v-if="auth.can('orders.update_status')" class="btn btn-primary" @click="updateStatus" :disabled="updatingStatus">
                 {{ updatingStatus ? 'Đang cập nhật...' : 'Lưu' }}
               </button>
             </div>
@@ -136,8 +136,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { ordersApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const toast = useToastStore()
+const auth = useAuthStore()
 
 const orders       = ref([])
 const total        = ref(0)

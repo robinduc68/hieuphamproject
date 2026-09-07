@@ -3,7 +3,7 @@ from peewee import DoesNotExist
 
 from app.models.collection import Collection
 from app.schemas.collection import CollectionOut, CollectionCreate, CollectionUpdate
-from app.auth import get_current_admin
+from app.auth import require
 from app.database import get_db
 
 router = APIRouter(prefix="/api/collections", tags=["Collections"])
@@ -29,14 +29,14 @@ def get_collection(slug: str, _db=Depends(get_db)):
 
 
 @router.post("/", response_model=CollectionOut, status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("products.create"))])
 def create_collection(data: CollectionCreate, _db=Depends(get_db)):
     col = Collection.create(**data.model_dump())
     return CollectionOut.model_validate(col, from_attributes=True)
 
 
 @router.put("/{col_id}", response_model=CollectionOut,
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("products.update"))])
 def update_collection(col_id: int, data: CollectionUpdate, _db=Depends(get_db)):
     try:
         col = Collection.get_by_id(col_id)
@@ -49,7 +49,7 @@ def update_collection(col_id: int, data: CollectionUpdate, _db=Depends(get_db)):
 
 
 @router.delete("/{col_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("products.delete"))])
 def delete_collection(col_id: int, _db=Depends(get_db)):
     try:
         col = Collection.get_by_id(col_id)

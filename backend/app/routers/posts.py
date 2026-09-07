@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from peewee import DoesNotExist, IntegrityError
 
-from app.auth import get_current_admin
+from app.auth import require
 from app.database import get_db
 from app.models.post import Post
 from app.schemas.post import (
@@ -64,7 +64,7 @@ def related_posts(slug: str, limit: int = Query(2, ge=1, le=12), _db=Depends(get
 
 
 @router.post("/", response_model=PostOut, status_code=201,
-             dependencies=[Depends(get_current_admin)])
+             dependencies=[Depends(require("posts.create"))])
 def create_post(data: PostCreate, _db=Depends(get_db)):
     payload = data.model_dump()
     if Post.select().where(Post.slug == payload["slug"]).exists():
@@ -80,7 +80,7 @@ def create_post(data: PostCreate, _db=Depends(get_db)):
 
 
 @router.put("/{post_id}", response_model=PostOut,
-            dependencies=[Depends(get_current_admin)])
+            dependencies=[Depends(require("posts.update"))])
 def update_post(post_id: int, data: PostUpdate, _db=Depends(get_db)):
     try:
         post = Post.get_by_id(post_id)
@@ -107,7 +107,7 @@ def update_post(post_id: int, data: PostUpdate, _db=Depends(get_db)):
 
 
 @router.delete("/{post_id}", status_code=204,
-               dependencies=[Depends(get_current_admin)])
+               dependencies=[Depends(require("posts.delete"))])
 def delete_post(post_id: int, _db=Depends(get_db)):
     try:
         post = Post.get_by_id(post_id)

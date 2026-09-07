@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <h1 class="page-title">Tùy chỉnh sản phẩm</h1>
-      <button class="btn btn-primary" @click="openCreate">+ Thêm option</button>
+      <button v-if="auth.can('customization.update')" class="btn btn-primary" @click="openCreate">+ Thêm option</button>
     </div>
 
     <div v-if="loading" class="loading">Đang tải...</div>
@@ -34,7 +34,7 @@
                 </span>
               </td>
               <td>
-                <button class="btn btn-sm btn-secondary" @click="openEdit(opt)">Sửa</button>
+                <button v-if="auth.can('customization.update')" class="btn btn-sm btn-secondary" @click="openEdit(opt)">Sửa</button>
               </td>
             </tr>
           </tbody>
@@ -104,6 +104,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { customizationApi } from '@/api/index.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+const auth    = useAuthStore()
 
 const groups  = ref([])
 const loading = ref(true)
