@@ -108,6 +108,9 @@ class ProductBase(BaseModel):
     specification:     Optional[str] = None     # Quy cách (vải)
     fabric_width:      Optional[str] = None     # Khổ vải
     unit_label:        Optional[str] = None     # Đơn vị bán, VD "mét"
+    pattern:           Optional[str] = None     # Họa tiết (lọc trang vải)
+    color_tag:         Optional[str] = None     # Tone màu (lọc trang vải)
+    silk_type:         Optional[str] = None     # Loại lụa (lọc trang 100% tơ tằm)
 
 class ProductCreate(ProductBase):
     # None = để backend tự suy ra từ danh mục (vải hay quần áo)
@@ -140,6 +143,9 @@ class ProductUpdate(BaseModel):
     specification:     Optional[str]     = None
     fabric_width:      Optional[str]     = None
     unit_label:        Optional[str]     = None
+    pattern:           Optional[str]     = None
+    color_tag:         Optional[str]     = None
+    silk_type:         Optional[str]     = None
 
 class ProductOut(ProductBase):
     model_config = ConfigDict(from_attributes=True)
@@ -169,6 +175,9 @@ class ProductListOut(BaseModel):
     is_featured:  bool
     product_type: str = "apparel"
     unit_label:   Optional[str] = None
+    pattern:      Optional[str] = None
+    color_tag:    Optional[str] = None
+    silk_type:    Optional[str] = None
     sub_category: Optional[str] = None
     category_id:  Optional[int] = None
     category:     Optional[CategoryOut] = None

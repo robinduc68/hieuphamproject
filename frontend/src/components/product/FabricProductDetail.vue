@@ -247,7 +247,7 @@ function addToCart() {
 .breadcrumb a { color: var(--text-muted); transition: color var(--transition); }
 .breadcrumb a:hover { color: var(--charcoal); }
 .sep { opacity: .35; }
-.breadcrumb-current { color: var(--charcoal); font-weight: 500; }
+.breadcrumb-current { color: var(--charcoal); font-weight: 500; text-transform: uppercase; }
 
 .fd-layout { display: grid; grid-template-columns: 55% 45%; gap: 40px; align-items: start; }
 
@@ -283,6 +283,7 @@ function addToCart() {
 .fd-name {
   font-family: var(--font-display); font-size: 30px; font-weight: 600;
   color: var(--brand-red); line-height: 1.25; margin-bottom: 12px;
+  text-transform: uppercase;
 }
 .fd-price { font-family: var(--font-display); font-size: 22px; color: var(--brand-red); margin-bottom: 4px; }
 .fd-price-old {

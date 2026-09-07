@@ -101,10 +101,16 @@ const { pureSilk: fabricProducts } = useFabricProducts()
 const selectedTypes  = ref([])
 const selectedColors = ref([])
 
-// Sản phẩm thật chưa có thuộc tính loại lụa/màu để lọc → ẩn khi đang bật bộ lọc.
-const shownProducts = computed(() =>
-  (selectedTypes.value.length || selectedColors.value.length) ? [] : fabricProducts.value
-)
+// Sản phẩm thật: lọc theo loại lụa/tone màu admin đã gán. Chưa gán → ẩn khi
+// khách bật bộ lọc tương ứng (không đoán bừa là khớp).
+const shownProducts = computed(() => {
+  let list = fabricProducts.value
+  if (selectedTypes.value.length)
+    list = list.filter(p => selectedTypes.value.includes((p.silk_type || '').trim()))
+  if (selectedColors.value.length)
+    list = list.filter(p => selectedColors.value.includes((p.color_tag || '').trim()))
+  return list
+})
 
 const displayedFabrics = computed(() => {
   let list = pureSilkFabrics

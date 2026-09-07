@@ -238,6 +238,7 @@ onUnmounted(() => clearInterval(autoTimer))
   color: var(--cream);
   line-height: 1.1;
   margin-bottom: 20px;
+  text-transform: uppercase;
 }
 
 .slide-arrow {

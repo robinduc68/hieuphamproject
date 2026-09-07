@@ -31,6 +31,10 @@ class Product(BaseModel):
     specification     = TextField(null=True)                   # Quy cách
     fabric_width      = CharField(max_length=60, null=True)   # Khổ vải
     unit_label        = CharField(max_length=30, null=True)   # Đơn vị bán (mét, cái…)
+    # Thuộc tính để lọc ở 2 trang kho lụa ngoài website
+    pattern           = CharField(max_length=80, null=True)   # Họa tiết (VD: Thọ Dơi)
+    color_tag         = CharField(max_length=40, null=True)   # Tone màu (VD: Hồng)
+    silk_type         = CharField(max_length=100, null=True)  # Loại lụa (trang 100% tơ tằm)
 
     class Meta:
         table_name = "products"

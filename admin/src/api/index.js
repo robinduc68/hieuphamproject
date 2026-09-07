@@ -47,6 +47,15 @@ export const settingsApi = {
   save: (key, value)  => client.put(`/settings/${key}`, { value }),
 }
 
+// ── Bài viết (Tin tức) ────────────────────────────────────────────────────
+export const postsApi = {
+  list:   (params) => client.get('/posts/', { params: { published_only: false, ...params } }),
+  get:    (idOrSlug) => client.get(`/posts/${idOrSlug}`),
+  create: (data)   => client.post('/posts/', data),
+  update: (id, data) => client.put(`/posts/${id}`, data),
+  remove: (id)     => client.delete(`/posts/${id}`),
+}
+
 // ── Categories ────────────────────────────────────────────────────────────
 export const categoriesApi = {
   list:   ()       => client.get('/categories/', { params: { active_only: false } }),

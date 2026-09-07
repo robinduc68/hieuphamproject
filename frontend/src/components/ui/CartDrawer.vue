@@ -132,7 +132,7 @@ function swatchGrad(hex) {
 .cart-item { display: flex; gap: 12px; align-items: flex-start; }
 .ci-img { width: 64px; height: 80px; flex-shrink: 0; border: 1px solid var(--border); }
 .ci-info { flex: 1; }
-.ci-name { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; }
+.ci-name { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; text-transform: uppercase; }
 .ci-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
 .ci-qty { display: flex; align-items: center; gap: 8px; }
 .ci-qty button {

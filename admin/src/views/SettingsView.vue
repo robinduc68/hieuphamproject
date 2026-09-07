@@ -120,6 +120,52 @@
           {{ saving.fabric_tailoring_guide ? 'Đang lưu...' : 'Lưu định mức may đo' }}
         </button>
       </div>
+
+      <!-- ── Trang "Câu hỏi thường gặp" ────────────────────────────────── -->
+      <div class="card form-section">
+        <div class="section-title">Trang “Câu hỏi thường gặp”</div>
+        <p class="form-hint" style="margin-bottom:14px">
+          Toàn bộ nội dung trang <strong>/cau-hoi-thuong-gap</strong>. Câu đầu tiên mặc định
+          được mở sẵn ngoài website.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Tiêu đề trang</label>
+          <input v-model="faqPage.title" class="form-input" placeholder="CÂU HỎI THƯỜNG GẶP" />
+        </div>
+
+        <div v-if="!faqPage.items.length" class="empty-state" style="padding:20px;font-size:13px">
+          Chưa có câu hỏi nào
+        </div>
+
+        <div v-for="(item, i) in faqPage.items" :key="i" class="faq-row">
+          <div class="faq-row-head">
+            <span class="faq-row-num">{{ i + 1 }}</span>
+            <div class="faq-row-actions">
+              <button class="btn btn-icon btn-sm" title="Lên" :disabled="i === 0" @click="moveFaq(i, -1)">↑</button>
+              <button class="btn btn-icon btn-sm" title="Xuống" :disabled="i === faqPage.items.length - 1" @click="moveFaq(i, 1)">↓</button>
+              <button class="btn btn-icon btn-sm" title="Xoá" @click="faqPage.items.splice(i, 1)">✕</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Câu hỏi</label>
+            <input v-model="item.question" class="form-input" placeholder="VD: Chính sách đổi trả như thế nào?" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Câu trả lời</label>
+            <textarea v-model="item.answer" class="form-input faq-answer" rows="4" placeholder="Nội dung trả lời..." />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-secondary" @click="faqPage.items.push({ question: '', answer: '' })">
+            + Thêm câu hỏi
+          </button>
+          <button class="btn btn-primary" :disabled="saving.faq_page" @click="save('faq_page', faqPage)">
+            {{ saving.faq_page ? 'Đang lưu...' : 'Lưu câu hỏi thường gặp' }}
+          </button>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -155,6 +201,16 @@ const fabricGuideTable = ref({ columns: [], rows: [] })
 // Hai hướng dẫn dạng bài viết (nội dung HTML soạn bằng trình soạn thảo)
 const measureGuide = ref({ title: '', content: '' })
 const colorGuide   = ref({ title: '', content: '' })
+
+// Trang "Câu hỏi thường gặp" — toàn bộ nội dung nằm ở một key duy nhất
+const faqPage = ref({ title: '', items: [] })
+
+function moveFaq(i, delta) {
+  const items = faqPage.value.items
+  const j = i + delta
+  if (j < 0 || j >= items.length) return
+  ;[items[i], items[j]] = [items[j], items[i]]
+}
 
 const articleGuides = [
   {
@@ -202,6 +258,14 @@ onMounted(async () => {
     colorGuide.value = {
       title:   data.color_guide?.title   ?? 'Hướng Dẫn Chọn Màu & Đặt May',
       content: data.color_guide?.content ?? '',
+    }
+
+    faqPage.value = {
+      title: data.faq_page?.title ?? 'CÂU HỎI THƯỜNG GẶP',
+      items: (data.faq_page?.items ?? []).map(it => ({
+        question: it.question ?? '',
+        answer:   it.answer   ?? '',
+      })),
     }
   } catch (e) {
     toast.error('Lỗi tải cấu hình: ' + e)
@@ -275,6 +339,17 @@ async function onPosterSelected(e) {
 .video-fields { flex: 1; min-width: 0; }
 
 .upload-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+.faq-row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.faq-row-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.faq-row-num { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.faq-row-actions { display: flex; gap: 6px; }
+.faq-answer { resize: vertical; font-family: inherit; line-height: 1.6; }
 
 .progress { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
 .progress-bar { height: 100%; background: var(--brand); transition: width .2s; }

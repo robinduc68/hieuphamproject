@@ -83,6 +83,9 @@ def _product_to_out(p: Product) -> dict:
         "specification":    p.specification,
         "fabric_width":     p.fabric_width,
         "unit_label":       p.unit_label,
+        "pattern":          p.pattern,
+        "color_tag":        p.color_tag,
+        "silk_type":        p.silk_type,
         "images": [
             {
                 "id": i.id,

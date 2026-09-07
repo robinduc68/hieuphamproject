@@ -1,6 +1,6 @@
 <template>
   <div class="faq-page">
-    <h1 class="faq-title">CÂU HỎI THƯỜNG GẶP</h1>
+    <h1 class="faq-title">{{ pageTitle }}</h1>
 
     <div class="faq-list">
       <div
@@ -39,40 +39,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useSiteSettings } from '@/composables/useSiteSettings'
 
 const openIndex = ref(0)
 
-const faqs = [
-  {
-    question: 'Mất bao lâu để hoàn thành một sản phẩm may đo?',
-    answer: 'Trung bình, quy trình may đo thủ công sẽ mất từ 1–2 tuần kể từ khi bạn chốt đơn hàng và đặt cọc. Mọi đường kim mũi chỉ đều cần tính toán tỉ mỉ để phù hợp với bạn nhất, Hà Hoạt Silk hy vọng bạn có thể kiên nhẫn chờ đợi tác phẩm của mình.',
-  },
-  {
-    question: 'Sản phẩm thực tế có hoàn toàn giống ảnh không?',
-    answer: 'Màu sắc thực tế có thể chênh lệch nhẹ so với ảnh chụp do điều kiện ánh sáng và hiển thị màn hình. Tuy nhiên chất liệu, họa tiết và đường may đều được thực hiện chính xác theo mẫu. Nếu cần, bạn có thể yêu cầu gửi ảnh vải thực tế trước khi đặt hàng.',
-  },
-  {
-    question: 'Tôi có thể đặt may theo số đo riêng không?',
-    answer: 'Hoàn toàn có thể. Hà Hoạt Silk nhận may theo số đo cá nhân với đầy đủ các thông số: ngực, eo, hông, chiều dài tay, chiều cao. Bạn có thể tham khảo hướng dẫn lấy số đo trên trang hoặc liên hệ trực tiếp để được hỗ trợ.',
-  },
-  {
-    question: 'Chính sách đổi trả như thế nào?',
-    answer: 'Hà Hoạt Silk hỗ trợ đổi trả trong vòng 7 ngày kể từ ngày nhận hàng với điều kiện sản phẩm chưa qua sử dụng, còn nguyên tag và bao bì. Riêng sản phẩm may theo số đo cá nhân sẽ không áp dụng đổi trả, ngoại trừ trường hợp lỗi từ phía nhà sản xuất.',
-  },
-  {
-    question: 'Hà Hoạt Silk có giao hàng quốc tế không?',
-    answer: 'Có, chúng tôi giao hàng đến hơn 30 quốc gia. Thời gian giao hàng quốc tế từ 7–14 ngày làm việc tùy khu vực. Phí vận chuyển sẽ được tính dựa trên địa chỉ nhận hàng và trọng lượng đơn hàng.',
-  },
-  {
-    question: 'Tôi cần đặt cọc bao nhiêu khi đặt may?',
-    answer: 'Khi đặt may, bạn cần thanh toán trước 50% giá trị đơn hàng để xác nhận. Phần còn lại sẽ được thanh toán khi sản phẩm hoàn thành và trước khi giao hàng. Chúng tôi chấp nhận thanh toán qua chuyển khoản ngân hàng, MoMo và các ví điện tử phổ biến.',
-  },
-  {
-    question: 'Làm thế nào để bảo quản áo dài lụa tơ tằm?',
-    answer: 'Áo dài lụa tơ tằm nên được giặt khô (dry clean only) để giữ độ bóng và hình dạng tốt nhất. Tránh giặt máy, vắt xoắn hoặc phơi dưới ánh nắng trực tiếp. Khi cất giữ, hãy treo thẳng hoặc gấp nhẹ nhàng, bảo quản nơi thoáng mát, tránh ẩm mốc.',
-  },
-]
+// Nội dung admin sửa trong trang admin → "Nội dung web" → "Câu hỏi thường gặp".
+// Danh sách dưới đây chỉ là dự phòng khi API chưa trả về được cấu hình.
+const FALLBACK = {
+  title: 'CÂU HỎI THƯỜNG GẶP',
+  items: [
+    {
+      question: 'Mất bao lâu để hoàn thành một sản phẩm may đo?',
+      answer: 'Trung bình, quy trình may đo thủ công sẽ mất từ 1–2 tuần kể từ khi bạn chốt đơn hàng và đặt cọc. Mọi đường kim mũi chỉ đều cần tính toán tỉ mỉ để phù hợp với bạn nhất, Hà Hoạt Silk hy vọng bạn có thể kiên nhẫn chờ đợi tác phẩm của mình.',
+    },
+    {
+      question: 'Tôi có thể đặt may theo số đo riêng không?',
+      answer: 'Hoàn toàn có thể. Hà Hoạt Silk nhận may theo số đo cá nhân với đầy đủ các thông số: ngực, eo, hông, chiều dài tay, chiều cao. Bạn có thể tham khảo hướng dẫn lấy số đo trên trang hoặc liên hệ trực tiếp để được hỗ trợ.',
+    },
+    {
+      question: 'Chính sách đổi trả như thế nào?',
+      answer: 'Hà Hoạt Silk hỗ trợ đổi trả trong vòng 7 ngày kể từ ngày nhận hàng với điều kiện sản phẩm chưa qua sử dụng, còn nguyên tag và bao bì. Riêng sản phẩm may theo số đo cá nhân sẽ không áp dụng đổi trả, ngoại trừ trường hợp lỗi từ phía nhà sản xuất.',
+    },
+  ],
+}
+
+const { settings } = useSiteSettings()
+
+const pageTitle = computed(() => settings.value.faq_page?.title || FALLBACK.title)
+
+const faqs = computed(() => {
+  const items = settings.value.faq_page?.items
+  return Array.isArray(items) && items.length ? items : FALLBACK.items
+})
 </script>
 
 <style scoped>
@@ -160,6 +159,7 @@ const faqs = [
   line-height: 1.85;
   color: var(--text-dark);
   max-width: 820px;
+  white-space: pre-line;   /* giữ ngắt dòng admin gõ trong ô trả lời */
 }
 
 .faq-body-enter-active,

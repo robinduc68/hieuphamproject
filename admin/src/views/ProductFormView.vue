@@ -117,6 +117,45 @@
               <span class="form-hint">Hiện dưới giá: “Đơn giá trên 1 {{ form.unit_label || 'mét' }} vải”</span>
             </div>
           </div>
+
+          <div class="section-title" style="margin-top:22px">Bộ lọc ngoài website</div>
+          <div class="create-note" style="margin-bottom:16px">
+            🔎 Ba ô dưới đây quyết định sản phẩm có hiện ra khi khách lọc ở sidebar
+            trang <strong>Lụa Nha Xá thông dụng</strong> / <strong>100% tơ tằm</strong> hay không.
+            Bỏ trống = sản phẩm bị ẩn khi khách bật bộ lọc tương ứng.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Họa tiết</label>
+              <input v-model="form.pattern" class="form-input" list="pattern-options" placeholder="VD: Thọ Dơi" />
+              <datalist id="pattern-options">
+                <option v-for="p in PATTERNS" :key="p" :value="p" />
+              </datalist>
+              <span class="form-hint">
+                Chọn trong gợi ý để khớp với bộ lọc “HỌA TIẾT”. Gõ tên mới cũng được — tên mới sẽ
+                tự xuất hiện thành một mục lọc ngoài website.
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tone màu</label>
+              <select v-model="form.color_tag" class="form-select">
+                <option value="">— Không chọn —</option>
+                <option v-for="c in COLOR_TAGS" :key="c.name" :value="c.name">{{ c.name }}</option>
+              </select>
+              <span class="form-hint">Khớp với ô màu ở bộ lọc “MÀU SẮC” của cả hai trang vải.</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Loại lụa</label>
+            <select v-model="form.silk_type" class="form-select">
+              <option value="">— Không chọn —</option>
+              <option v-for="t in SILK_TYPES" :key="t" :value="t">{{ t }}</option>
+            </select>
+            <span class="form-hint">
+              Chỉ dùng cho bộ lọc của trang <strong>Lụa Nha Xá 100% tơ tằm</strong>
+              (sản phẩm thuộc danh mục con đó).
+            </span>
+          </div>
         </div>
 
         <!-- Quản lý ảnh -->
@@ -299,6 +338,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { productsApi, categoriesApi, customizationApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
+import { PATTERNS, COLOR_TAGS, SILK_TYPES } from '@/data/fabricOptions.js'
+import { toSlug } from '@/utils/slug.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -325,6 +366,7 @@ const form = ref({
   category_id: '', subcategory_id: '', primary_color: '', sort_order: 0,
   is_active: true, is_new: false, is_featured: false,
   product_type: 'apparel', sku_code: '', specification: '', fabric_width: '', unit_label: '',
+  pattern: '', color_tag: '', silk_type: '',
 })
 
 const isFabric = computed(() => form.value.product_type === 'fabric')
@@ -383,25 +425,6 @@ const pricePreview = computed(() => {
   return `${formatVnd(base)} – ${formatVnd(base + maxAdjustment.value)}`
 })
 
-// ── Vietnamese slug generator ─────────────────────────────────────────────
-const VI_MAP = {
-  à:'a',á:'a',ả:'a',ã:'a',ạ:'a',ă:'a',ắ:'a',ằ:'a',ẳ:'a',ẵ:'a',ặ:'a',
-  â:'a',ấ:'a',ầ:'a',ẩ:'a',ẫ:'a',ậ:'a',
-  è:'e',é:'e',ẻ:'e',ẽ:'e',ẹ:'e',ê:'e',ế:'e',ề:'e',ể:'e',ễ:'e',ệ:'e',
-  ì:'i',í:'i',ỉ:'i',ĩ:'i',ị:'i',
-  ò:'o',ó:'o',ỏ:'o',õ:'o',ọ:'o',ô:'o',ố:'o',ồ:'o',ổ:'o',ỗ:'o',ộ:'o',
-  ơ:'o',ớ:'o',ờ:'o',ở:'o',ỡ:'o',ợ:'o',
-  ù:'u',ú:'u',ủ:'u',ũ:'u',ụ:'u',ư:'u',ứ:'u',ừ:'u',ử:'u',ữ:'u',ự:'u',
-  ỳ:'y',ý:'y',ỷ:'y',ỹ:'y',ỵ:'y',đ:'d',
-}
-
-function toSlug(str) {
-  return str.toLowerCase()
-    .split('').map(c => VI_MAP[c] ?? c).join('')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim().replace(/\s+/g, '-').replace(/-+/g, '-')
-}
-
 let slugTouched = false  // nếu user tự sửa slug thì không auto-gen nữa
 
 function autoSlug() {
@@ -448,6 +471,9 @@ async function loadData() {
         specification:     p.specification || '',
         fabric_width:      p.fabric_width  || '',
         unit_label:        p.unit_label    || '',
+        pattern:           p.pattern       || '',
+        color_tag:         p.color_tag     || '',
+        silk_type:         p.silk_type     || '',
       })
       images.value = p.images || []
       sizes.value  = p.sizes  || []

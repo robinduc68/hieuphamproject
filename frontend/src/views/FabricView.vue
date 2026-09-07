@@ -110,8 +110,16 @@ const patternSearch   = ref('')
 const selectedPatterns = ref([])
 const selectedColors  = ref([])
 
+// Danh sách họa tiết = mẫu demo tĩnh + họa tiết admin nhập cho sản phẩm thật.
+const allPatterns = computed(() => {
+  const extra = fabricProducts.value
+    .map(p => (p.pattern || '').trim())
+    .filter(p => p && !patterns.includes(p))
+  return [...patterns, ...new Set(extra)]
+})
+
 const filteredPatterns = computed(() =>
-  patterns.filter(p => p.toLowerCase().includes(patternSearch.value.toLowerCase()))
+  allPatterns.value.filter(p => p.toLowerCase().includes(patternSearch.value.toLowerCase()))
 )
 
 const displayedFabrics = computed(() => {
@@ -123,10 +131,16 @@ const displayedFabrics = computed(() => {
   return list
 })
 
-// Sản phẩm thật chưa có thuộc tính họa tiết/màu để lọc → ẩn khi đang bật bộ lọc.
-const shownProducts = computed(() =>
-  (selectedPatterns.value.length || selectedColors.value.length) ? [] : fabricProducts.value
-)
+// Sản phẩm thật: lọc theo họa tiết/tone màu admin đã gán. Chưa gán → ẩn khi
+// khách bật bộ lọc tương ứng (không đoán bừa là khớp).
+const shownProducts = computed(() => {
+  let list = fabricProducts.value
+  if (selectedPatterns.value.length)
+    list = list.filter(p => selectedPatterns.value.includes((p.pattern || '').trim()))
+  if (selectedColors.value.length)
+    list = list.filter(p => selectedColors.value.includes((p.color_tag || '').trim()))
+  return list
+})
 
 function toggleColor(name) {
   const i = selectedColors.value.indexOf(name)

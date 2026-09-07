@@ -7,6 +7,7 @@ from .order import Order, OrderItem
 from .newsletter import NewsletterSubscription
 from .customization import CustomizationOption
 from .setting import SiteSetting
+from .post import Post
 
 ALL_MODELS = [
     Category, SubCategory,
@@ -17,4 +18,5 @@ ALL_MODELS = [
     NewsletterSubscription,
     CustomizationOption,
     SiteSetting,
+    Post,
 ]
