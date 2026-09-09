@@ -3,10 +3,16 @@
 
     <h1 class="page-title">{{ pageTitle }}</h1>
 
+    <button class="filter-toggle" :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen">
+      BỘ LỌC
+      <span v-if="selectedSlug" class="filter-toggle-count">1</span>
+      <svg class="filter-toggle-caret" :class="{ open: filtersOpen }" viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l5 5 5-5"/></svg>
+    </button>
+
     <div class="shop-layout">
 
       <!-- ── Sidebar ── -->
-      <aside class="shop-sidebar">
+      <aside class="shop-sidebar" :class="{ 'is-open': filtersOpen }">
 
         <div class="filter-section">
           <h3 class="filter-title">BỘ LỌC</h3>
@@ -130,6 +136,8 @@ const router = useRouter()
 
 const { categories, loading: catsLoading } = useCategories()
 
+const filtersOpen = ref(false)   // sidebar bộ lọc trên mobile
+
 // Slug đang chọn — có thể là danh mục cha hoặc danh mục con
 const selectedSlug = ref(route.query.category || null)
 const searchTerm   = ref(route.query.search   || '')
@@ -251,7 +259,7 @@ function formatPrice(price) {
 .shop-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 100px 48px 64px;
+  padding: var(--page-top) var(--page-x) 64px;
 }
 
 /* ── Tiêu đề ── */
@@ -526,14 +534,55 @@ function formatPrice(price) {
 .pg-btn.active { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
 .pg-btn:disabled { opacity: .3; cursor: default; }
 
+/* ── Bộ lọc gập trên mobile ── */
+.filter-toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto 14px;
+  padding: 13px 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+}
+.filter-toggle-count {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--brand-red);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.filter-toggle-caret { width: 12px; height: 8px; transition: transform var(--transition); flex-shrink: 0; }
+.filter-toggle-caret.open { transform: rotate(180deg); }
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
 }
+@media (max-width: 900px) {
+  .shop-layout  { flex-direction: column; }
+  .shop-sidebar { width: 100%; display: none; }
+  .shop-sidebar.is-open { display: flex; }
+  .filter-toggle { display: flex; }
+}
 @media (max-width: 768px) {
-  .shop-page { padding: 24px 20px 48px; }
-  .shop-layout { flex-direction: column; }
-  .shop-sidebar { width: 100%; }
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .shop-page   { padding-bottom: 48px; }
+  .page-title  { font-size: 24px; letter-spacing: 2px; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+@media (max-width: 420px) {
+  .product-grid { gap: 10px; }
+  .product-name { font-size: 11px; }
 }
 </style>

@@ -293,4 +293,10 @@ textarea.form-input { resize: vertical; font-family: inherit; }
   .form-side { width: 100%; }
   .form-row  { grid-template-columns: 1fr; }
 }
+@media (max-width: 640px) {
+  .form-section   { padding: 16px; }
+  .cover-preview  { width: 100%; height: 180px; }
+  .header-actions { width: 100%; }
+  .header-actions > * { flex: 1; justify-content: center; }
+}
 </style>

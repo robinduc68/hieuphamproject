@@ -58,7 +58,7 @@
 <style scoped>
 .about-page {
   background: var(--bg-gray);
-  padding: 100px 24px 48px;
+  padding: var(--page-top) var(--page-x) 48px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -141,4 +141,9 @@
 }
 .social-btn:hover { border-color: var(--charcoal); color: var(--brand-red); }
 .social-btn svg { width: 17px; height: 17px; }
+
+@media (max-width: 768px) {
+  .about-page { padding-bottom: 40px; }
+  .contact-cards { grid-template-columns: 1fr; }
+}
 </style>

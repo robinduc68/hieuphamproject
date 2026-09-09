@@ -138,7 +138,7 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 .about-panel {
   background: #F5F5F5;
   border-radius: 10px;
-  padding: 40px 48px;
+  padding: 40px var(--page-x);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -177,5 +177,9 @@ const rightPhotos = [...photos.filter((_, i) => i % 2 === 1), ...photos.filter((
 
 @media (max-width: 860px) {
   .about-card { margin: 0; }
+}
+
+@media (max-width: 900px) {
+  .about-card { grid-template-columns: 1fr; gap: 0; }
 }
 </style>

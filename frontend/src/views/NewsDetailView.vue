@@ -110,14 +110,14 @@ watch(() => route.params.slug, load, { immediate: true })
 .nd-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding-top: 100px;
+  padding-top: var(--page-top);
 }
 
 /* Wrap */
 .nd-wrap {
   max-width: 820px;
   margin: 0 auto;
-  padding: 0 24px 96px;
+  padding: 0 var(--page-x) 96px;
 }
 
 /* Hero */
@@ -281,5 +281,16 @@ watch(() => route.params.slug, load, { immediate: true })
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-body);
+}
+
+@media (max-width: 768px) {
+  .nd-hero  { height: 220px; margin-top: 18px; border-radius: 10px; }
+  .nd-breadcrumb { padding: 16px 0 22px; font-size: 10px; gap: 6px; flex-wrap: wrap; }
+  .nd-title { font-size: 24px; }
+  .nd-subtitle { font-size: 15px; }
+  .nd-header { margin-bottom: 28px; }
+  .nd-divider { margin-bottom: 32px; }
+  .related-grid { grid-template-columns: 1fr; }
+  .related-title { font-size: 19px; }
 }
 </style>

@@ -516,7 +516,15 @@ const colorGuide = computed(() => ({
 }))
 
 // ── Related carousel ─────────────────────────────────────────────────────
-const VISIBLE      = 3
+// Số sản phẩm hiện cùng lúc — 3 trên desktop, 2 tablet, 1 trên điện thoại
+const relatedVisible = ref(3)
+function slidesForViewport() {
+  const w = window.innerWidth
+  if (w < 520) return 1
+  if (w < 900) return 2
+  return 3
+}
+
 const relatedIndex = ref(0)
 const relatedVp    = ref(null)
 const relatedItemW = ref(0)
@@ -532,8 +540,12 @@ const relatedTrackStyle = computed(() => ({
 
 async function calcItemW() {
   await nextTick()
-  if (relatedVp.value)
-    relatedItemW.value = relatedVp.value.offsetWidth / VISIBLE
+  if (!relatedVp.value) return
+  relatedVisible.value = slidesForViewport()
+  relatedItemW.value   = relatedVp.value.offsetWidth / relatedVisible.value
+  // Xoay ngang máy làm số slide hiện tăng lên → kéo index về trong giới hạn
+  const max = Math.max(0, related.value.length - relatedVisible.value)
+  if (relatedIndex.value > max) relatedIndex.value = max
 }
 
 watch(related, async () => {
@@ -542,7 +554,7 @@ watch(related, async () => {
 })
 
 const relatedAtStart = computed(() => relatedIndex.value === 0)
-const relatedAtEnd   = computed(() => relatedIndex.value >= related.value.length - VISIBLE)
+const relatedAtEnd   = computed(() => relatedIndex.value >= related.value.length - relatedVisible.value)
 
 function relatedPrev() {
   if (!relatedAtStart.value) relatedIndex.value--
@@ -574,14 +586,14 @@ onUnmounted(() => {
 .product-detail-page {
   min-height: 80vh;
   background: var(--warm-white);
-  padding-top: 100px;
+  padding-top: var(--page-top);
 }
 
 /* ── Centered wrapper (giống homepage pattern) ───────────────────────────── */
 .pd-wrapper {
   max-width: 1300px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0 var(--page-x);
 }
 
 /* ── Breadcrumb ──────────────────────────────────────────────────────────── */
@@ -1220,4 +1232,44 @@ onUnmounted(() => {
 .back-link:hover { color: var(--gold); }
 
 /* Modal hướng dẫn nằm trong components/ui/GuideModal.vue */
+
+/* ══ Responsive ═══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .pd-layout { grid-template-columns: 54% 46%; }
+  .pd-info   { padding: 30px 0 40px 26px; }
+  .pd-name   { font-size: 25px; }
+}
+
+/* Ảnh và thông tin xếp dọc — thumbnail chuyển thành hàng ngang dưới ảnh */
+@media (max-width: 860px) {
+  .pd-layout  { grid-template-columns: 1fr; }
+  .pd-gallery {
+    position: static;
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding: 16px 0 0;
+  }
+  .thumb-strip {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .thumb-strip::-webkit-scrollbar { display: none; }
+  .thumb-btn { width: 52px; }
+  .pd-info   { padding: 24px 0 24px; }
+  .pd-info-card { margin-top: 28px; }
+  .pd-name   { font-size: 23px; }
+  .pd-price  { margin-bottom: 20px; }
+  .pd-related-inner { padding: 36px var(--page-x) 52px; }
+  .related-title { font-size: 20px; }
+}
+
+@media (max-width: 560px) {
+  .breadcrumb { font-size: 9px; letter-spacing: 1.2px; padding: 12px 0; }
+  .pd-name    { font-size: 21px; }
+  .add-to-cart-btn { width: 100%; }
+  .pd-info-body { padding: 20px 16px 24px; }
+}
 </style>

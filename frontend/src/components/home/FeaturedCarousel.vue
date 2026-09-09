@@ -12,6 +12,8 @@
       @mousemove="onDrag"
       @mouseup="endDrag"
       @mouseleave="endDrag"
+      @touchstart.passive="startDrag"
+      @touchend="endDrag"
     >
       <div
         class="carousel-track"
@@ -103,17 +105,22 @@ function goTo(i) {
 function prev() { goTo(currentIndex.value - 1) }
 function next() { goTo(currentIndex.value + 1) }
 
+/** Toạ độ X của cả chuột lẫn chạm */
+function pointerX(e) {
+  return e.changedTouches ? e.changedTouches[0].clientX : e.clientX
+}
+
 function startDrag(e) {
   isDragging.value = true
-  dragStartX = e.clientX
+  dragStartX = pointerX(e)
 }
 function onDrag(e) {
   if (!isDragging.value) return
 }
 function endDrag(e) {
   if (!isDragging.value) return
-  const delta = e.clientX - dragStartX
-  if (Math.abs(delta) > 60) {
+  const delta = pointerX(e) - dragStartX
+  if (Math.abs(delta) > 50) {
     delta < 0 ? next() : prev()
   }
   isDragging.value = false
@@ -143,12 +150,12 @@ onUnmounted(() => clearInterval(autoTimer))
 <style scoped>
 .featured {
   background: var(--charcoal);
-  padding: 80px 0 64px;
+  padding: var(--section-y) 0 64px;
   overflow: hidden;
 }
 
 .featured-header {
-  padding: 0 48px;
+  padding: 0 var(--page-x);
   margin-bottom: 48px;
 }
 .featured-header .section-title { margin-bottom: 0; }
@@ -167,7 +174,7 @@ onUnmounted(() => clearInterval(autoTimer))
 
 .carousel-slide {
   flex: 0 0 100%;
-  padding: 0 48px;
+  padding: 0 var(--page-x);
   display: block;
 }
 
@@ -208,7 +215,7 @@ onUnmounted(() => clearInterval(autoTimer))
   display: flex;
   align-items: flex-end;
   gap: 32px;
-  padding: 48px 64px;
+  padding: 48px var(--page-x);
   width: 100%;
 }
 
@@ -256,7 +263,7 @@ onUnmounted(() => clearInterval(autoTimer))
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 48px 0;
+  padding: 32px var(--page-x) 0;
 }
 
 .carousel-dots {
@@ -291,4 +298,20 @@ onUnmounted(() => clearInterval(autoTimer))
   color: var(--gold);
 }
 .carousel-btn:disabled { opacity: .25; cursor: default; }
+
+@media (max-width: 900px) {
+  .slide-img      { aspect-ratio: 4 / 3; }
+  .slide-number   { font-size: 60px; }
+  .slide-name     { font-size: clamp(24px, 6vw, 34px); margin-bottom: 14px; }
+  .slide-content  { gap: 18px; padding: 28px var(--page-x); }
+  .slide-ornament { right: 20px; width: 92px; height: 120px; opacity: .5; }
+  .featured-header { margin-bottom: 28px; }
+}
+@media (max-width: 560px) {
+  .slide-img      { aspect-ratio: 3 / 4; }
+  .slide-ornament { display: none; }
+  .slide-number   { display: none; }
+  .slide-overlay  { background: linear-gradient(to top, rgba(26,26,24,.92) 12%, rgba(26,26,24,.28) 70%); }
+  .slide-arrow    { opacity: 1; transform: none; }   /* không có hover trên mobile */
+}
 </style>

@@ -341,4 +341,8 @@ function onPaste(e) {
 .rte-btn.danger { color: #DC2626; }
 .rte-btn.danger:hover { background: #FEF2F2; }
 .rte-body :deep(a) { color: var(--blue); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .rte-toolbar { flex-wrap: wrap; row-gap: 6px; }
+}
 </style>

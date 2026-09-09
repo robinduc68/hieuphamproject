@@ -1,8 +1,11 @@
 <template>
   <div class="admin-wrap">
 
+    <!-- Lớp phủ khi mở menu trên mobile -->
+    <div v-if="menuOpen" class="sidebar-overlay" @click="menuOpen = false" />
+
     <!-- ── Sidebar ── -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'is-open': menuOpen }">
       <div class="sidebar-logo">
         <span class="logo-icon">RBD</span>
         <div>
@@ -35,6 +38,9 @@
     <!-- ── Main ── -->
     <div class="main-wrap">
       <header class="topbar">
+        <button class="topbar-burger" aria-label="Mở menu" @click="menuOpen = true">
+          <span /><span /><span />
+        </button>
         <div class="topbar-title">{{ pageTitle }}</div>
         <a :href="homeUrl" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
           Xem trang chủ ↗
@@ -50,7 +56,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { siteUrl } from '@/utils/siteUrl.js'
@@ -61,6 +67,10 @@ const router    = useRouter()
 const currentRoute = useRoute()
 
 const homeUrl = siteUrl('/')
+
+// Sidebar trên mobile: ẩn mặc định, mở bằng nút hamburger ở topbar
+const menuOpen = ref(false)
+watch(() => currentRoute.path, () => { menuOpen.value = false })
 
 const allNavItems = [
   { to: '/dashboard',  label: 'Dashboard', perm: 'dashboard.view',     icon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg>' },
@@ -237,5 +247,54 @@ function logout() {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+}
+
+/* Nút mở menu — chỉ hiện trên mobile */
+.topbar-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 34px; height: 34px;
+  margin-right: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.topbar-burger span {
+  display: block;
+  width: 18px; height: 1.8px;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+.sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 90;
+}
+
+/* ══ Mobile ═══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,.25);
+  }
+  .sidebar.is-open { transform: translateX(0); }
+
+  .topbar-burger { display: flex; }
+  .topbar        { padding: 0 14px; }
+  .topbar-title  { font-size: 15px; flex: 1; min-width: 0;
+                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .content       { padding: 16px 14px 28px; }
+}
+
+@media (max-width: 480px) {
+  .content { padding: 14px 12px 24px; }
 }
 </style>

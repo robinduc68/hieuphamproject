@@ -9,10 +9,16 @@
       </h1>
     </header>
 
+    <button class="filter-toggle" :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen">
+      BỘ LỌC
+      <span v-if="selectedTypes.length + selectedColors.length" class="filter-toggle-count">{{ selectedTypes.length + selectedColors.length }}</span>
+      <svg class="filter-toggle-caret" :class="{ open: filtersOpen }" viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l5 5 5-5"/></svg>
+    </button>
+
     <div class="fabric-layout">
 
       <!-- ── Sidebar ─────────────────────────────────────── -->
-      <aside class="fabric-sidebar">
+      <aside class="fabric-sidebar" :class="{ 'is-open': filtersOpen }">
 
         <!-- LOẠI LỤA -->
         <div class="filter-section">
@@ -100,6 +106,7 @@ const { pureSilk: fabricProducts } = useFabricProducts()
 
 const selectedTypes  = ref([])
 const selectedColors = ref([])
+const filtersOpen    = ref(false)   // bộ lọc trên mobile
 
 // Sản phẩm thật: lọc theo loại lụa/tone màu admin đã gán. Chưa gán → ẩn khi
 // khách bật bộ lọc tương ứng (không đoán bừa là khớp).
@@ -140,7 +147,7 @@ function resetFilter() {
 .fabric-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 100px 48px 64px;
+  padding: var(--page-top) var(--page-x) 64px;
 }
 
 .fabric-header {
@@ -398,5 +405,55 @@ function resetFilter() {
   color: var(--text-dark);
   text-align: center;
   text-transform: uppercase;
+}
+
+/* Bộ lọc trên mobile: gập lại sau nút, tránh đẩy lưới sản phẩm xuống quá xa */
+.filter-toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 13px 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+}
+.filter-toggle-count {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--brand-red);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.filter-toggle-caret { width: 12px; height: 8px; transition: transform var(--transition); flex-shrink: 0; }
+.filter-toggle-caret.open { transform: rotate(180deg); }
+
+@media (max-width: 1024px) {
+  .fabric-grid { grid-template-columns: repeat(3, 1fr); }
+  .color-grid  { grid-template-columns: repeat(6, 1fr); }
+}
+@media (max-width: 900px) {
+  .fabric-layout  { flex-direction: column; }
+  .fabric-sidebar { width: 100%; display: none; }
+  .fabric-sidebar.is-open { display: flex; }
+  .filter-toggle  { display: flex; }
+  .fabric-header-title { font-size: 26px; }
+  .fabric-header-sub   { display: block; font-size: 14px; margin-top: 4px; }
+}
+@media (max-width: 560px) {
+  .fabric-page { padding-bottom: 48px; }
+  .fabric-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .color-grid  { grid-template-columns: repeat(4, 1fr); }
+  .fabric-name { font-size: 13px; }
 }
 </style>

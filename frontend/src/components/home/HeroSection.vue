@@ -36,6 +36,8 @@ const poster   = computed(() => settings.value.hero_video?.poster || '/videos/he
   position: relative;
   width: 100%;
   height: 100vh;
+  /* svh = chiều cao thật khi thanh địa chỉ trình duyệt mobile đang hiện */
+  height: 100svh;
   min-height: 320px;
   overflow: hidden;
   background: linear-gradient(135deg, #1a100e 0%, #2b1a15 40%, #1a1510 100%);
@@ -55,5 +57,9 @@ const poster   = computed(() => settings.value.hero_video?.poster || '/videos/he
   inset: 0;
   background: rgba(0, 0, 0, 0.25);
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .hero { height: 68svh; min-height: 420px; }
 }
 </style>

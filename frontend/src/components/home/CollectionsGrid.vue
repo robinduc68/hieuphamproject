@@ -99,7 +99,7 @@ onUnmounted(() => {
 <style scoped>
 .features-section {
   background: #DEDEDE;
-  padding: 80px 48px;
+  padding: var(--section-y) var(--page-x);
 }
 @media (min-width: 701px) {
   .features-section.bg-anim {
@@ -196,5 +196,15 @@ onUnmounted(() => {
   color: #000000;
   line-height: 1.75;
   font-weight: 400;
+}
+
+@media (max-width: 1024px) {
+  .features-cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .features-inner { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 560px) {
+  .features-cards { grid-template-columns: 1fr; gap: 14px; }
 }
 </style>

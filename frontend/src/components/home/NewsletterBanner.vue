@@ -96,7 +96,7 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.newsletter { background: var(--charcoal); padding: 96px 48px; overflow: hidden; }
+.newsletter { background: var(--charcoal); padding: 96px var(--page-x); overflow: hidden; }
 .newsletter-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 160px 1fr 160px; gap: 48px; align-items: center; }
 .newsletter-deco { display: flex; align-items: center; justify-content: center; }
 .deco-svg { width: 100%; height: 320px; }
@@ -123,4 +123,12 @@ async function handleSubmit() {
 .submit-btn:disabled { opacity: .75; cursor: default; }
 .submitted-text { display: flex; align-items: center; gap: 10px; }
 .api-error { font-size: 11px; color: #e05070; text-align: center; }
+
+@media (max-width: 900px) {
+  .newsletter { padding: 60px var(--page-x); }
+  .newsletter-inner { grid-template-columns: 1fr; gap: 24px; text-align: center; }
+}
+@media (max-width: 560px) {
+  .form-row { grid-template-columns: 1fr; }
+}
 </style>

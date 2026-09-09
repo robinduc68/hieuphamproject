@@ -181,4 +181,11 @@ function swatchGrad(hex) {
 .overlay-enter-from, .overlay-leave-to { opacity: 0; }
 .drawer-enter-active, .drawer-leave-active { transition: transform .35s cubic-bezier(.25,.46,.45,.94); }
 .drawer-enter-from, .drawer-leave-to { transform: translateX(100%); }
+
+@media (max-width: 480px) {
+  /* Chừa mép trái để còn thấy trang phía sau, biết là lớp phủ bấm ra được */
+  .cart-drawer { width: 100vw; max-width: calc(100vw - 40px); }
+  .ci-img { width: 56px; height: 70px; }
+  .ci-name { font-size: 12px; }
+}
 </style>

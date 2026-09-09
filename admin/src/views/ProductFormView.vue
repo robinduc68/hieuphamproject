@@ -784,4 +784,13 @@ async function deleteSize(s) {
   .form-side { width: 100%; }
   .images-grid { grid-template-columns: repeat(3, 1fr); }
 }
+@media (max-width: 640px) {
+  /* 2 cột trên màn hẹp làm ô nhập ngắn tới mức không đọc được slug/giá */
+  .form-row      { grid-template-columns: 1fr; }
+  .form-section  { padding: 16px; }
+  .images-grid   { grid-template-columns: repeat(2, 1fr); }
+  .upload-area   { padding: 20px; }
+  .header-actions { width: 100%; }
+  .header-actions > * { flex: 1; justify-content: center; }
+}
 </style>

@@ -63,7 +63,7 @@ onMounted(async () => {
 .news-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 100px 80px 96px;
+  padding: var(--page-top) var(--page-x) 96px;
 }
 
 .news-title {
@@ -176,5 +176,16 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.65;
+}
+
+@media (max-width: 1024px) {
+  .news-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+}
+@media (max-width: 768px) {
+  .news-page  { padding-bottom: 64px; }
+  .news-title { font-size: 28px; letter-spacing: 2px; margin-bottom: 30px; }
+}
+@media (max-width: 560px) {
+  .news-grid { grid-template-columns: 1fr; }
 }
 </style>

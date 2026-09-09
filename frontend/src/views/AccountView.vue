@@ -174,13 +174,13 @@ async function submitRegister() {
 .acc-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 100px 0 72px;
+  padding: var(--page-top) 0 72px;
 }
 
 .acc-wrapper {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0 var(--page-x);
 }
 
 .acc-title {
@@ -378,8 +378,11 @@ async function submitRegister() {
 .dash-actions > * { flex: 1; }
 
 @media (max-width: 860px) {
-  .acc-wrapper { padding: 0 20px; }
   .acc-card { padding: 26px 22px 30px; }
   .dash-actions { flex-direction: column; }
+}
+
+@media (max-width: 560px) {
+  .acc-card { padding: 22px 18px 26px; }
 }
 </style>

@@ -226,4 +226,11 @@ onMounted(load)
 .info-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); }
 .badge-green  { background: #dcfce7 !important; color: #166534 !important; }
 .badge-orange { background: #fff7ed !important; color: #c2410c !important; }
+
+@media (max-width: 900px) {
+  .toolbar { flex-wrap: wrap; }
+}
+@media (max-width: 560px) {
+  .order-info-grid { grid-template-columns: 1fr; }
+}
 </style>

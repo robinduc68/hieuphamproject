@@ -14,8 +14,8 @@
     <div class="card intro">
       Vai trò quyết định một tài khoản admin <strong>vào được tab nào</strong> và
       <strong>bấm được nút nào</strong> trong tab đó. Gán vai trò cho tài khoản ở mục
-      <RouterLink to="/users">Người dùng</RouterLink>. Quyền được kiểm tra ở cả giao diện lẫn
-      server, nên tắt quyền là thao tác đó bị chặn thật chứ không chỉ ẩn nút.
+      <RouterLink to="/users">Người dùng</RouterLink>. Hiện quyền chỉ dùng để ẩn/hiện giao diện —
+      tài khoản admin nào cũng gọi được API trực tiếp, nên chỉ cấp quyền admin cho người tin tưởng.
     </div>
 
     <div class="card" style="margin-top:16px">
@@ -365,5 +365,12 @@ onMounted(load)
 
 @media (max-width: 800px) {
   .form-row, .perm-items { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .role-desc, .perm-chips { max-width: none; }
+  .perm-head { flex-direction: column; align-items: stretch; gap: 8px; }
+  .perm-head > div { display: flex; gap: 8px; }
+  .perm-head .btn { flex: 1; justify-content: center; }
 }
 </style>

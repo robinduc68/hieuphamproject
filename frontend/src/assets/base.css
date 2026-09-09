@@ -26,11 +26,36 @@
 
   --transition:   .3s cubic-bezier(.25,.46,.45,.94);
   --radius:       12px;
+
+  /* Lề ngang & khoảng đệm trên của trang — mọi view dùng biến này thay vì số
+     cứng, đổi ở đây là cả site co theo. Header cao ~74px nên --page-top phải
+     lớn hơn để nội dung không bị che. */
+  --page-x:       48px;
+  --page-top:     100px;
+  --section-y:    80px;
+}
+
+/* Tablet ngang */
+@media (max-width: 1024px) {
+  :root { --page-x: 32px; --section-y: 64px; }
+}
+/* Tablet dọc */
+@media (max-width: 768px) {
+  :root { --page-x: 20px; --page-top: 92px; --section-y: 52px; }
+}
+/* Điện thoại */
+@media (max-width: 480px) {
+  :root { --page-x: 16px; --page-top: 84px; --section-y: 44px; }
 }
 
 /* ─── RESET ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  /* iOS tự phóng chữ khi quay ngang máy nếu không khai báo */
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
   font-family: var(--font-body);
@@ -43,6 +68,16 @@ body {
 a { text-decoration: none; color: inherit; }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; font-family: inherit; }
+
+/* Safari iOS phóng to trang khi focus vào input có chữ nhỏ hơn 16px */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* Vùng bấm tối thiểu cho ngón tay trên thiết bị cảm ứng */
+@media (hover: none) {
+  button, a[class*="btn"], .icon-btn { min-height: 40px; }
+}
 
 /* ─── ANIMATIONS ─── */
 @keyframes fadeUp {
@@ -60,7 +95,7 @@ button { cursor: pointer; font-family: inherit; }
 
 /* ─── GLOBAL SECTION UTILITIES ─── */
 .section {
-  padding: 80px 48px;
+  padding: var(--section-y) var(--page-x);
 }
 
 .section-label {
@@ -74,11 +109,16 @@ button { cursor: pointer; font-family: inherit; }
 
 .section-title {
   font-family: var(--font-display);
-  font-size: clamp(28px, 3vw, 44px);
+  font-size: clamp(24px, 3vw, 44px);
   font-weight: 400;
   color: var(--charcoal);
   margin-bottom: 40px;
   line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .section-label { font-size: 19px; }
+  .section-title { margin-bottom: 26px; }
 }
 
 /* ─── TYPEWRITER DIRECTIVE (v-typewriter) ─── */

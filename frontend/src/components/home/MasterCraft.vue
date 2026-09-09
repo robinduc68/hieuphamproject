@@ -38,7 +38,7 @@ const cards = [
 <style scoped>
 .craft-section {
   background: var(--bg-gray);
-  padding: 80px 20px 48px;   /* khớp padding ngang 20px; lùi đáy cho sát NewArrivals */
+  padding: var(--section-y) var(--page-x) 48px;   /* khớp padding ngang 20px; lùi đáy cho sát NewArrivals */
 }
 
 .craft-head {
@@ -114,5 +114,9 @@ const cards = [
 }
 @media (max-width: 700px) {
   .craft-cards { margin: 0; }
+}
+
+@media (max-width: 560px) {
+  .craft-card { padding: 30px 20px 40px; }
 }
 </style>

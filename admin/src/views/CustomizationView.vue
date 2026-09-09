@@ -322,4 +322,11 @@ code {
   opacity: 0;
   transform: translate(-50%, -48%);
 }
+
+@media (max-width: 560px) {
+  /* Modal của view này tự định vị (position: fixed) nên phải chỉnh riêng,
+     không ăn theo .modal chung trong admin.css */
+  .modal { width: calc(100vw - 20px); max-height: 92vh; }
+  .modal-body { padding: 16px; }
+}
 </style>

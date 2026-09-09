@@ -78,7 +78,7 @@ const faqs = computed(() => {
 .faq-page {
   min-height: 80vh;
   background: var(--bg-gray);
-  padding: 100px 48px 96px;
+  padding: var(--page-top) var(--page-x) 96px;
 }
 
 .faq-title {
@@ -172,5 +172,15 @@ const faqs = computed(() => {
 .faq-body-leave-to {
   max-height: 0;
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .faq-page  { padding-bottom: 64px; }
+  .faq-title { font-size: 26px; letter-spacing: 2px; margin-bottom: 32px; }
+  .faq-trigger { padding: 20px 0; gap: 14px; }
+  .faq-q     { font-size: 15px; }
+  .faq-answer { padding-bottom: 22px; }
+  /* Câu trả lời dài hơn 300px bị cắt mất khi mở trên màn hẹp */
+  .faq-body-enter-active, .faq-body-leave-active { max-height: 900px; }
 }
 </style>

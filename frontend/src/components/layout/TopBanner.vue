@@ -39,7 +39,7 @@ const navItems = [
   gap: 0;
   list-style: none;
   width: 100%;
-  padding: 8px 48px;
+  padding: 8px var(--page-x);
 }
 
 .top-nav li + li::before {
@@ -63,5 +63,9 @@ const navItems = [
 .router-link-active {
   color: var(--text-dark);
   font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .top-banner { font-size: 11px; }
 }
 </style>

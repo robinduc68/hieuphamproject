@@ -366,7 +366,7 @@ async function handleSubmit() {
 .checkout-page {
   background: #fff;
   min-height: 80vh;
-  padding: 100px 0 80px;
+  padding: var(--page-top) 0 80px;
 }
 
 .checkout-layout {
@@ -375,7 +375,7 @@ async function handleSubmit() {
   gap: 60px;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 var(--page-x);
   align-items: start;
 }
 
@@ -748,4 +748,19 @@ form { display: flex; flex-direction: column; gap: 16px; }
 .overlay-enter-from, .overlay-leave-to { opacity: 0; }
 .modal-enter-active, .modal-leave-active { transition: opacity .3s, transform .3s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translate(-50%,-46%); }
+
+/* ══ Responsive ═══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* Tóm tắt đơn lên trên để khách thấy ngay tổng tiền, form nhập xuống dưới */
+  .checkout-layout { grid-template-columns: 1fr; gap: 34px; }
+  .checkout-right  { position: static; order: -1; }
+  .checkout-left   { gap: 28px; }
+}
+@media (max-width: 560px) {
+  .checkout-page { padding-bottom: 56px; }
+  .form-row  { grid-template-columns: 1fr; gap: 14px; }
+  .bank-card { grid-template-columns: 1fr; }
+  .bank-info { border-right: none; border-bottom: 1px solid #D5D5D0; padding: 16px 18px; }
+  .co-section-title { font-size: 12px; letter-spacing: 1.5px; }
+}
 </style>

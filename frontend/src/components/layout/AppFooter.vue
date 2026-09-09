@@ -87,7 +87,7 @@
 .footer-wrap {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 40px 64px 48px;
+  padding: 40px var(--page-x) 48px;
   color: white;
 }
 
@@ -204,4 +204,15 @@
   background: rgba(255,255,255,0.1);
 }
 .social-btn svg { width: 16px; height: 16px; }
+
+@media (max-width: 900px) {
+  .footer-cols { grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+}
+@media (max-width: 420px) {
+  /* white-space: nowrap + padding 38px làm nút rộng hơn màn hình nhỏ */
+  .footer-cta { padding: 15px 22px; font-size: 16px; gap: 8px; }
+}
+@media (max-width: 560px) {
+  .footer-cols { grid-template-columns: 1fr; gap: 26px; }
+}
 </style>

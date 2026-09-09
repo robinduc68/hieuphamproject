@@ -142,4 +142,11 @@ function removeColumn(ci) {
 
 .tbl-empty { padding: 16px; text-align: center; color: var(--text-2); font-size: 13px; }
 .tbl-actions { display: flex; gap: 8px; padding: 10px; background: #FAFBFC; border-top: 1px solid var(--border); }
+
+@media (max-width: 760px) {
+  .tbl-scroll { -webkit-overflow-scrolling: touch; }
+  .tbl { min-width: 520px; }
+  .tbl-actions { flex-wrap: wrap; }
+  .tbl-actions .btn { flex: 1; justify-content: center; }
+}
 </style>

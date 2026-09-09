@@ -165,9 +165,9 @@ function addToCart() {
 .fd-page {
   min-height: 80vh;
   background: var(--warm-white);
-  padding-top: 100px;
+  padding-top: var(--page-top);
 }
-.fd-wrapper { max-width: 1300px; margin: 0 auto; padding: 0 48px; }
+.fd-wrapper { max-width: 1300px; margin: 0 auto; padding: 0 var(--page-x); }
 
 .breadcrumb {
   display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
@@ -290,7 +290,7 @@ function addToCart() {
 
 /* Related */
 .fd-related { background: var(--warm-white); }
-.fd-related-inner { max-width: 1300px; margin: 0 auto; padding: 40px 48px 72px; }
+.fd-related-inner { max-width: 1300px; margin: 0 auto; padding: 40px var(--page-x) 72px; }
 .related-title {
   font-family: var(--font-display); font-size: 26px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase; color: var(--brand-red); margin-bottom: 32px;
@@ -319,5 +319,47 @@ function addToCart() {
 @media (max-width: 860px) {
   .fd-layout { grid-template-columns: 1fr; }
   .related-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1024px) {
+  .fd-name { font-size: 26px; }
+}
+@media (max-width: 860px) {
+  .fd-gallery {
+    position: static;
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding: 12px 0 0;
+  }
+  .thumb-strip {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .thumb-strip::-webkit-scrollbar { display: none; }
+  .thumb-btn { width: 54px; }
+  .fd-name   { font-size: 23px; }
+  .fd-related-inner { padding: 32px var(--page-x) 52px; }
+  .related-title { font-size: 19px; letter-spacing: 1.4px; }
+}
+@media (max-width: 560px) {
+  .breadcrumb { font-size: 9px; letter-spacing: 1.2px; }
+  .fd-name    { font-size: 21px; }
+  .fd-buy     { flex-wrap: wrap; }
+  .add-to-cart-btn { width: 100%; }
+  .related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 640px) {
+  /* flex-wrap khiến tab dài bị đẩy tràn — cho cuộn ngang như trang sản phẩm */
+  .fd-info-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .fd-info-tabs::-webkit-scrollbar { display: none; }
+  .fd-info-tab  { padding: 15px 18px; font-size: 12px; }
+  .fd-info-body { padding: 20px 16px 24px; }
 }
 </style>

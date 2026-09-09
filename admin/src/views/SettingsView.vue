@@ -429,4 +429,12 @@ async function onPosterSelected(e) {
   .video-preview { width: 100%; }
   .form-row { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 760px) {
+  .form-row      { grid-template-columns: 1fr; }
+  .video-row     { flex-direction: column; }
+  .video-preview { width: 100%; }
+  .pattern-row   { flex-wrap: wrap; }
+  .pattern-row .form-input { flex: 1 1 100%; order: -1; }
+}
 </style>

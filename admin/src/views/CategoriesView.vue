@@ -183,4 +183,11 @@ onMounted(load)
 .sub-slug  { font-size: 11px; color: var(--text-2); }
 .sub-actions{ display: flex; gap: 4px; margin-left: auto; }
 .sub-empty { padding: 12px 20px; font-size: 13px; color: var(--text-2); }
+
+@media (max-width: 560px) {
+  .cat-header  { flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
+  .cat-actions { width: 100%; }
+  .sub-list    { padding: 8px 14px 12px; }
+  .sub-item    { flex-wrap: wrap; gap: 8px; }
+}
 </style>
