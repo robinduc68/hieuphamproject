@@ -88,6 +88,8 @@
             </button>
           </div>
 
+          <p class="fd-qty-hint">Có thể nhập số mét vải lẻ cần mua. Ví dụ: 3.8</p>
+
           <p class="fd-total">
             Tạm tính {{ formatQty(qty) }} {{ unit }}:
             <strong>{{ formatPrice(Number(product.price) * qty) }}</strong>
@@ -384,7 +386,11 @@ function addToCart() {
 }
 .fd-link:hover { color: var(--brand-red); }
 
-.fd-buy { display: flex; gap: 14px; margin-bottom: 14px; }
+.fd-buy { display: flex; gap: 14px; margin-bottom: 10px; }
+.fd-qty-hint {
+  font-family: var(--font-body); font-size: 12px; line-height: 1.6;
+  color: var(--text-muted); margin-bottom: 10px;
+}
 .qty-stepper {
   display: flex; align-items: center; border: 1px solid var(--border);
   border-radius: 4px; flex-shrink: 0; background: #fff;
