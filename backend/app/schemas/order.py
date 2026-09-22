@@ -8,10 +8,22 @@ from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 class OrderItemIn(BaseModel):
     product_id:       int
     size:             str
-    quantity:         int = 1
+    # Decimal vì vải bán theo mét, khách mua được 3.8 mét
+    quantity:         Decimal = Decimal("1")
     tailoring_method: Optional[str] = None  # option_key, e.g. 'size' or 'custom'
     lining_type:      Optional[str] = None  # option_key, e.g. 'lien_ta' or 'yem_roi'
     color_option:     Optional[str] = None  # option_key, e.g. 'same' or 'custom_color'
+
+    @field_validator("quantity", mode="before")
+    @classmethod
+    def parse_quantity(cls, v):
+        """Nhận cả '3,8' (kiểu Việt) lẫn 3.8, làm tròn 2 số lẻ."""
+        if isinstance(v, str):
+            v = v.replace(",", ".").strip()
+        qty = Decimal(str(v)).quantize(Decimal("0.01"))
+        if qty <= 0:
+            raise ValueError("Số lượng phải lớn hơn 0.")
+        return qty
 
 
 class OrderCreate(BaseModel):
@@ -34,13 +46,13 @@ class OrderItemOut(BaseModel):
     product_id:       Optional[int] = None
     product_name:     Optional[str] = None
     size:             str
-    quantity:         int
+    quantity:         Decimal
     price:            Decimal
     tailoring_method: Optional[str] = None
     lining_type:      Optional[str] = None
     color_option:     Optional[str] = None
 
-    @field_validator("price", mode="before")
+    @field_validator("price", "quantity", mode="before")
     @classmethod
     def coerce(cls, v): return Decimal(str(v))
 

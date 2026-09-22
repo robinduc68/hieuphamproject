@@ -58,7 +58,8 @@ class OrderItem(BaseModel):
     product          = ForeignKeyField(Product, backref="order_items", null=True, on_delete="SET NULL")
     product_name     = CharField(max_length=255, null=True)   # snapshot
     size             = CharField(max_length=20)
-    quantity         = IntegerField(default=1)
+    # Vải bán theo mét nên cho số lẻ (VD 3.8 mét); quần áo vẫn là số nguyên
+    quantity         = DecimalField(max_digits=10, decimal_places=2, default=1)
     price            = DecimalField(max_digits=14, decimal_places=0)   # unit price snapshot (incl. adjustments)
     tailoring_method = CharField(max_length=60, null=True)   # option_key snapshot
     lining_type      = CharField(max_length=60, null=True)

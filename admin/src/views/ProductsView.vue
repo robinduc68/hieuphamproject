@@ -66,6 +66,15 @@
                   <RouterLink v-if="auth.can('products.update')" :to="`/products/${p.id}/edit`" class="btn btn-icon btn-sm" title="Sửa">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M11 2l3 3L5 14H2v-3L11 2z"/></svg>
                   </RouterLink>
+                  <button
+                    v-if="auth.can('products.create')"
+                    class="btn btn-icon btn-sm"
+                    title="Nhân bản sản phẩm"
+                    :disabled="duplicatingId === p.id"
+                    @click="duplicate(p)"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="width:13px;height:13px"><rect x="5.5" y="5.5" width="9" height="9" rx="1.5"/><path d="M10.5 5.5v-3a1 1 0 00-1-1h-7a1 1 0 00-1 1v7a1 1 0 001 1h3"/></svg>
+                  </button>
                   <button v-if="auth.can('products.delete')" class="btn btn-icon btn-sm" title="Xoá" @click="confirmDelete(p)">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
                   </button>
@@ -111,9 +120,11 @@ import { ref, computed, onMounted } from 'vue'
 import { productsApi, categoriesApi } from '@/api/index.js'
 import { useToastStore } from '@/stores/toast.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useRouter } from 'vue-router'
 
 const toast = useToastStore()
 const auth = useAuthStore()
+const router = useRouter()
 
 const products   = ref([])
 const categories = ref([])
@@ -126,6 +137,7 @@ const search         = ref('')
 const filterCategory = ref('')
 const filterStatus   = ref('')
 const deleteTarget   = ref(null)
+const duplicatingId  = ref(null)
 const deleting       = ref(false)
 
 const totalPages = computed(() => Math.ceil(total.value / PER_PAGE))
@@ -165,6 +177,23 @@ async function loadCategories() {
 
 function doSearch() { page.value = 1; load() }
 function goPage(p)  { page.value = p; load() }
+
+/**
+ * Nhân bản sản phẩm — backend copy cả ảnh và size, bản sao để ẩn.
+ * Mở thẳng trang sửa để admin đổi tên / giá rồi bật hiển thị.
+ */
+async function duplicate(p) {
+  duplicatingId.value = p.id
+  try {
+    const copy = await productsApi.duplicate(p.id)
+    toast.success(`Đã nhân bản "${p.name}" — bản sao đang ẩn, sửa xong nhớ bật hiển thị`)
+    router.push(`/products/${copy.id}/edit`)
+  } catch (e) {
+    toast.error(String(e))
+  } finally {
+    duplicatingId.value = null
+  }
+}
 
 function confirmDelete(p) { deleteTarget.value = p }
 

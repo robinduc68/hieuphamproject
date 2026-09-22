@@ -201,13 +201,16 @@
             <div class="item-img" :style="{ background: swatchGradient(item.color_hex) }" />
             <div class="item-info">
               <p class="item-name">{{ item.name.toUpperCase() }}</p>
-              <p v-if="item.tailoring_method === 'custom'" class="item-detail">May theo số đo</p>
+              <p v-if="item.product_type === 'fabric'" class="item-detail">Bán theo {{ item.unit_label || 'mét' }}</p>
+              <p v-else-if="item.tailoring_method === 'custom'" class="item-detail">May theo số đo</p>
               <p v-else class="item-detail">Size: {{ item.size }}</p>
               <p v-if="item.lining_type" class="item-detail">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà ngoài' }}</p>
               <p v-if="item.color_option" class="item-detail">Màu sắc: {{ item.color_option === 'same' ? 'Giống ảnh mẫu' : 'Phối màu riêng' }}</p>
             </div>
             <div class="item-right">
-              <span class="item-qty">x{{ item.quantity }}</span>
+              <span class="item-qty">
+                x{{ formatQty(item.quantity) }}<em v-if="item.product_type === 'fabric'">{{ item.unit_label || 'mét' }}</em>
+              </span>
               <span class="item-price">{{ formatPrice(item.price * item.quantity) }}</span>
             </div>
           </div>
@@ -259,6 +262,9 @@ import { useAuthStore } from '@/stores/auth'
 import { ordersApi, locationsApi } from '@/api'
 
 const cartStore = useCartStore()
+
+/** 3.8 → "3,8" ; 2 → "2" */
+const formatQty = (v) => Number(v).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 const authStore = useAuthStore()
 
 const payMethod = ref('onepay')
@@ -673,6 +679,7 @@ form { display: flex; flex-direction: column; gap: 16px; }
   font-size: 12px;
   color: var(--text-muted);
 }
+.item-qty em { font-style: normal; margin-left: 3px; }
 .item-price {
   font-family: var(--font-body);
   font-size: 13px;

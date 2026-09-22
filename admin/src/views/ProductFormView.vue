@@ -6,6 +6,13 @@
         <div class="page-sub">{{ isEdit ? `ID: ${productId}` : 'Điền thông tin sản phẩm' }}</div>
       </div>
       <div class="header-actions">
+        <button
+          v-if="isEdit && auth.can('products.create')"
+          class="btn btn-secondary"
+          :disabled="duplicating"
+          title="Tạo một sản phẩm mới copy toàn bộ nội dung, ảnh và size của sản phẩm này"
+          @click="duplicate"
+        >{{ duplicating ? 'Đang nhân bản...' : 'Nhân bản' }}</button>
         <a v-if="publicUrl" :href="publicUrl" target="_blank" rel="noopener"
            class="btn btn-secondary" title="Mở trang sản phẩm ngoài website ở tab mới">
           Xem trên web ↗
@@ -56,7 +63,7 @@
               </span>
               <span v-else class="form-hint">Quyết định sản phẩm nằm ở mục nào trên website</span>
             </div>
-            <div class="form-group">
+            <div v-if="!isFabric" class="form-group">
               <label class="form-label">Danh mục con{{ subcategories.length ? ' *' : '' }}</label>
               <select v-model="form.subcategory_id" class="form-select" :disabled="!subcategories.length">
                 <option value="">{{ form.category_id ? 'Chọn danh mục con' : 'Chọn danh mục trước' }}</option>
@@ -71,6 +78,12 @@
               </span>
             </div>
           </div>
+
+          <p v-if="isFabric" class="form-hint" style="margin: -6px 0 16px">
+            Sản phẩm vải không chọn danh mục con ở đây — ô <strong>Loại lụa</strong> trong
+            khối “Thông số vải” bên dưới quyết định luôn sản phẩm nằm ở trang vải nào.
+          </p>
+
           <div class="form-group">
             <label class="form-label">Chất liệu vải</label>
             <RichTextEditor v-model="form.fabric" placeholder="Lụa tơ tằm 100%..." :min-height="140" />
@@ -159,14 +172,29 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Loại lụa</label>
-            <select v-model="form.silk_type" class="form-select">
+            <label class="form-label">Loại lụa *</label>
+            <select v-model="silkChoice" class="form-select" :disabled="!silkGroups.length">
               <option value="">— Không chọn —</option>
-              <option v-for="t in SILK_TYPES" :key="t" :value="t">{{ t }}</option>
+              <template v-for="g in silkGroups" :key="g.label ?? 'flat'">
+                <optgroup v-if="g.label" :label="g.label">
+                  <option v-for="o in g.items" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </optgroup>
+                <template v-else>
+                  <option v-for="o in g.items" :key="o.value" :value="o.value">{{ o.label }}</option>
+                </template>
+              </template>
+              <option v-if="silkChoiceMissing" :value="silkChoice">
+                {{ form.silk_type }} (không còn trong danh sách)
+              </option>
             </select>
-            <span class="form-hint">
-              Chỉ dùng cho bộ lọc của trang <strong>Lụa Nha Xá 100% tơ tằm</strong>
-              (sản phẩm thuộc danh mục con đó).
+            <span v-if="!silkGroups.length" class="form-hint" style="color:var(--brand)">
+              Danh mục “{{ selectedCategoryName }}” chưa có danh mục con — vào trang
+              <RouterLink to="/categories">Danh mục</RouterLink> tạo “Lụa Nha Xá thông dụng”
+              và “Lụa Nha Xá 100% tơ tằm” trước.
+            </span>
+            <span v-else class="form-hint">
+              Quyết định sản phẩm hiện ở trang vải nào ngoài website. Ba loại nhỏ bên trong
+              “Lụa Nha Xá 100% tơ tằm” là mục lọc ở sidebar trang đó.
             </span>
           </div>
         </div>
@@ -354,10 +382,12 @@ import RichTextEditor from '@/components/RichTextEditor.vue'
 import { PATTERNS, COLOR_TAGS, SILK_TYPES } from '@/data/fabricOptions.js'
 import { toSlug } from '@/utils/slug.js'
 import { siteUrl } from '@/utils/siteUrl.js'
+import { useAuthStore } from '@/stores/auth.js'
 
 const route  = useRoute()
 const router = useRouter()
 const toast  = useToastStore()
+const auth   = useAuthStore()
 
 const productId = computed(() => route.params.id)
 const isEdit    = computed(() => !!productId.value)
@@ -365,6 +395,7 @@ const isEdit    = computed(() => !!productId.value)
 const loading        = ref(false)
 const saving         = ref(false)
 const saveError      = ref('')
+const duplicating    = ref(false)
 const uploading      = ref(false)
 const uploadProgress = ref('')
 const fileInput      = ref(null)
@@ -405,6 +436,65 @@ const patternMissing = computed(
 const subcategories = computed(() => {
   const cat = categories.value.find(c => c.id === Number(form.value.category_id))
   return cat?.subcategories ?? []
+})
+
+const selectedCategoryName = computed(() => {
+  const cat = categories.value.find(c => c.id === Number(form.value.category_id))
+  return cat?.name ?? ''
+})
+
+// ── Ô "Loại lụa" ─────────────────────────────────────────────────────────
+// Gộp 2 thứ vào một ô cho khỏi phải điền 2 chỗ mà còn lệch nhau:
+//   • danh mục con  → quyết định sản phẩm nằm ở trang vải nào
+//   • silk_type     → mục lọc trong trang "Lụa Nha Xá 100% tơ tằm"
+// Danh sách dựng từ danh mục con thật, nên admin đổi tên danh mục là nó đổi theo.
+const PURE_SILK_SUB_SLUG = 'lua-nha-xa-100-to-tam'
+
+/** [{ label: tên nhóm | null, items: [{ value, label, subId, silk }] }] */
+const silkGroups = computed(() => {
+  const groups = []
+  let flat = null
+  for (const sub of subcategories.value) {
+    if (sub.slug === PURE_SILK_SUB_SLUG) {
+      groups.push({
+        label: sub.name,
+        items: [
+          { value: `sub:${sub.id}`, label: `${sub.name} (chưa phân loại nhỏ)`, subId: sub.id, silk: '' },
+          ...SILK_TYPES.map(t => ({ value: `silk:${sub.id}:${t}`, label: t, subId: sub.id, silk: t })),
+        ],
+      })
+    } else {
+      if (!flat) { flat = { label: null, items: [] }; groups.push(flat) }
+      flat.items.push({ value: `sub:${sub.id}`, label: sub.name, subId: sub.id, silk: '' })
+    }
+  }
+  return groups
+})
+
+const silkOptions = computed(() => silkGroups.value.flatMap(g => g.items))
+
+// Loại lụa cũ đã bị xoá khỏi danh mục → vẫn cho thấy giá trị cũ thay vì mất trắng
+const silkChoiceMissing = computed(
+  () => !!form.value.silk_type && !silkOptions.value.some(o => o.silk === form.value.silk_type)
+)
+
+const silkChoice = computed({
+  get() {
+    const subId = Number(form.value.subcategory_id) || null
+    if (!subId) return ''
+    const silk = (form.value.silk_type || '').trim()
+    return silk ? `silk:${subId}:${silk}` : `sub:${subId}`
+  },
+  set(value) {
+    const opt = silkOptions.value.find(o => o.value === value)
+    if (!opt) {                       // chọn "— Không chọn —"
+      form.value.subcategory_id = ''
+      form.value.silk_type = ''
+      return
+    }
+    form.value.subcategory_id = opt.subId
+    form.value.silk_type = opt.silk
+  },
 })
 
 // Slug danh mục vải — khớp với backend (app/routers/products.py FABRIC_CATEGORY_SLUG)
@@ -526,6 +616,20 @@ async function loadData() {
 onMounted(loadData)
 watch(() => route.params.id, loadData)
 
+/** Nhân bản sản phẩm đang mở rồi chuyển sang sửa bản sao. */
+async function duplicate() {
+  duplicating.value = true
+  try {
+    const copy = await productsApi.duplicate(productId.value)
+    toast.success('Đã nhân bản — bản sao đang ẩn, sửa xong nhớ bật hiển thị')
+    router.push(`/products/${copy.id}/edit`)
+  } catch (e) {
+    toast.error(String(e))
+  } finally {
+    duplicating.value = false
+  }
+}
+
 // ── Save ──────────────────────────────────────────────────────────────────
 async function save() {
   saveError.value = ''
@@ -538,7 +642,9 @@ async function save() {
     return
   }
   if (subcategories.value.length && !form.value.subcategory_id) {
-    saveError.value = 'Danh mục này có danh mục con, vui lòng chọn một danh mục con.'
+    saveError.value = isFabric.value
+      ? 'Vui lòng chọn Loại lụa ở khối “Thông số vải” — nó quyết định sản phẩm nằm ở trang vải nào.'
+      : 'Danh mục này có danh mục con, vui lòng chọn một danh mục con.'
     return
   }
 

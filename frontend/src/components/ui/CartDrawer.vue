@@ -32,14 +32,15 @@
               <div class="ci-img" :style="{ background: swatchGrad(item.color_hex) }" />
               <div class="ci-info">
                 <p class="ci-name">{{ item.name }}</p>
-                <p v-if="item.tailoring_method !== 'custom'" class="ci-meta">Size: {{ item.size }}</p>
+                <p v-if="isFabric(item)" class="ci-meta">Bán theo {{ item.unit_label || 'mét' }}</p>
+                <p v-else-if="item.tailoring_method !== 'custom'" class="ci-meta">Size: {{ item.size }}</p>
                 <p v-else class="ci-meta">May theo số đo</p>
                 <p v-if="item.lining_type" class="ci-meta">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà' }}</p>
                 <p v-if="item.color_option" class="ci-meta">Màu: {{ item.color_option === 'same' ? 'Giống ảnh' : 'Phối màu riêng' }}</p>
                 <div class="ci-qty">
-                  <button @click="cartStore.updateQty(item._key, item.quantity - 1)">−</button>
-                  <span>{{ item.quantity }}</span>
-                  <button @click="cartStore.updateQty(item._key, item.quantity + 1)">+</button>
+                  <button @click="cartStore.updateQty(item._key, stepTo(item, -1))">−</button>
+                  <span>{{ formatQty(item.quantity) }}<em v-if="isFabric(item)">{{ item.unit_label || 'mét' }}</em></span>
+                  <button @click="cartStore.updateQty(item._key, stepTo(item, 1))">+</button>
                 </div>
               </div>
               <div class="ci-right">
@@ -75,6 +76,19 @@
 <script setup>
 import { useCartStore } from '@/stores/cart'
 const cartStore = useCartStore()
+
+const isFabric = (item) => item.product_type === 'fabric'
+
+/** Giống trang sản phẩm: − về số nguyên dưới, + lên số nguyên trên, ít nhất 1. */
+function stepTo(item, delta) {
+  const cur  = Number(item.quantity)
+  const next = delta > 0
+    ? Math.floor(cur) + 1
+    : (Number.isInteger(cur) ? cur - 1 : Math.floor(cur))
+  return isFabric(item) ? Math.max(next, 1) : next
+}
+/** 3.8 → "3,8" ; 2 → "2" */
+const formatQty = (v) => Number(v).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
 defineProps({ open: { type: Boolean, default: false } })
 defineEmits(['close'])
 function fmt(n) { return Number(n).toLocaleString('vi-VN') + ' đ' }
@@ -142,7 +156,8 @@ function swatchGrad(hex) {
   transition: all var(--transition);
 }
 .ci-qty button:hover { border-color: var(--charcoal); background: var(--charcoal); color: var(--cream); }
-.ci-qty span { font-size: 13px; min-width: 20px; text-align: center; }
+.ci-qty span { font-size: 13px; min-width: 20px; text-align: center; white-space: nowrap; }
+.ci-qty span em { font-style: normal; color: var(--text-muted); font-size: 12px; margin-left: 3px; }
 .ci-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 .ci-price { font-size: 13px; font-weight: 500; white-space: nowrap; }
 .ci-remove {

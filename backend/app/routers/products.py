@@ -321,6 +321,92 @@ def create_product(data: ProductCreate, _db=Depends(get_db)):
     return ProductOut.model_validate(_product_to_out(product))
 
 
+def _unique_slug(base: str) -> str:
+    """base-copy, base-copy-2, … — slug là unique nên phải dò tới khi còn trống."""
+    base = base[:240]            # chừa chỗ cho hậu tố, cột slug tối đa 255 ký tự
+    candidate = f"{base}-copy"
+    n = 1
+    while Product.select().where(Product.slug == candidate).exists():
+        n += 1
+        candidate = f"{base}-copy-{n}"
+    return candidate
+
+
+@router.post("/{product_id}/duplicate", response_model=ProductOut, status_code=201,
+             dependencies=[Depends(require("products.create"))])
+def duplicate_product(product_id: int, _db=Depends(get_db)):
+    """
+    Nhân bản một sản phẩm: copy toàn bộ thông tin, ảnh và size sang sản phẩm mới.
+
+    Bản sao được tạo ở trạng thái ẨN (is_active=False) để không lộ ra cửa hàng
+    trước khi admin sửa xong tên / giá / ảnh.
+
+    Ảnh dùng chung URL với bản gốc chứ không nhân đôi file trên storage —
+    delete_image chỉ xoá file thật khi không còn sản phẩm nào dùng ảnh đó.
+    """
+    try:
+        src = Product.get_by_id(product_id)
+    except DoesNotExist:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    suffix = " (bản sao)"
+    copy_name = f"{src.name[:255 - len(suffix)]}{suffix}"
+
+    with _db.atomic():
+        new = Product.create(
+            name=copy_name,
+            slug=_unique_slug(src.slug),
+            is_active=False,
+            price=src.price,
+            compare_at_price=src.compare_at_price,
+            description=src.description,
+            fabric=src.fabric,
+            care_instructions=src.care_instructions,
+            shipping_info=src.shipping_info,
+            category=src.category_id,
+            subcategory=src.subcategory_id,
+            collection=src.collection_id,
+            is_new=src.is_new,
+            is_featured=src.is_featured,
+            sort_order=src.sort_order,
+            primary_color=src.primary_color,
+            product_type=src.product_type,
+            sku_code=src.sku_code,
+            specification=src.specification,
+            fabric_width=src.fabric_width,
+            unit_label=src.unit_label,
+            pattern=src.pattern,
+            color_tag=src.color_tag,
+            silk_type=src.silk_type,
+        )
+
+        images = (
+            ProductImage.select()
+            .where(ProductImage.product == src)
+            .order_by(ProductImage.sort_order, ProductImage.id)
+        )
+        for img in images:
+            ProductImage.create(
+                product=new,
+                url=img.url,
+                alt_text=img.alt_text,
+                sort_order=img.sort_order,
+                is_primary=img.is_primary,
+            )
+
+        sizes = ProductSize.select().where(ProductSize.product == src).order_by(ProductSize.id)
+        for sz in sizes:
+            ProductSize.create(
+                product=new,
+                size=sz.size,
+                stock=sz.stock,
+                is_available=sz.is_available,
+                sort_order=sz.sort_order,
+            )
+
+    return ProductOut.model_validate(_product_to_out(new))
+
+
 @router.put("/{product_id}", response_model=ProductOut,
             dependencies=[Depends(require("products.update"))])
 def update_product(product_id: int, data: ProductUpdate, _db=Depends(get_db)):
@@ -453,7 +539,16 @@ def delete_image(product_id: int, img_id: int, _db=Depends(get_db)):
         img = ProductImage.get(ProductImage.id == img_id, ProductImage.product == product_id)
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Image not found")
-    delete_file(img.url)
+
+    # Sản phẩm nhân bản dùng chung URL ảnh với bản gốc — xoá file ngay sẽ làm
+    # hỏng ảnh của sản phẩm kia, nên chỉ xoá khi không còn bản ghi nào trỏ tới.
+    still_used = (
+        ProductImage.select()
+        .where(ProductImage.url == img.url, ProductImage.id != img.id)
+        .exists()
+    )
+    if not still_used:
+        delete_file(img.url)
     img.delete_instance()
 
 

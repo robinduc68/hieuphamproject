@@ -18,9 +18,15 @@
           <RouterLink to="/ve-chung-toi" class="nav-link">Về chúng tôi</RouterLink>
 
           <!-- Sản phẩm + dropdown -->
+          <!--
+            mouseover (không phải mouseenter): sau khi bấm vào menu, con trỏ vẫn
+            nằm nguyên trong vùng này nên mouseenter sẽ không bao giờ bắn lại →
+            menu kẹt ở trạng thái đóng cho tới khi rê chuột ra ngoài rồi vào lại.
+            mouseover bắn liên tục khi di chuyển bên trong nên luôn mở lại được.
+          -->
           <div
             class="nav-dropdown-wrap"
-            @mouseenter="menuOpen = true"
+            @mouseover="menuOpen = true"
             @mouseleave="menuOpen = false"
           >
             <!-- Click = về trang shop không filter; hover vẫn mở mega menu -->
@@ -28,7 +34,6 @@
               to="/cua-hang"
               class="nav-link"
               :class="{ 'nav-link--open': menuOpen }"
-              @click="menuOpen = false"
             >Sản phẩm</RouterLink>
             <MegaMenu
               :open="menuOpen"
@@ -196,9 +201,10 @@ watch(mobileOpen, (val) => {
   document.body.style.overflow = val ? 'hidden' : ''
 })
 
-// Đổi trang thì đóng menu (bấm link trong drawer hoặc nút back)
+// Đổi trang thì đóng cả menu mobile lẫn mega menu (bấm link hoặc nút back)
 watch(() => router.currentRoute.value.fullPath, () => {
   mobileOpen.value = false
+  menuOpen.value   = false
 })
 
 onUnmounted(() => { document.body.style.overflow = '' })

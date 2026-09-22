@@ -96,8 +96,12 @@ def create_order(
         except DoesNotExist:
             raise HTTPException(status_code=404, detail=f"Sản phẩm #{item.product_id} không tồn tại.")
 
+        # Vải bán theo mét, "size" chỉ là nhãn đơn vị nên không có bản ghi
+        # ProductSize nào để đối chiếu → bỏ qua, giống may theo số đo.
+        is_fabric = getattr(product, "product_type", None) == "fabric"
+
         # Size validation: skip for custom tailoring
-        if item.tailoring_method != "custom":
+        if item.tailoring_method != "custom" and not is_fabric:
             size_to_check = item.size
             try:
                 ProductSize.get(
@@ -118,7 +122,7 @@ def create_order(
             + _get_adjustment("color_option",      item.color_option)
         )
         unit_price = Decimal(str(product.price)) + adj
-        line_total = unit_price * item.quantity
+        line_total = unit_price * Decimal(str(item.quantity))
         total += line_total
 
         line_items.append({

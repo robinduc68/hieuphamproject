@@ -54,7 +54,13 @@
           <p class="fd-unit"><em>Đơn giá trên 1 {{ unit }} vải (chiều dài)</em></p>
 
           <ul class="fd-specs" v-if="specs.length">
-            <li v-for="s in specs" :key="s.label">{{ s.label }}: {{ s.value }}</li>
+            <li v-for="s in specs" :key="s.label">
+              <span class="spec-label">{{ s.label }}:</span>
+              <!-- Chất liệu giữ nguyên định dạng admin soạn (đậm/nghiêng, danh
+                   sách, xuống dòng, ảnh) — đã lọc HTML trong renderRichText -->
+              <div v-if="s.html" class="spec-value rich-text" v-html="s.html" />
+              <template v-else> {{ s.value }}</template>
+            </li>
           </ul>
 
           <div class="fd-links">
@@ -63,9 +69,18 @@
 
           <div class="fd-buy">
             <div class="qty-stepper">
-              <button class="qty-btn" @click="qty > 1 && qty--" aria-label="Giảm">−</button>
-              <span class="qty-val">{{ qty }}</span>
-              <button class="qty-btn" @click="qty++" aria-label="Tăng">+</button>
+              <button class="qty-btn" aria-label="Giảm" @click="stepQty(-1)">−</button>
+              <input
+                class="qty-val qty-input"
+                type="text"
+                inputmode="decimal"
+                :value="formatQty(qty)"
+                aria-label="Số mét"
+                @change="onQtyInput"
+                @blur="onQtyInput"
+                @keyup.enter="$event.target.blur()"
+              />
+              <button class="qty-btn" aria-label="Tăng" @click="stepQty(1)">+</button>
             </div>
             <button class="add-to-cart-btn" :class="{ added: justAdded }" @click="addToCart">
               <span v-if="!justAdded">THÊM VÀO GIỎ HÀNG</span>
@@ -74,7 +89,8 @@
           </div>
 
           <p class="fd-total">
-            Tạm tính {{ qty }} {{ unit }}: <strong>{{ formatPrice(Number(product.price) * qty) }}</strong>
+            Tạm tính {{ formatQty(qty) }} {{ unit }}:
+            <strong>{{ formatPrice(Number(product.price) * qty) }}</strong>
           </p>
         </div>
       </div>
@@ -130,7 +146,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import { renderRichText, richTextToPlain } from '@/utils/richtext'
+import { renderRichText } from '@/utils/richtext'
 import { useSiteSettings, guideTable } from '@/composables/useSiteSettings'
 import GuideModal from '@/components/ui/GuideModal.vue'
 
@@ -142,7 +158,45 @@ const props = defineProps({
 const cart = useCartStore()
 
 const activeImg = ref(0)
-const qty       = ref(1)
+
+// ── Số lượng vải ─────────────────────────────────────────────────────────
+// Một nguồn sự thật duy nhất: qty = tổng số mét, 1 chữ số lẻ.
+// Hai ô trên giao diện chỉ là 2 cách sửa cùng con số đó.
+const MIN_QTY = 1
+const MAX_QTY = 999
+const qty     = ref(1)
+
+function setQty(value) {
+  // làm tròn 1 chữ số lẻ, tránh 0.1 + 0.2 = 0.30000000000000004
+  const n = Math.round(Number(value) * 10) / 10
+  qty.value = Number.isFinite(n) ? Math.min(Math.max(n, MIN_QTY), MAX_QTY) : MIN_QTY
+}
+
+/**
+ * Nút − / + luôn đưa về số nguyên gần nhất theo hướng bấm:
+ *   1,3 → − về 1, + lên 2 ;  đang là số nguyên thì ± 1 như thường.
+ */
+function stepQty(delta) {
+  const cur  = qty.value
+  const next = delta > 0
+    ? Math.floor(cur) + 1
+    : (Number.isInteger(cur) ? cur - 1 : Math.floor(cur))
+  setQty(next)
+}
+
+/** Gõ tay: nhận cả "2,2" (kiểu Việt) lẫn "2.2". */
+function onQtyInput(event) {
+  const raw = String(event.target.value).replace(',', '.').replace(/[^\d.]/g, '')
+  const n   = Number.parseFloat(raw)
+  setQty(Number.isFinite(n) ? n : qty.value)
+  event.target.value = formatQty(qty.value)   // chuẩn hoá lại ô nhập
+}
+
+/** 3.8 → "3,8" ; 3 → "3" */
+function formatQty(v) {
+  return Number(v).toLocaleString('vi-VN', { maximumFractionDigits: 1 })
+}
+
 const justAdded = ref(false)
 const openTab   = ref('desc')
 const guideOpen = ref(false)
@@ -185,10 +239,10 @@ const specs = computed(() => {
   const p = props.product
   return [
     { label: 'Mã sản phẩm', value: p.sku_code },
-    { label: 'Chất liệu',   value: richTextToPlain(p.fabric) },
+    { label: 'Chất liệu',   html:  renderRichText(p.fabric) },
     { label: 'Quy cách',    value: p.specification },
     { label: 'Khổ vải',     value: p.fabric_width },
-  ].filter(s => s.value)
+  ].filter(s => s.value || s.html)
 })
 
 const tabs = computed(() => {
@@ -223,7 +277,8 @@ function isPlaceholderImg(img) {
 }
 
 function addToCart() {
-  cart.addItem(props.product, `${qty.value} ${unit.value}`, qty.value)
+  // size = đơn vị, để mua thêm cùng loại vải thì cộng dồn vào một dòng giỏ hàng
+  cart.addItem(props.product, unit.value, qty.value)
   justAdded.value = true
   setTimeout(() => { justAdded.value = false }, 2000)
 }
@@ -301,6 +356,24 @@ function addToCart() {
   content: ''; position: absolute; left: 2px; top: 9px;
   width: 5px; height: 5px; border-radius: 50%; background: var(--brand-red);
 }
+.fd-specs .spec-label { font-weight: 600; }
+
+/* .rich-text toàn cục là cỡ 16px / line-height 1.9 — quá to cho khối thông số
+   nằm cạnh giá, nên thu lại cho khớp các dòng còn lại. */
+.spec-value { margin-top: 5px; }
+.spec-value :deep(p),
+.spec-value :deep(li)  { font-size: 14px; line-height: 1.65; }
+.spec-value :deep(p)   { margin-bottom: 8px; }
+.spec-value :deep(h1),
+.spec-value :deep(h2),
+.spec-value :deep(h3),
+.spec-value :deep(h4)  { font-size: 15px; margin: 10px 0 5px; }
+.spec-value :deep(ul),
+.spec-value :deep(ol)  { margin: 0 0 8px; padding-left: 20px; }
+.spec-value :deep(li)  { margin-bottom: 4px; }
+.spec-value :deep(img) { margin: 8px 0; border-radius: 6px; }
+.spec-value :deep(blockquote) { margin: 8px 0; padding-left: 12px; border-left: 2px solid var(--border); }
+.spec-value :deep(> *:last-child) { margin-bottom: 0; }
 
 .fd-links { display: flex; justify-content: flex-start; margin: -18px 0 26px; }
 .fd-link {
@@ -318,6 +391,12 @@ function addToCart() {
 }
 .qty-btn { width: 40px; height: 48px; background: none; border: none; font-size: 18px; color: var(--charcoal); cursor: pointer; }
 .qty-val { width: 44px; text-align: center; font-family: var(--font-body); font-size: 14px; }
+/* Ô số lượng gõ tay được — giữ nguyên kích thước như chữ tĩnh trước đây */
+.qty-input {
+  border: none; background: none; outline: none; padding: 0;
+  color: var(--charcoal); height: 48px;
+}
+.qty-input:focus { background: #F6F2EA; }
 
 .add-to-cart-btn {
   flex: 1; background: var(--brand-red); border: none; color: #fff;

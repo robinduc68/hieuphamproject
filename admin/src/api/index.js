@@ -18,6 +18,7 @@ export const productsApi = {
   create: (data)   => client.post('/products/', data),
   update: (id, data) => client.put(`/products/${id}`, data),
   remove: (id)     => client.delete(`/products/${id}`),
+  duplicate: (id)  => client.post(`/products/${id}/duplicate`),
 
   // Images
   uploadImage:  (id, formData) => client.post(`/products/${id}/images`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),

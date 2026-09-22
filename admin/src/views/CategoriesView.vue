@@ -5,10 +5,15 @@
       <button v-if="auth.can('categories.create')" class="btn btn-primary" @click="openCatModal()">+ Thêm danh mục</button>
     </div>
 
+    <p class="order-note">
+      Thứ tự ở đây chính là thứ tự hiện trong menu <strong>Sản phẩm</strong> ngoài website
+      (và ở bộ lọc trang Cửa hàng). Dùng nút ↑ ↓ để sắp xếp lại.
+    </p>
+
     <div v-if="loading" class="card empty-state">Đang tải...</div>
 
     <div v-else class="cat-list">
-      <div v-for="cat in categories" :key="cat.id" class="cat-block card">
+      <div v-for="(cat, i) in categories" :key="cat.id" class="cat-block card">
         <!-- Category header -->
         <div class="cat-header">
           <div class="cat-info">
@@ -16,6 +21,18 @@
             <span class="cat-slug">{{ cat.slug }}</span>
           </div>
           <div class="cat-actions">
+            <button
+              v-if="auth.can('categories.update')"
+              class="btn btn-icon btn-sm" title="Đưa lên trên"
+              :disabled="i === 0 || reordering"
+              @click="moveCat(i, -1)"
+            >↑</button>
+            <button
+              v-if="auth.can('categories.update')"
+              class="btn btn-icon btn-sm" title="Đưa xuống dưới"
+              :disabled="i === categories.length - 1 || reordering"
+              @click="moveCat(i, 1)"
+            >↓</button>
             <button class="btn btn-secondary btn-sm" @click="openSubModal(cat)">+ Sub</button>
             <button class="btn btn-icon btn-sm" @click="openCatModal(cat)">✏️</button>
             <button v-if="auth.can('categories.delete')" class="btn btn-danger btn-sm" @click="deleteCat(cat)">✕</button>
@@ -24,10 +41,22 @@
 
         <!-- Subcategories -->
         <div v-if="cat.subcategories?.length" class="sub-list">
-          <div v-for="sub in cat.subcategories" :key="sub.id" class="sub-item">
+          <div v-for="(sub, j) in cat.subcategories" :key="sub.id" class="sub-item">
             <span class="sub-name">{{ sub.name }}</span>
             <span class="sub-slug">{{ sub.slug }}</span>
             <div class="sub-actions">
+              <button
+                v-if="auth.can('categories.update')"
+                class="btn btn-icon btn-sm" title="Đưa lên trên"
+                :disabled="j === 0 || reordering"
+                @click="moveSub(cat, j, -1)"
+              >↑</button>
+              <button
+                v-if="auth.can('categories.update')"
+                class="btn btn-icon btn-sm" title="Đưa xuống dưới"
+                :disabled="j === cat.subcategories.length - 1 || reordering"
+                @click="moveSub(cat, j, 1)"
+              >↓</button>
               <button class="btn btn-icon btn-sm" @click="openSubModal(cat, sub)">✏️</button>
               <button v-if="auth.can('categories.delete')" class="btn btn-danger btn-sm" @click="deleteSub(sub)">✕</button>
             </div>
@@ -102,6 +131,7 @@ import { useToastStore } from '@/stores/toast.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 const toast      = useToastStore()
+const auth       = useAuthStore()
 const categories = ref([])
 const loading    = ref(true)
 
@@ -137,6 +167,45 @@ async function saveCat() {
   finally { catModal.saving = false }
 }
 
+const reordering = ref(false)
+
+/**
+ * Đổi chỗ 2 mục rồi ghi lại sort_order theo vị trí mới.
+ * Ghi lại cả danh sách (không chỉ 2 mục) vì dữ liệu cũ có thể trùng sort_order.
+ */
+async function persistOrder(list, updateFn) {
+  reordering.value = true
+  try {
+    for (const [index, item] of list.entries()) {
+      if (item.sort_order !== index) await updateFn(item.id, { sort_order: index })
+    }
+    toast.success('Đã đổi thứ tự — kiểm tra lại menu ngoài website')
+    load()
+  } catch (e) {
+    toast.error(String(e))
+    load()
+  } finally {
+    reordering.value = false
+  }
+}
+
+function moveCat(i, delta) {
+  const j = i + delta
+  if (j < 0 || j >= categories.value.length) return
+  const list = [...categories.value]
+  ;[list[i], list[j]] = [list[j], list[i]]
+  categories.value = list                     // đổi ngay trên giao diện
+  persistOrder(list, categoriesApi.update)
+}
+
+function moveSub(cat, j, delta) {
+  const k = j + delta
+  const subs = cat.subcategories
+  if (k < 0 || k >= subs.length) return
+  ;[subs[j], subs[k]] = [subs[k], subs[j]]
+  persistOrder([...subs], categoriesApi.updateSub)
+}
+
 async function deleteCat(cat) {
   if (!confirm(`Xoá danh mục "${cat.name}"?`)) return
   try { await categoriesApi.remove(cat.id); toast.success('Đã xoá'); load() }
@@ -169,6 +238,13 @@ onMounted(load)
 </script>
 
 <style scoped>
+.order-note {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
 .cat-list { display: flex; flex-direction: column; gap: 16px; }
 .cat-block { overflow: hidden; }
 .cat-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }

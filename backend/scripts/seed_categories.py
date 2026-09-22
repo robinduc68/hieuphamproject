@@ -57,7 +57,9 @@ def seed():
             cat = Category.create(name=name, slug=slug, sort_order=order, is_active=True)
             print(f"  + tạo danh mục   {slug:<12} {name}")
         else:
-            cat.name, cat.sort_order, cat.is_active = name, order, True
+            # KHÔNG đụng sort_order: thứ tự là do admin tự sắp bằng nút ↑ ↓ ở
+            # trang Danh mục, chạy lại script này không được xoá công đó.
+            cat.name, cat.is_active = name, True
             cat.save()
             print(f"  = giữ danh mục   {slug:<12} {name}")
         cats[slug] = cat
@@ -72,7 +74,7 @@ def seed():
                 print(f"      + tạo con    {sub_slug:<28} {sub_name}")
             else:
                 sub.category, sub.name = cat, sub_name
-                sub.sort_order, sub.is_active = sub_order, True
+                sub.is_active = True          # sort_order giữ nguyên, xem ghi chú trên
                 sub.save()
                 print(f"      = giữ con    {sub_slug:<28} {sub_name}")
     return cats
