@@ -2,8 +2,8 @@
   <section class="quote-section" :class="{ 'bg-anim': bgAnim }" ref="sectionEl">
     <!-- Cột trái -->
     <div class="col col-left">
-      <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" />
-      <img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" />
+      <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" />
+      <img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" width="600" height="800" loading="lazy" decoding="async" />
     </div>
 
     <!-- Cột giữa -->
@@ -29,8 +29,8 @@
 
     <!-- Cột phải -->
     <div class="col col-right">
-      <img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" />
-      <img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" />
+      <img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" width="800" height="450" loading="lazy" decoding="async" />
+      <img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" width="600" height="800" loading="lazy" decoding="async" />
     </div>
   </section>
 </template>
@@ -102,7 +102,7 @@ function prevSectionHeight() {
 
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth <= 700) return   // mobile: hiển thị thường, không pin
+  if (window.innerWidth < 768) return   // mobile: hiển thị thường, không pin
 
   bgAnim.value = true
   ctx = gsap.context(() => {
@@ -209,7 +209,7 @@ onUnmounted(() => {
   gap: 8px;
   overflow: hidden;
 }
-@media (min-width: 701px) {
+@media (min-width: 768px) {
   .quote-section.bg-anim { background: transparent; }   /* hiện lớp nền chung đổi màu */
 }
 
@@ -221,6 +221,7 @@ onUnmounted(() => {
 
 .img {
   display: block;
+  height: auto;          /* thuộc tính height="…" (chống layout shift) không được đè aspect-ratio */
   border-radius: 16px;
   object-fit: cover;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
@@ -328,17 +329,84 @@ onUnmounted(() => {
   .col-right { display: none; }
 }
 
-/* Mobile */
-@media (max-width: 700px) {
+/* ─── MOBILE (< 768px) ───
+   Chữ chảy tự nhiên ở giữa, 4 ảnh làng nghề đặt lệch quanh (absolute),
+   một số tràn mép / đè nhẹ dưới chữ như design. */
+@media (max-width: 767px) {
   .quote-section {
-    grid-template-columns: 1fr;
-    padding: 60px 24px;
-    gap: 24px;
+    --accent-gold: var(--cream);
+    position: relative;
+    display: block;
+    min-height: 0;
+    padding: 50px 0 48px;
   }
+
   .col-left,
-  .col-right { display: none; }
-  .quote-line { font-size: clamp(20px, 6vw, 28px); }
-  .quote-cta { flex-direction: column; align-items: center; }
-  .btn { width: 100%; max-width: 320px; text-align: center; }
+  .col-right { display: contents; }
+
+  .img {
+    position: absolute;
+    z-index: 0;
+    margin: 0;
+    aspect-ratio: auto;
+    border-radius: 10px;
+    opacity: .5;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
+  }
+  .img-1 { top: 30px;  left: 27px;   width: 99px;  height: 130px; }
+  .img-3 { top: -6px;  right: -10px; width: 117px; height: 194px; }
+  .img-2 { top: 240px; left: -12px;  width: 106px; height: 198px; }
+  .img-4 { top: 240px; right: 17px;  width: 102px; height: 122px; }
+
+  .col-center {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--page-x);
+  }
+  .center-inner {
+    display: block;
+    max-width: 306px;
+    margin: 0 auto;
+    text-wrap: pretty;     /* tránh chữ mồ côi cuối đoạn */
+  }
+
+  /* 2 dòng đầu giữ nguyên dòng; phần còn lại chảy liền (inline) để xuống dòng như design */
+  .quote-line {
+    display: inline;
+    font-size: 19px;
+    line-height: 1.85;
+    letter-spacing: 1.9px;
+  }
+  .quote-line::after { content: ' '; }
+  .center-inner > .quote-line:nth-child(-n+2),
+  .spacer-top { display: block; }
+  .spacer-top { margin-top: 14px; }
+
+  .quote-cta {
+    flex-direction: column;
+    align-items: center;
+    gap: 17px;
+    margin-top: 34px;
+  }
+  .btn {
+    width: 180px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .btn-solid { background: var(--border); color: var(--brand-red); }
+  .btn-outline { border-color: rgba(255, 255, 255, .85); color: #FFFFFF; }
+}
+
+@media (max-width: 380px) {
+  .quote-line { font-size: 17px; letter-spacing: 1.4px; }
+  .img-1 { width: 84px;  height: 112px; }
+  .img-3 { width: 96px;  height: 170px; }
+  .img-2 { width: 88px;  height: 170px; }
+  .img-4 { width: 86px;  height: 104px; }
 }
 </style>

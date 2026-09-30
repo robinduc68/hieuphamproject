@@ -62,4 +62,9 @@ const poster   = computed(() => settings.value.hero_video?.poster || '/videos/he
 @media (max-width: 768px) {
   .hero { height: 68svh; min-height: 420px; }
 }
+
+/* Mobile: khung 414 × 477 theo design */
+@media (max-width: 767px) {
+  .hero { height: 115.2vw; min-height: 320px; }
+}
 </style>

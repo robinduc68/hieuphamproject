@@ -34,4 +34,9 @@ import IconicProducts from '@/components/home/IconicProducts.vue'
   background: var(--bg-gray);
   pointer-events: none;
 }
+
+/* Mobile: nền xám → góc bo trên của footer lộ màu section cuối như design */
+@media (max-width: 767px) {
+  .page-bg { background: var(--border); }
+}
 </style>

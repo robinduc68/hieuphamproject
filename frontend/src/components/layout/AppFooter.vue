@@ -5,7 +5,7 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="footer-logo">
-            <img src="/HHS LG (1) (2).png" alt="Hà Hoạt Silk" class="footer-logo-img" />
+            <img src="/HHS LG (1) (2).png" alt="Hà Hoạt Silk" class="footer-logo-img" loading="lazy" decoding="async" />
           </div>
           <p class="footer-tagline">
             <em>Lụa tơ tằm Nha Xá cao cấp</em>
@@ -13,10 +13,12 @@
         </div>
 
         <RouterLink to="/cua-hang" class="footer-cta">
-          Khám phá sản phẩm
-          <svg viewBox="0 0 20 10" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M0 5h18M13 1l5 4-5 4"/>
-          </svg>
+          <span class="footer-cta-label">Khám phá sản phẩm</span>
+          <span class="footer-cta-arrow">
+            <svg viewBox="0 0 20 10" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M0 5h18M13 1l5 4-5 4"/>
+            </svg>
+          </span>
         </RouterLink>
       </div>
 
@@ -58,12 +60,12 @@
         <div class="footer-col">
           <h4 class="col-title">THEO DÕI HÀ HOẠT SILK</h4>
           <div class="social-links">
-            <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" class="social-btn">
+            <a href="https://facebook.com/hahoatsilk" target="_blank" rel="noopener" aria-label="Facebook" class="social-btn">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
               </svg>
             </a>
-            <a href="https://tiktok.com" target="_blank" rel="noopener" aria-label="TikTok" class="social-btn">
+            <a href="https://tiktok.com/@hahoatsilk" target="_blank" rel="noopener" aria-label="TikTok" class="social-btn">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.31 6.31 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/>
               </svg>
@@ -214,5 +216,87 @@
 }
 @media (max-width: 560px) {
   .footer-cols { grid-template-columns: 1fr; gap: 26px; }
+}
+
+.footer-cta-arrow { display: inline-flex; }
+
+/* ─── MOBILE (< 768px) – theo design mobile 414px ─── */
+@media (max-width: 767px) {
+  .app-footer {
+    background: var(--brand-red);
+    border-radius: 24px 24px 0 0;
+  }
+  .footer-wrap {
+    padding:
+      26px max(var(--page-x), env(safe-area-inset-right))
+      calc(40px + env(safe-area-inset-bottom))
+      max(var(--page-x), env(safe-area-inset-left));
+  }
+
+  .footer-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
+    margin-bottom: 36px;
+  }
+  .footer-brand { gap: 12px; }
+  .footer-logo-img { height: 68px; }
+  .footer-tagline { font-size: 32px; color: var(--cream); }
+
+  /* Nút pill kem + nút tròn mũi tên tách rời */
+  .footer-cta,
+  .footer-cta:hover {
+    padding: 0;
+    gap: 7px;
+    border: none;
+    background: none;
+    transform: none;
+    color: var(--brand-red);
+    font-size: 16px;
+  }
+  .footer-cta-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 44px 0 24px;
+    border-radius: 999px;
+    background: var(--cream);
+  }
+  .footer-cta-arrow {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--cream);
+    align-items: center;
+    justify-content: center;
+  }
+  .footer-cta svg { width: 24px; height: 12px; stroke-width: 2; }
+
+  /* Kẻ ngang tràn hết chiều rộng */
+  .footer-divider {
+    margin: 0 calc(-1 * max(var(--page-x), env(safe-area-inset-left))) 36px;
+    background: rgba(255, 255, 255, .45);
+  }
+
+  .footer-cols { gap: 34px; padding-left: 8px; }
+  .col-title { font-size: 14px; letter-spacing: .6px; margin-bottom: 4px; color: rgba(255, 255, 255, .88); }
+  .contact-line { font-size: 15px; line-height: 1.75; }
+  .footer-col li { margin-bottom: 0; }
+  .footer-col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .social-links { gap: 8px; }
+  .social-btn {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border: 1px solid rgba(255, 255, 255, .8);
+    color: #FFFFFF;
+  }
+  .social-btn svg { width: 20px; height: 20px; }
 }
 </style>

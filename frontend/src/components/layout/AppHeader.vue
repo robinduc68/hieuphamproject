@@ -501,7 +501,52 @@ onUnmounted(() => { document.body.style.overflow = '' })
   .search-inner { padding: 10px 16px; }
 }
 
+/* ─── Điện thoại (< 768px) – theo design mobile 414px ───
+   Card nổi trắng mờ đè lên nội dung; hiện lại nút ngôn ngữ; vùng bấm 44×44. */
+@media (max-width: 767px) {
+  .header-wrap {
+    padding: calc(6px + env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+  }
+  .header-card {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    border: none;
+    background: rgba(255, 255, 255, .62);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .burger-btn {
+    height: 44px;
+    padding: 0 0 0 10px;
+    gap: 6px;
+  }
+  .burger-btn span { width: 28px; }
+  .header-card .logo-block { height: 44px; margin-top: 0; padding: 3px 0 3px 8px; }   /* logo 38px, vùng bấm 44px */
+
+  .header-icons { margin-left: auto; padding: 0; gap: 0; }
+  .icon-btn,
+  .lang-btn {
+    min-width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+  .icon-btn svg { width: 19px; height: 19px; }
+  .lang-btn { display: flex; gap: 4px; padding: 0 6px; font-size: 13px; color: var(--text-medium); }
+  .flag { font-size: 16px; }
+  .cart-badge { top: 6px; right: 6px; }
+
+  .search-bar {
+    margin: 6px max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+    border: none;
+    border-radius: 10px;
+  }
+  .search-close { width: 44px; height: 44px; }
+}
+
+/* Máy hẹp (360–380px): design vẫn giữ icon tài khoản → thu logo lại cho vừa */
 @media (max-width: 380px) {
-  .header-icons .icon-btn[aria-label="Tài khoản"] { display: none; }
+  .header-card .logo-block { padding-top: 6px; padding-bottom: 6px; }
+  .lang-btn { padding: 0 2px; }
 }
 </style>

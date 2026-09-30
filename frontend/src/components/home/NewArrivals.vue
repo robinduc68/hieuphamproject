@@ -4,7 +4,7 @@
 
       <!-- Top: 2-line centered heading -->
       <div class="custom-top">
-        <h2 class="custom-heading">THIẾT KẾ TRANG PHỤC ĐỘC BẢN</h2>
+        <h2 class="custom-heading">THIẾT KẾ <br class="br-mobile" />TRANG PHỤC ĐỘC BẢN</h2>
         <p class="custom-sub">Trải nghiệm cá nhân hóa trên nền Lụa tơ tằm</p>
       </div>
 
@@ -73,7 +73,7 @@ const steps = [
 /* Pin section ~1.5 viewport. Scroll: nền chuyển dần trắng → #DEDEDE (màu section). */
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth <= 700) return   // mobile: nền #DEDEDE tĩnh, không pin
+  if (window.innerWidth < 768) return   // mobile: nền #DEDEDE tĩnh, không pin
 
   const pageBg = document.querySelector('[data-page-bg]')   // lớp nền chung – không lộ đường nối
   bgAnim.value = true
@@ -105,7 +105,7 @@ onUnmounted(() => {
   padding: 56px 24px;
   color: rgb(104, 25, 39);
 }
-@media (min-width: 701px) {
+@media (min-width: 768px) {
   .custom-section.bg-anim {
     background: transparent;    /* trong suốt – hiện lớp nền chung đổi màu */
   }
@@ -207,5 +207,56 @@ onUnmounted(() => {
 }
 @media (max-width: 560px) {
   .steps { grid-template-columns: 1fr; }
+}
+
+.br-mobile { display: none; }
+
+/* ─── MOBILE (< 768px) ─── */
+@media (max-width: 767px) {
+  .custom-section {
+    background: var(--border);
+    padding: 44px 0 40px;
+  }
+  .custom-inner { gap: 24px; }
+
+  .custom-top { gap: 4px; padding: 0 var(--page-x); }
+  .custom-heading { font-size: 24px; line-height: 1.35; }
+  .br-mobile { display: inline; }
+  .custom-sub { font-size: 32px; line-height: 1.1; max-width: 280px; }
+
+  /* Card cuộn ngang, card kế tiếp lấp ló mép phải */
+  .steps {
+    display: flex;
+    gap: 16px;
+    padding: 0 var(--page-x);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 var(--page-x);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .steps::-webkit-scrollbar { display: none; }
+
+  .step {
+    flex: 0 0 250px;
+    margin-top: 0 !important;      /* bỏ so le bậc thang của desktop (inline style) */
+    min-height: 216px;
+    padding: 20px 18px 28px;
+    gap: 8px;
+    background: var(--bg-light);
+    box-shadow: none;
+    scroll-snap-align: start;
+  }
+  .step:hover { transform: none; box-shadow: none; }
+
+  .step-num {
+    font-size: 64px;
+    line-height: .9;
+    background: none;
+    color: var(--brand-red);
+    -webkit-text-fill-color: var(--brand-red);
+  }
+  .step-title { font-size: 20px; line-height: 1.4; max-width: 180px; }
+  .step-desc { font-size: 13px; line-height: 1.5; margin-top: 14px; }
 }
 </style>

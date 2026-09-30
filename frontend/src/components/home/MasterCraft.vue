@@ -1,15 +1,17 @@
 <template>
   <section class="craft-section">
     <div class="craft-head">
-      <h2 class="craft-title">LỤA TƠ TẰM NHA XÁ - GỐC NGHỆ NHÂN</h2>
+      <h2 class="craft-title">LỤA TƠ TẰM NHA XÁ<span class="title-dash"> - </span><br class="br-mobile" />GỐC NGHỆ NHÂN</h2>
       <p class="craft-script">Tinh hoa trong từng sợi vải</p>
     </div>
 
     <div class="craft-cards">
       <div v-for="c in cards" :key="c.title" class="craft-card">
-        <img class="craft-icon" :src="c.icon" :alt="c.title" />
-        <h3 class="craft-card-title" v-typewriter="24">{{ c.title }}</h3>
-        <p class="craft-card-desc" v-typewriter="24">{{ c.desc }}</p>
+        <img class="craft-icon" :src="c.icon" :alt="c.title" width="90" height="90" loading="lazy" decoding="async" />
+        <div class="craft-card-body">
+          <h3 class="craft-card-title" v-typewriter="24">{{ c.title }}</h3>
+          <p class="craft-card-desc" v-typewriter="24">{{ c.desc }}</p>
+        </div>
       </div>
     </div>
   </section>
@@ -118,5 +120,50 @@ const cards = [
 
 @media (max-width: 560px) {
   .craft-card { padding: 30px 20px 40px; }
+}
+
+.br-mobile { display: none; }
+.craft-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ─── MOBILE (< 768px) ─── */
+@media (max-width: 767px) {
+  .craft-section {
+    background: var(--bg-light);
+    padding: 44px 0 24px;
+  }
+
+  .craft-head { margin-bottom: 20px; padding: 0 var(--page-x); }
+  .craft-title { font-size: 24px; letter-spacing: .5px; line-height: 1.35; }
+  .title-dash { display: none; }
+  .br-mobile { display: inline; }
+  .craft-script { font-size: 34px; margin-top: 2px; }
+
+  .craft-cards {
+    padding: 0 24px;
+    gap: 16px;
+  }
+
+  /* Card ngang: icon trái – chữ phải */
+  .craft-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 14px;
+    padding: 18px 16px 18px 14px;
+    border-radius: 8px;
+    background: var(--border);
+  }
+  .craft-card:hover { transform: none; box-shadow: none; }
+
+  .craft-icon { width: 60px; height: 60px; flex-shrink: 0; }   /* PNG có viền trống → 60px ≈ nét vẽ 44px */
+
+  .craft-card-body { align-items: flex-start; gap: 4px; }
+  .craft-card-title { font-size: 17px; font-weight: 700; line-height: 1.3; }
+  .craft-card-desc { font-size: 13px; line-height: 1.45; color: var(--text-dark); }
 }
 </style>

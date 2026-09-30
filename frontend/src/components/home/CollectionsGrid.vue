@@ -5,13 +5,13 @@
       <div class="features-title">
         <p class="title-script">Đặc quyền</p>
         <p class="title-regular">của lựa chọn</p>
-        <p class="title-italic">May đo cá nhân hóa</p>
+        <p class="title-italic"><span class="title-plain">May đo</span> cá nhân hóa</p>
       </div>
 
       <!-- Right: 4 cards -->
       <div class="features-cards">
         <div v-for="feat in features" :key="feat.title" class="feat-card">
-          <img class="feat-icon" :src="feat.icon" :alt="feat.title.replace('\n',' ')" />
+          <img class="feat-icon" :src="feat.icon" :alt="feat.title.replace('\n',' ')" width="96" height="96" loading="lazy" decoding="async" />
           <h3 class="feat-title">{{ feat.title }}</h3>
           <p class="feat-desc">{{ feat.desc }}</p>
         </div>
@@ -70,7 +70,7 @@ const features = [
    và nền vẫn maroon → lộ ra một khoảng trống. */
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth <= 700) return
+  if (window.innerWidth < 768) return
 
   bgAnim.value = true
   ctx = gsap.context(() => {
@@ -101,7 +101,7 @@ onUnmounted(() => {
   background: #DEDEDE;
   padding: var(--section-y) var(--page-x);
 }
-@media (min-width: 701px) {
+@media (min-width: 768px) {
   .features-section.bg-anim {
     background: transparent;    /* hiện lớp nền chung đổi màu */
   }
@@ -206,5 +206,55 @@ onUnmounted(() => {
 }
 @media (max-width: 560px) {
   .features-cards { grid-template-columns: 1fr; gap: 14px; }
+}
+
+/* ─── MOBILE (< 768px) ─── */
+@media (max-width: 767px) {
+  .features-section {
+    background: var(--border);
+    padding: 44px 0 0;
+  }
+  .features-inner { gap: 24px; }
+
+  /* "Đặc quyền" + "may đo *cá nhân hóa*" (design mobile bỏ dòng "của lựa chọn") */
+  .features-title { gap: 0; padding: 0 var(--page-x); }
+  .title-script { font-size: 46px; line-height: 1; }
+  .title-regular { display: none; }
+  .title-italic { font-size: 22px; font-weight: 700; margin-top: 0; }
+  .title-plain {
+    font-family: var(--font-body);
+    font-style: normal;
+    font-weight: 400;
+    color: var(--text-dark);
+    text-transform: lowercase;
+  }
+
+  /* Card cuộn ngang, card kế tiếp lấp ló mép phải */
+  .features-cards {
+    display: flex;
+    gap: 14px;
+    padding: 0 var(--page-x);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 var(--page-x);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .features-cards::-webkit-scrollbar { display: none; }
+
+  .feat-card {
+    flex: 0 0 250px;
+    min-height: 234px;
+    padding: 24px 18px 26px;
+    gap: 12px;
+    background: var(--bg-light);
+    scroll-snap-align: start;
+  }
+  .feat-card:hover { box-shadow: none; }
+  .feat-card:hover .feat-icon { transform: none; }
+
+  .feat-icon { width: 52px; height: 52px; object-position: left center; }
+  .feat-title { font-size: 19px; line-height: 1.35; }
+  .feat-desc { font-size: 12.5px; line-height: 1.6; text-align: justify; }
 }
 </style>

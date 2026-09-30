@@ -24,7 +24,9 @@
             v-for="(product, i) in loopProducts"
             :key="i"
             class="product-card"
+            :class="{ 'is-clone': i >= products.length }"
             :style="{ width: itemWidth + 'px' }"
+            :aria-hidden="i >= products.length ? 'true' : null"
           >
             <RouterLink :to="product.slug ? `/san-pham/${product.slug}` : '/cua-hang'" class="card-link">
               <!-- Ảnh hỏng/thiếu vẫn giữ khung màu sản phẩm, không vỡ layout -->
@@ -33,6 +35,10 @@
                   v-if="product.image && !brokenImages[product.image]"
                   :src="product.image"
                   :alt="product.name"
+                  width="300"
+                  height="525"
+                  loading="lazy"
+                  decoding="async"
                   @error="brokenImages[product.image] = true"
                 />
               </div>
@@ -248,5 +254,51 @@ onUnmounted(() => {
 @media (max-width: 700px) {
   .arrow { width: 8%; }
   .arrow svg { width: 24px; height: 24px; }
+}
+
+/* ─── MOBILE (< 768px) ───
+   Bỏ carousel JS (translateX), dùng cuộn ngang gốc + scroll-snap;
+   item kế tiếp lấp ló mép phải. Bản clone (vòng lặp vô tận) ẩn đi. */
+@media (max-width: 767px) {
+  .products-section {
+    background: var(--border);
+    padding-bottom: 48px;
+  }
+  .products-head { padding: 36px var(--page-x) 14px; }
+  .products-heading { font-size: 23px; letter-spacing: .5px; }
+
+  .arrow { display: none; }
+
+  .viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 var(--page-x);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .viewport::-webkit-scrollbar { display: none; }
+
+  .track {
+    gap: 7px;
+    padding: 0 var(--page-x);
+    width: max-content;
+    transform: none !important;
+    transition: none;
+  }
+
+  .product-card {
+    width: 155px !important;
+    scroll-snap-align: start;
+  }
+  .product-card.is-clone { display: none; }
+
+  .card-link { gap: 8px; }
+  .card-img {
+    aspect-ratio: 1 / 1.75;
+    border-radius: 0;
+  }
+  .card-link:hover .card-img img { transform: none; }
+  .card-name  { font-size: 12px; font-weight: 700; letter-spacing: .2px; }
+  .card-price { font-size: 12px; font-weight: 700; color: var(--text-dark); }
 }
 </style>

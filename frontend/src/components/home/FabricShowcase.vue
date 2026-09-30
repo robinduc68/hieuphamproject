@@ -14,7 +14,7 @@
         <div
           class="fs-track"
           :class="{ 'no-anim': !animate }"
-          :style="{ transform: `translateX(-${currentIndex * (itemWidth + GAP)}px)` }"
+          :style="{ transform: `translateX(-${currentIndex * (itemWidth + gap)}px)`, gap: gap + 'px' }"
         >
           <RouterLink
             v-for="(f, i) in loopFabrics"
@@ -24,7 +24,7 @@
             :style="{ width: itemWidth + 'px' }"
           >
             <div class="fs-swatch">
-              <img :src="f.img" :alt="f.name" class="fs-img" />
+              <img :src="f.img" :alt="`Mẫu lụa ${f.name}`" class="fs-img" width="240" height="240" loading="lazy" decoding="async" />
               <span class="fs-shimmer" />
             </div>
             <p class="fs-name">{{ f.name }}</p>
@@ -66,25 +66,26 @@ const fabrics = [
 // Render 2× để carousel vô tận trượt mượt (real + clone)
 const loopFabrics = [...fabrics, ...fabrics]
 
-const GAP        = 20
 const viewportEl = ref(null)
 const itemWidth  = ref(240)
+const gap        = ref(20)   // mobile < 768px: 10px
 
 const { currentIndex, animate, next, prev, reset } = useInfiniteCarousel(
   () => fabrics.length,
-  () => itemWidth.value + GAP
+  () => itemWidth.value + gap.value
 )
 
 function computeVisible() {
   const w = window.innerWidth
-  return w > 1200 ? 5 : (w > 980 ? 4 : (w > 620 ? 3 : 2))
+  return w > 1200 ? 5 : (w > 980 ? 4 : 3)
 }
 
 function updateItemWidth() {
   if (!viewportEl.value) return
   const visible = computeVisible()
+  gap.value = window.innerWidth < 768 ? 10 : 20
   itemWidth.value = Math.floor(
-    (viewportEl.value.offsetWidth - GAP * (visible - 1)) / visible
+    (viewportEl.value.offsetWidth - gap.value * (visible - 1)) / visible
   )
 }
 
@@ -234,4 +235,47 @@ function startAuto() {
   justify-content: center;
 }
 .fs-cta-icon svg { width: 18px; height: 18px; }
+
+/* ─── MOBILE (< 768px) ─── */
+@media (max-width: 767px) {
+  .fabric-showcase {
+    background: var(--bg-light);
+    padding: 8px 0 24px;
+  }
+
+  .fs-carousel { gap: 3px; }
+
+  /* Mũi tên mảnh, không nền; vùng bấm 44px nhờ ::before */
+  .fs-arrow {
+    position: relative;
+    width: 24px;
+    height: 48px;
+    margin-bottom: 30px;          /* căn giữa theo ảnh, không tính tên mẫu */
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--text-medium);
+  }
+  .fs-arrow::before { content: ''; position: absolute; top: 0; bottom: 0; }
+  .fs-arrow-left::before  { left: 0;  right: -20px; }   /* nới vào trong, không lòi ra mép màn hình */
+  .fs-arrow-right::before { left: -20px; right: 0; }
+  .fs-arrow:hover { background: none; color: var(--brand-red); }
+  .fs-arrow svg { width: 22px; height: 40px; }
+  .fs-arrow svg path { stroke-width: 1.2; }
+
+  .fs-swatch { border-radius: 4px; }
+  .fs-card:hover .fs-swatch { transform: none; box-shadow: none; }
+  .fs-name { margin-top: 10px; font-size: 15px; font-weight: 700; }
+
+  .fs-cta {
+    margin-top: 26px;
+    min-height: 44px;
+    gap: 12px;
+    padding: 5px 6px 5px 18px;
+    font-size: 16px;
+  }
+  .fs-cta-icon { width: 32px; height: 32px; }
+  .fs-cta-icon svg { width: 16px; height: 16px; }
+}
 </style>
