@@ -1,9 +1,9 @@
 <template>
   <section class="quote-section" :class="{ 'bg-anim': bgAnim, 'm-anim': mAnim }" ref="sectionEl">
-    <!-- Cột trái -->
+    <!-- Cột trái. .img-lane: desktop display contents; mobile là "làn" cho ảnh sticky -->
     <div class="col col-left">
-      <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" />
-      <img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" width="600" height="800" loading="lazy" decoding="async" />
+      <div class="img-lane lane-1"><img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" /></div>
+      <div class="img-lane lane-2"><img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" width="600" height="800" loading="lazy" decoding="async" /></div>
     </div>
 
     <!-- Cột giữa -->
@@ -29,8 +29,8 @@
 
     <!-- Cột phải -->
     <div class="col col-right">
-      <img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" width="800" height="450" loading="lazy" decoding="async" />
-      <img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" width="600" height="800" loading="lazy" decoding="async" />
+      <div class="img-lane lane-3"><img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" width="800" height="450" loading="lazy" decoding="async" /></div>
+      <div class="img-lane lane-4"><img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" width="600" height="800" loading="lazy" decoding="async" /></div>
     </div>
   </section>
 </template>
@@ -199,8 +199,8 @@ function setupDesktop() {
 /* ---------- MOBILE: giống leeemb.com (mục "LÊ Embroidery tập trung…") ----------
    Cách leeemb làm (đã xem code): KHÔNG pin bằng GSAP, KHÔNG animate ảnh.
    - Khối chữ (.col-center) dính giữa màn hình bằng CSS position: sticky.
-   - 4 ảnh (mờ 50%) đặt cố định trong section, trôi qua sau chữ bằng chính
-     cuộn gốc của trình duyệt ⇒ mượt tuyệt đối, JS không đụng tới ảnh.
+   - 4 ảnh (mờ 50%) cũng sticky (CSS): trồi lên từ đáy theo chính cuộn gốc
+     của trình duyệt, tới chỗ quanh khối chữ thì đứng yên ⇒ mượt, JS không đụng tới ảnh.
    - JS chỉ làm chữ sáng dần (scrub: true – bám đúng vị trí cuộn, không trễ)
      + đổi nền + CTA hiện cuối.
    Quãng chữ dính = chiều cao ::after của section (CSS). */
@@ -333,6 +333,9 @@ onUnmounted(() => {
   object-fit: cover;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
+
+/* Làn ảnh chỉ dùng ở mobile có hiệu ứng; còn lại không tham gia layout */
+.img-lane { display: contents; }
 
 /* Cột trái - so le bậc thang */
 .col-left { align-items: flex-end; }
@@ -508,31 +511,52 @@ onUnmounted(() => {
   .btn-solid { background: var(--border); color: var(--brand-red); }
   .btn-outline { border-color: rgba(255, 255, 255, .85); color: #FFFFFF; }
 
-  /* Có hiệu ứng (JS bật .m-anim) – giống leeemb: khối chữ sticky giữa màn hình,
-     ảnh đứng yên trong section, trôi qua sau chữ theo cuộn gốc của trình duyệt.
+  /* Có hiệu ứng (JS bật .m-anim) – giống leeemb: khối chữ sticky giữa màn hình.
      overflow-x: clip (không phải hidden) để không phá sticky. */
   .quote-section.m-anim {
+    --pt: calc(70px + env(safe-area-inset-top));
+    --stick-top: calc(50svh - var(--qh, 0px) / 2);   /* đỉnh khối chữ lúc dính */
     background: transparent;    /* hiện lớp nền chung đổi màu */
     overflow-x: clip;
     overflow-y: visible;
-    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* gap trên ~1/3, dưới CTA ~1/3 */
+    padding: var(--pt) 0 96px;   /* gap trên ~1/3, dưới CTA ~1/3 */
   }
-  /* Quãng cuộn khối chữ đứng yên (chữ sáng dần, ảnh trôi qua) */
+  /* Quãng cuộn khối chữ đứng yên (chữ sáng dần, ảnh trồi lên rồi dừng) */
   .quote-section.m-anim::after {
     content: '';
     display: block;
-    height: 120svh;
+    height: 140svh;
   }
   .m-anim .col-center {
     position: sticky;
-    top: calc(50svh - var(--qh, 0px) / 2);
+    top: var(--stick-top);
   }
   .m-anim .center-inner { will-change: auto; }
-  /* Ảnh rải theo chiều cao section (2 bên), lần lượt trôi qua sau khối chữ */
-  .m-anim .img-1 { top: 8%; }
-  .m-anim .img-3 { top: 17%; }
-  .m-anim .img-2 { top: 28%; }
-  .m-anim .img-4 { top: 37%; }
+
+  /* Ảnh: cũng sticky (không JS) ⇒ trôi lên theo cuộn gốc, tới chỗ thì đứng yên.
+     Mỗi ảnh nằm trong 1 "làn" absolute:
+     - đỉnh làn nằm dưới đáy màn hình lúc khối chữ bắt đầu dính (+ --d so le)
+       ⇒ ảnh trồi lên từ đáy trong quãng dính;
+     - ảnh dính ở --o so với đỉnh khối chữ;
+     - đáy làn tính để ảnh hết dính ĐÚNG lúc khối chữ hết dính ⇒ cả cụm trôi đi cùng nhau.
+     --h = chiều cao ảnh. */
+  .m-anim .img-lane {
+    display: block;
+    position: absolute;
+    top: calc(var(--pt) + 50svh + var(--qh, 0px) / 2 + var(--d));
+    bottom: calc(96px + var(--qh, 0px) - var(--o) - var(--h));
+    z-index: 0;
+  }
+  .m-anim .img {
+    position: sticky;
+    top: calc(var(--stick-top) + var(--o));
+    left: auto;
+    right: auto;   /* vị trí ngang nằm ở làn */
+  }
+  .m-anim .lane-1 { left: 27px;   --o: -20px;  --h: 130px; --d: 40px; }
+  .m-anim .lane-3 { right: -10px; --o: -110px; --h: 194px; --d: 0px; }
+  .m-anim .lane-2 { left: -12px;  --o: calc(var(--qh, 0px) - 220px); --h: 198px; --d: 120px; }
+  .m-anim .lane-4 { right: 17px;  --o: calc(var(--qh, 0px) - 270px); --h: 122px; --d: 80px; }
 }
 
 @media (max-width: 380px) {
@@ -541,5 +565,9 @@ onUnmounted(() => {
   .img-3 { width: 96px;  height: 170px; }
   .img-2 { width: 88px;  height: 170px; }
   .img-4 { width: 86px;  height: 104px; }
+  .m-anim .lane-1 { --h: 112px; }
+  .m-anim .lane-3 { --h: 170px; }
+  .m-anim .lane-2 { --h: 170px; --o: calc(var(--qh, 0px) - 190px); }
+  .m-anim .lane-4 { --h: 104px; --o: calc(var(--qh, 0px) - 240px); }
 }
 </style>
