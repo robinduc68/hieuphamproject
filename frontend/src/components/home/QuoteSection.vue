@@ -196,46 +196,60 @@ function setupDesktop() {
   return () => { bgAnim.value = false }
 }
 
-/* ---------- MOBILE: giống leeemb.com ----------
-   Section cao đúng 1 màn hình, chữ ở giữa. Trượt lên tới đỉnh thì pin:
-   chữ sáng dần từng ký tự, 4 ảnh (mờ 50%) trôi từ dưới lên xuyên qua màn
-   hình phía sau chữ như parallax, cuối cùng CTA hiện ra rồi nhả pin. */
+/* ---------- MOBILE: giống leeemb.com (mục "LÊ Embroidery tập trung…") ----------
+   Cách leeemb làm (đã xem code): KHÔNG pin bằng GSAP, KHÔNG animate ảnh.
+   - Khối chữ (.col-center) dính giữa màn hình bằng CSS position: sticky.
+   - 4 ảnh (mờ 50%) đặt cố định trong section, trôi qua sau chữ bằng chính
+     cuộn gốc của trình duyệt ⇒ mượt tuyệt đối, JS không đụng tới ảnh.
+   - JS chỉ làm chữ sáng dần (scrub: true – bám đúng vị trí cuộn, không trễ)
+     + đổi nền + CTA hiện cuối.
+   Quãng chữ dính = chiều cao ::after của section (CSS). */
 function setupMobile() {
   mAnim.value = true
   bgAnim.value = true
   // Thanh địa chỉ co/giãn khi cuộn không được làm ScrollTrigger tính lại (giật)
   ScrollTrigger.config({ ignoreMobileResize: true })
-  /* Mượt khi pin trên điện thoại: mặc định trình duyệt cuộn ở luồng riêng,
-     GSAP cập nhật pin/ảnh ở luồng JS sau đó 1–2 frame ⇒ section pin + ảnh
-     rung/khựng nhất là khi vuốt nhanh (quán tính). normalizeScroll để GSAP tự
-     điều khiển cuộn ⇒ cuộn, pin, ảnh cập nhật cùng 1 frame. Chỉ bật ở trang chủ
-     mobile, tắt lại khi rời trang / sang desktop (cleanup).
-     allowNestedScroll: vẫn vuốt ngang được carousel sản phẩm.
-     scroll-behavior: smooth (base.css) làm mỗi lần GSAP đặt vị trí cuộn bị
-     trình duyệt "trượt" thêm ⇒ phải tắt trong lúc bật normalizeScroll. */
-  const html = document.documentElement
-  const prevScrollBehavior = html.style.scrollBehavior
-  html.style.scrollBehavior = 'auto'
-  ScrollTrigger.normalizeScroll({ allowNestedScroll: true })
 
   const q = gsap.utils.selector(sectionEl.value)
+  const section = sectionEl.value
+  const col = centerInner.value.parentElement      // .col-center – phần tử sticky
   const chars = q('.qchar')
-  const CHAR = { opacity: 0.25, duration: 0.12, stagger: 0.014 }
+  /* Chữ mờ sẵn (set) rồi to → sáng (from + stagger chỉ áp from-state cho
+     ký tự đầu khi timeline đang ở progress 0). */
+  const CHAR = { opacity: 1, duration: 0.12, stagger: 0.014 }
+  gsap.set(chars, { opacity: 0.25 })
   const ENTRY_RATIO = 0.2
   const cut = Math.ceil(chars.length * ENTRY_RATIO)
 
-  /* 1. GIAO NHAU (như desktop): section trôi từ đáy lên tới lúc khối chữ ở giữa
-     màn hình → nền chung xám → maroon, chữ tối → cream/gold, vài dòng đầu sáng trước. */
+  /* Chiều cao khối chữ → CSS tính top sticky để khối chữ nằm giữa màn hình.
+     Đo trước mỗi lần ScrollTrigger tính lại (resize, font/ảnh load). */
+  const setH = () => section.style.setProperty('--qh', `${col.offsetHeight}px`)
+  setH()
+  ScrollTrigger.addEventListener('refreshInit', setH)
+
+  // Ảnh lazy → tải sẵn để lúc trôi vào màn hình không bị giải mã giữa chừng
+  q('.img').forEach(img => { img.loading = 'eager'; img.decode?.().catch(() => {}) })
+
+  const css = el => getComputedStyle(el)
+  const padTop = () => parseFloat(css(section).paddingTop)
+  const stickTop = () => parseFloat(css(col).top)
+  // Khối chữ bắt đầu dính: đỉnh khối (= đỉnh section + padding-top) chạm sticky top
+  const stickStart = () => `top+=${padTop()} ${stickTop()}`
+  // Quãng dính = phần nội dung section còn lại dưới khối chữ (::after)
+  const stickLen = () =>
+    section.clientHeight - padTop() - parseFloat(css(section).paddingBottom) - col.offsetHeight
+
+  /* 1. GIAO NHAU (như desktop): section trôi từ đáy lên tới lúc khối chữ dính
+     → nền chung xám → maroon, chữ tối → cream/gold, vài dòng đầu sáng trước. */
   const BG_DURATION = 1.4
   const pageBg = document.querySelector('[data-page-bg]')
   const entry = gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
-      trigger: sectionEl.value,
+      trigger: section,
       start: 'top bottom',
-      endTrigger: centerInner.value,
-      end: 'center center',
-      scrub: 1,
+      end: stickStart,
+      scrub: true,
       invalidateOnRefresh: true,
     },
   })
@@ -244,58 +258,25 @@ function setupMobile() {
     { backgroundColor: '#681927', duration: BG_DURATION }, 0)
   entry.from(q('.quote-line.cream'), { color: '#3A1219', duration: BG_DURATION }, 0)
   entry.from(q('.quote-line.gold, .quote-line .gold'), { color: '#7A5A16', duration: BG_DURATION }, 0)
-  entry.from(chars.slice(0, cut), { ...CHAR }, 0.4)
+  entry.to(chars.slice(0, cut), { ...CHAR }, 0.4)
 
-  /* 2. Pin khi khối chữ vào GIỮA màn hình: phần còn lại của chữ + ảnh trôi lên + CTA.
-     Section chỉ cao vừa nội dung (không cao 1 màn hình) → nhả pin xong
-     khoảng trống dưới CTA ngắn; phần màn hình dư là nền chung maroon. */
+  /* 2. Khối chữ đang dính: phần còn lại của chữ + CTA (chỉ hiện dần tại chỗ). */
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
-      trigger: centerInner.value,
-      start: 'center center',
-      end: '+=200%',
-      pin: sectionEl.value,
-      scrub: 1,
-      anticipatePin: 1,
+      trigger: section,
+      start: stickStart,
+      end: () => `+=${stickLen()}`,
+      scrub: true,
       invalidateOnRefresh: true,
     },
   })
   const waveLen = (chars.length - cut) * CHAR.stagger + CHAR.duration
-  tl.from(chars.slice(cut), { ...CHAR }, 0)
-  /* Đỉnh section trên màn hình lúc đang pin (khối chữ ở giữa màn hình) */
-  const pinnedTop = () => {
-    const ci = centerInner.value.getBoundingClientRect()
-    const sec = sectionEl.value.getBoundingClientRect()
-    return window.innerHeight / 2 - (ci.top - sec.top + ci.height / 2)
-  }
-  /* Ảnh: bắt đầu dưới đáy màn hình, trôi qua vị trí đặt sẵn trong CSS rồi
-     tiếp tục lên thêm chút (parallax).
-     Cho mượt:
-     - Ảnh lazy nằm ngoài màn hình → chỉ được tải/giải mã đúng lúc trồi lên ⇒ khựng.
-       Mobile tải + decode sẵn từ đầu.
-     - Cả 4 ảnh chạy CÙNG quãng (không so le start/duration) với tốc độ đều
-       (ease none) → không ảnh nào tăng/giảm tốc đột ngột; khác nhau chỉ ở
-       quãng đường nên vẫn có chiều sâu parallax.
-     - Quãng dài ~70% sóng chữ → ảnh trôi chậm, xong trước khi chữ sáng hết.
-     - force3D: giữ ảnh trên layer GPU suốt (mặc định GSAP trả về 2D lúc tween
-       xong → vẽ lại layer ⇒ giật khi ảnh dừng). */
-  const IMG_LEN = waveLen * 0.7
-  q('.img').forEach((img, i) => {
-    img.loading = 'eager'
-    img.decode?.().catch(() => {})
-    tl.fromTo(img,
-      { y: () => window.innerHeight - pinnedTop() - img.offsetTop + 20 },
-      { y: () => -(40 + i * 25), duration: IMG_LEN, force3D: true },
-      0)
-  })
-  // CTA chỉ hiện dần tại chỗ (không trượt y) → nút không nhảy
-  tl.from(q('.quote-cta'), { opacity: 0, duration: waveLen * 0.25 }, waveLen * 0.8)
+  tl.to(chars.slice(cut), { ...CHAR }, 0)
+  tl.from(q('.quote-cta'), { opacity: 0, duration: waveLen * 0.2 }, waveLen * 0.85)
 
   /* Quote trôi khỏi màn hình → trả nền chung về xám. Nếu để maroon, mép giữa
      các section nền xám (toạ độ lẻ px) lộ ra 1 đường đỏ mảnh trên điện thoại. */
-  /* Trigger = section kế tiếp (nằm sau pin-spacer nên vị trí đúng); khi nó
-     chạm đỉnh màn hình thì Quote đã trôi hết. */
   const nextSection = document.querySelector('.features-section')
   if (nextSection) ScrollTrigger.create({
     trigger: nextSection,
@@ -306,8 +287,9 @@ function setupMobile() {
 
   ScrollTrigger.refresh()
   return () => {
-    ScrollTrigger.normalizeScroll(false)
-    html.style.scrollBehavior = prevScrollBehavior
+    ScrollTrigger.removeEventListener('refreshInit', setH)
+    section.style.removeProperty('--qh')
+    gsap.set(chars, { clearProps: 'opacity' })
     mAnim.value = false
     bgAnim.value = false
   }
@@ -526,25 +508,31 @@ onUnmounted(() => {
   .btn-solid { background: var(--border); color: var(--brand-red); }
   .btn-outline { border-color: rgba(255, 255, 255, .85); color: #FFFFFF; }
 
-  /* Có hiệu ứng (JS bật .m-anim): section cao vừa nội dung, pin khi khối chữ
-     ở giữa màn hình; ảnh đặt theo % chiều cao, GSAP đẩy xuống đáy màn hình rồi trôi lên.
-     overflow-y visible để ảnh trôi lên từ đáy MÀN HÌNH (không bị cắt ở đáy section);
-     trình duyệt không hỗ trợ clip thì giữ hidden ở rule gốc. */
+  /* Có hiệu ứng (JS bật .m-anim) – giống leeemb: khối chữ sticky giữa màn hình,
+     ảnh đứng yên trong section, trôi qua sau chữ theo cuộn gốc của trình duyệt.
+     overflow-x: clip (không phải hidden) để không phá sticky. */
   .quote-section.m-anim {
     background: transparent;    /* hiện lớp nền chung đổi màu */
     overflow-x: clip;
     overflow-y: visible;
-    display: flex;
-    align-items: flex-start;    /* gap với section trước ~1/3 */
-    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* dưới CTA ~1/3 trước (287px) */
+    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* gap trên ~1/3, dưới CTA ~1/3 */
   }
-  .m-anim .col-center { width: 100%; }
+  /* Quãng cuộn khối chữ đứng yên (chữ sáng dần, ảnh trôi qua) */
+  .quote-section.m-anim::after {
+    content: '';
+    display: block;
+    height: 120svh;
+  }
+  .m-anim .col-center {
+    position: sticky;
+    top: calc(50svh - var(--qh, 0px) / 2);
+  }
   .m-anim .center-inner { will-change: auto; }
-  .m-anim .img { will-change: transform; backface-visibility: hidden; }
-  .m-anim .img-1 { top: 14%; }
-  .m-anim .img-3 { top: 6%; }
-  .m-anim .img-2 { top: auto; bottom: 8%; }
-  .m-anim .img-4 { top: auto; bottom: 20%; }
+  /* Ảnh rải theo chiều cao section (2 bên), lần lượt trôi qua sau khối chữ */
+  .m-anim .img-1 { top: 8%; }
+  .m-anim .img-3 { top: 17%; }
+  .m-anim .img-2 { top: 28%; }
+  .m-anim .img-4 { top: 37%; }
 }
 
 @media (max-width: 380px) {
