@@ -73,7 +73,9 @@ const steps = [
 /* Pin section ~1.5 viewport. Scroll: nền chuyển dần trắng → #DEDEDE (màu section). */
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth < 768) return   // mobile: nền #DEDEDE tĩnh, không pin
+  /* mobile: không pin, chỉ để section trong suốt → thấy lớp nền chung
+     đổi xám → maroon khi QuoteSection trôi lên (chuyển cảnh như desktop) */
+  if (window.innerWidth < 768) { bgAnim.value = true; return }
 
   const pageBg = document.querySelector('[data-page-bg]')   // lớp nền chung – không lộ đường nối
   bgAnim.value = true
@@ -215,8 +217,9 @@ onUnmounted(() => {
 @media (max-width: 767px) {
   .custom-section {
     background: var(--border);
-    padding: 44px 0 40px;
+    padding: 44px 0 12px;      /* sát QuoteSection hơn – gap chỉ ~1/3 trước */
   }
+  .custom-section.bg-anim { background: transparent; }
   .custom-inner { gap: 24px; }
 
   .custom-top { gap: 4px; padding: 0 var(--page-x); }

@@ -1,5 +1,5 @@
 <template>
-  <section class="quote-section" :class="{ 'bg-anim': bgAnim }" ref="sectionEl">
+  <section class="quote-section" :class="{ 'bg-anim': bgAnim, 'm-anim': mAnim }" ref="sectionEl">
     <!-- Cột trái -->
     <div class="col col-left">
       <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" />
@@ -49,6 +49,8 @@ const centerInner = ref(null)
 /* true khi timeline đổi nền thật sự chạy → mới cho section trong suốt.
    Nếu không (mobile / prefers-reduced-motion) giữ nền maroon đặc. */
 const bgAnim = ref(false)
+/* true khi hiệu ứng mobile chạy (pin 1 màn hình, ảnh trôi từ dưới lên). */
+const mAnim = ref(false)
 let ctx = null
 
 /* Khoảng cách từ vị trí căn giữa lên sát mép trên của cột giữa.
@@ -102,91 +104,184 @@ function prevSectionHeight() {
 
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth < 768) return   // mobile: hiển thị thường, không pin
 
-  bgAnim.value = true
-  ctx = gsap.context(() => {
-    // chia ký tự trước khi tạo timeline
-    sectionEl.value.querySelectorAll('.quote-line').forEach(splitChars)
+  // chia ký tự trước khi tạo timeline (dùng chung desktop + mobile)
+  sectionEl.value.querySelectorAll('.quote-line').forEach(splitChars)
 
-    const pageBg = document.querySelector('[data-page-bg]')
+  const mm = gsap.matchMedia(sectionEl.value)   // scope: selector chuỗi chỉ tìm trong section
+  ctx = mm
+  mm.add('(min-width: 768px)', () => setupDesktop())
+  mm.add('(max-width: 767px)', () => setupMobile())
 
-    /* ---------- 1. GIAO NHAU: NewArrivals → QuoteSection ----------
-       KHÔNG pin. Chạy đúng trong đoạn section trôi từ dưới lên mép trên
-       (giống cách CollectionsGrid xử lý giao QuoteSection → CollectionsGrid).
-       Trong đoạn này: nền xám → maroon ĐỒNG THỜI chữ hiện ra từng ký tự. */
-    const BG_DURATION = 1.4
-    const entry = gsap.timeline({
-      defaults: { ease: 'none' },
-      scrollTrigger: {
-        trigger: sectionEl.value,
-        start: () => `top ${prevSectionHeight()}px`,
-        end: 'top top',
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    })
-
-    /* Chữ: MỜ (opacity .5) → RÕ dần từng ký tự (không phải trống rồi hiện ra).
-       stagger = nhịp giữa 2 ký tự, duration = thời gian 1 ký tự sáng lên.
-       duration < stagger×7 → mỗi lúc chỉ ~7 ký tự đang sáng ⇒ sóng chạy theo ký tự.
-
-       Sóng chữ chia làm 2 đoạn để dài hơn về scroll: một phần chạy trong đoạn
-       giao nhau (100vh – cố định theo layout), phần còn lại chạy tiếp trong đoạn pin
-       (dài tuỳ ý qua `end`) ⇒ muốn sóng dài hơn thì giảm ENTRY_RATIO + tăng `end`.
-       Chia mảng (không dùng chung 1 timeline) để mỗi timeline tự giữ from-state
-       của riêng nó – tránh 2 ScrollTrigger tranh nhau ghi cùng giá trị. */
-    const chars = gsap.utils.toArray('.qchar', sectionEl.value)
-    const ENTRY_RATIO = 0.15                     // % ký tự chạy trong đoạn giao nhau
-    const WAVE_DELAY = 0.4                       // chữ bắt đầu muộn hơn nền (~29% đoạn giao nhau)
-    const cut = Math.ceil(chars.length * ENTRY_RATIO)
-    const CHAR = { opacity: 0.5, duration: 0.12, stagger: 0.014 }
-    entry.from(chars.slice(0, cut), { ...CHAR }, WAVE_DELAY)
-    /* Nền (lớp chung) xám → maroon. fromTo vì đầu range chắc chắn là #DEDEDE
-       (NewArrivals vừa chuyển tới màu này). */
-    entry.fromTo(pageBg,
-      { backgroundColor: '#DEDEDE' },
-      { backgroundColor: '#681927', duration: BG_DURATION }, 0)
-    /* Màu chữ: lúc nền còn xám thì tông tối cho dễ đọc, về cream/gold cùng lúc nền xong. */
-    entry.from('.quote-line.cream', { color: '#3A1219', duration: BG_DURATION }, 0)
-    entry.from('.quote-line.gold, .quote-line .gold', { color: '#7A5A16', duration: BG_DURATION }, 0)
-
-    /* ---------- 2. PIN: ảnh trồi lên, khối chữ về giữa, CTA ---------- */
-    const tl = gsap.timeline({
-      defaults: { ease: 'none' },
-      scrollTrigger: {
-        trigger: sectionEl.value,
-        start: 'top top',
-        end: '+=245%',   // dài để phần còn lại của sóng chữ chạy đủ (~2 viewport)
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true,   // tính lại topOffset khi resize/ảnh load xong
-      },
-    })
-
-    // Phần còn lại của sóng chữ – tiếp tục ngay khi section bắt đầu pin
-    tl.from(chars.slice(cut), { ...CHAR }, 0)
-    /* Khối chữ + CTA: bắt đầu sát mép trên → trôi xuống giữa cùng lúc ảnh trồi lên.
-       duration ngắn hơn sóng chữ nhiều → ảnh/khối chữ vẫn xong sau ~1 viewport
-       dù pin dài 290% (nếu để 1.2 thì ảnh trôi lên chậm rề). */
-    tl.from('.center-inner', { y: () => -topOffset(), duration: 0.85 }, 0)
-    /* Hình: KHÔNG fade – luôn opacity 1, nằm sẵn dưới mép section (overflow:hidden che),
-       scroll thì trượt thẳng từ dưới lên đúng chỗ.
-       y phải > 1 viewport: img-3 có margin-top -80 nên đỉnh nó nằm TRÊN mép section,
-       lấy 0.9vh là chưa đủ đẩy khỏi màn → nó lấp ló sẵn từ đầu. +160 cho dư. */
-    tl.from('.img', {
-      y: () => window.innerHeight + 160,
-      duration: 0.85,
-      stagger: 0.12,
-    }, 0)
-    // CTA cuối
-    tl.from('.quote-cta', { opacity: 0, y: 18, duration: 0.5 })
-
-    ScrollTrigger.refresh()
-    // Ảnh load xong có thể đổi layout → tính lại trigger.
-    window.addEventListener('load', ScrollTrigger.refresh)
-  }, sectionEl.value)
+  // Ảnh load xong có thể đổi layout → tính lại trigger.
+  window.addEventListener('load', ScrollTrigger.refresh)
 })
+
+function setupDesktop() {
+  bgAnim.value = true
+  const pageBg = document.querySelector('[data-page-bg]')
+
+  /* ---------- 1. GIAO NHAU: NewArrivals → QuoteSection ----------
+     KHÔNG pin. Chạy đúng trong đoạn section trôi từ dưới lên mép trên
+     (giống cách CollectionsGrid xử lý giao QuoteSection → CollectionsGrid).
+     Trong đoạn này: nền xám → maroon ĐỒNG THỜI chữ hiện ra từng ký tự. */
+  const BG_DURATION = 1.4
+  const entry = gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: {
+      trigger: sectionEl.value,
+      start: () => `top ${prevSectionHeight()}px`,
+      end: 'top top',
+      scrub: 1,
+      invalidateOnRefresh: true,
+    },
+  })
+
+  /* Chữ: MỜ (opacity .5) → RÕ dần từng ký tự (không phải trống rồi hiện ra).
+     stagger = nhịp giữa 2 ký tự, duration = thời gian 1 ký tự sáng lên.
+     duration < stagger×7 → mỗi lúc chỉ ~7 ký tự đang sáng ⇒ sóng chạy theo ký tự.
+
+     Sóng chữ chia làm 2 đoạn để dài hơn về scroll: một phần chạy trong đoạn
+     giao nhau (100vh – cố định theo layout), phần còn lại chạy tiếp trong đoạn pin
+     (dài tuỳ ý qua `end`) ⇒ muốn sóng dài hơn thì giảm ENTRY_RATIO + tăng `end`.
+     Chia mảng (không dùng chung 1 timeline) để mỗi timeline tự giữ from-state
+     của riêng nó – tránh 2 ScrollTrigger tranh nhau ghi cùng giá trị. */
+  const chars = gsap.utils.toArray('.qchar', sectionEl.value)
+  const ENTRY_RATIO = 0.15                     // % ký tự chạy trong đoạn giao nhau
+  const WAVE_DELAY = 0.4                       // chữ bắt đầu muộn hơn nền (~29% đoạn giao nhau)
+  const cut = Math.ceil(chars.length * ENTRY_RATIO)
+  const CHAR = { opacity: 0.5, duration: 0.12, stagger: 0.014 }
+  entry.from(chars.slice(0, cut), { ...CHAR }, WAVE_DELAY)
+  /* Nền (lớp chung) xám → maroon. fromTo vì đầu range chắc chắn là #DEDEDE
+     (NewArrivals vừa chuyển tới màu này). */
+  entry.fromTo(pageBg,
+    { backgroundColor: '#DEDEDE' },
+    { backgroundColor: '#681927', duration: BG_DURATION }, 0)
+  /* Màu chữ: lúc nền còn xám thì tông tối cho dễ đọc, về cream/gold cùng lúc nền xong. */
+  entry.from('.quote-line.cream', { color: '#3A1219', duration: BG_DURATION }, 0)
+  entry.from('.quote-line.gold, .quote-line .gold', { color: '#7A5A16', duration: BG_DURATION }, 0)
+
+  /* ---------- 2. PIN: ảnh trồi lên, khối chữ về giữa, CTA ---------- */
+  const tl = gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: {
+      trigger: sectionEl.value,
+      start: 'top top',
+      end: '+=245%',   // dài để phần còn lại của sóng chữ chạy đủ (~2 viewport)
+      pin: true,
+      scrub: 1,
+      invalidateOnRefresh: true,   // tính lại topOffset khi resize/ảnh load xong
+    },
+  })
+
+  // Phần còn lại của sóng chữ – tiếp tục ngay khi section bắt đầu pin
+  tl.from(chars.slice(cut), { ...CHAR }, 0)
+  /* Khối chữ + CTA: bắt đầu sát mép trên → trôi xuống giữa cùng lúc ảnh trồi lên.
+     duration ngắn hơn sóng chữ nhiều → ảnh/khối chữ vẫn xong sau ~1 viewport
+     dù pin dài 290% (nếu để 1.2 thì ảnh trôi lên chậm rề). */
+  tl.from('.center-inner', { y: () => -topOffset(), duration: 0.85 }, 0)
+  /* Hình: KHÔNG fade – luôn opacity 1, nằm sẵn dưới mép section (overflow:hidden che),
+     scroll thì trượt thẳng từ dưới lên đúng chỗ.
+     y phải > 1 viewport: img-3 có margin-top -80 nên đỉnh nó nằm TRÊN mép section,
+     lấy 0.9vh là chưa đủ đẩy khỏi màn → nó lấp ló sẵn từ đầu. +160 cho dư. */
+  tl.from('.img', {
+    y: () => window.innerHeight + 160,
+    duration: 0.85,
+    stagger: 0.12,
+  }, 0)
+  // CTA cuối
+  tl.from('.quote-cta', { opacity: 0, y: 18, duration: 0.5 })
+
+  ScrollTrigger.refresh()
+  return () => { bgAnim.value = false }
+}
+
+/* ---------- MOBILE: giống leeemb.com ----------
+   Section cao đúng 1 màn hình, chữ ở giữa. Trượt lên tới đỉnh thì pin:
+   chữ sáng dần từng ký tự, 4 ảnh (mờ 50%) trôi từ dưới lên xuyên qua màn
+   hình phía sau chữ như parallax, cuối cùng CTA hiện ra rồi nhả pin. */
+function setupMobile() {
+  mAnim.value = true
+  bgAnim.value = true
+  // Thanh địa chỉ co/giãn khi cuộn không được làm ScrollTrigger tính lại (giật)
+  ScrollTrigger.config({ ignoreMobileResize: true })
+
+  const q = gsap.utils.selector(sectionEl.value)
+  const chars = q('.qchar')
+  const CHAR = { opacity: 0.25, duration: 0.12, stagger: 0.014 }
+  const ENTRY_RATIO = 0.2
+  const cut = Math.ceil(chars.length * ENTRY_RATIO)
+
+  /* 1. GIAO NHAU (như desktop): section trôi từ đáy lên tới lúc khối chữ ở giữa
+     màn hình → nền chung xám → maroon, chữ tối → cream/gold, vài dòng đầu sáng trước. */
+  const BG_DURATION = 1.4
+  const pageBg = document.querySelector('[data-page-bg]')
+  const entry = gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: {
+      trigger: sectionEl.value,
+      start: 'top bottom',
+      endTrigger: centerInner.value,
+      end: 'center center',
+      scrub: 1,
+      invalidateOnRefresh: true,
+    },
+  })
+  entry.fromTo(pageBg,
+    { backgroundColor: '#DEDEDE' },
+    { backgroundColor: '#681927', duration: BG_DURATION }, 0)
+  entry.from(q('.quote-line.cream'), { color: '#3A1219', duration: BG_DURATION }, 0)
+  entry.from(q('.quote-line.gold, .quote-line .gold'), { color: '#7A5A16', duration: BG_DURATION }, 0)
+  entry.from(chars.slice(0, cut), { ...CHAR }, 0.4)
+
+  /* 2. Pin khi khối chữ vào GIỮA màn hình: phần còn lại của chữ + ảnh trôi lên + CTA.
+     Section chỉ cao vừa nội dung (không cao 1 màn hình) → nhả pin xong
+     khoảng trống dưới CTA ngắn; phần màn hình dư là nền chung maroon. */
+  const tl = gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: {
+      trigger: centerInner.value,
+      start: 'center center',
+      end: '+=200%',
+      pin: sectionEl.value,
+      scrub: 1,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+    },
+  })
+  const waveLen = (chars.length - cut) * CHAR.stagger + CHAR.duration
+  tl.from(chars.slice(cut), { ...CHAR }, 0)
+  /* Đỉnh section trên màn hình lúc đang pin (khối chữ ở giữa màn hình) */
+  const pinnedTop = () => {
+    const ci = centerInner.value.getBoundingClientRect()
+    const sec = sectionEl.value.getBoundingClientRect()
+    return window.innerHeight / 2 - (ci.top - sec.top + ci.height / 2)
+  }
+  /* Ảnh: bắt đầu dưới đáy màn hình, trôi qua vị trí đặt sẵn trong CSS rồi
+     tiếp tục lên thêm chút (parallax) – mỗi ảnh tốc độ khác nhau. */
+  q('.img').forEach((img, i) => {
+    tl.fromTo(img,
+      { y: () => window.innerHeight - pinnedTop() - img.offsetTop + 20 },
+      { y: () => -(40 + i * 25), duration: waveLen * (1.05 - i * 0.08) },
+      i * waveLen * 0.08)
+  })
+  tl.from(q('.quote-cta'), { opacity: 0, y: 18, duration: waveLen * 0.25 }, waveLen * 0.8)
+
+  /* Quote trôi khỏi màn hình → trả nền chung về xám. Nếu để maroon, mép giữa
+     các section nền xám (toạ độ lẻ px) lộ ra 1 đường đỏ mảnh trên điện thoại. */
+  /* Trigger = section kế tiếp (nằm sau pin-spacer nên vị trí đúng); khi nó
+     chạm đỉnh màn hình thì Quote đã trôi hết. */
+  const nextSection = document.querySelector('.features-section')
+  if (nextSection) ScrollTrigger.create({
+    trigger: nextSection,
+    start: 'top top',
+    onEnter: () => gsap.set(pageBg, { backgroundColor: '#DEDEDE' }),
+    onLeaveBack: () => gsap.set(pageBg, { backgroundColor: '#681927' }),
+  })
+
+  ScrollTrigger.refresh()
+  return () => { mAnim.value = false; bgAnim.value = false }
+}
 
 onUnmounted(() => {
   if (typeof window !== 'undefined') window.removeEventListener('load', ScrollTrigger.refresh)
@@ -365,7 +460,7 @@ onUnmounted(() => {
   }
   .center-inner {
     display: block;
-    max-width: 306px;
+    max-width: 350px;
     margin: 0 auto;
     text-wrap: pretty;     /* tránh chữ mồ côi cuối đoạn */
   }
@@ -373,9 +468,9 @@ onUnmounted(() => {
   /* 2 dòng đầu giữ nguyên dòng; phần còn lại chảy liền (inline) để xuống dòng như design */
   .quote-line {
     display: inline;
-    font-size: 19px;
-    line-height: 1.85;
-    letter-spacing: 1.9px;
+    font-size: 23px;
+    line-height: 1.75;
+    letter-spacing: 1.2px;
   }
   .quote-line::after { content: ' '; }
   .center-inner > .quote-line:nth-child(-n+2),
@@ -400,10 +495,30 @@ onUnmounted(() => {
   }
   .btn-solid { background: var(--border); color: var(--brand-red); }
   .btn-outline { border-color: rgba(255, 255, 255, .85); color: #FFFFFF; }
+
+  /* Có hiệu ứng (JS bật .m-anim): section cao vừa nội dung, pin khi khối chữ
+     ở giữa màn hình; ảnh đặt theo % chiều cao, GSAP đẩy xuống đáy màn hình rồi trôi lên.
+     overflow-y visible để ảnh trôi lên từ đáy MÀN HÌNH (không bị cắt ở đáy section);
+     trình duyệt không hỗ trợ clip thì giữ hidden ở rule gốc. */
+  .quote-section.m-anim {
+    background: transparent;    /* hiện lớp nền chung đổi màu */
+    overflow-x: clip;
+    overflow-y: visible;
+    display: flex;
+    align-items: flex-start;    /* gap với section trước ~1/3 */
+    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* dưới CTA ~1/3 trước (287px) */
+  }
+  .m-anim .col-center { width: 100%; }
+  .m-anim .center-inner { will-change: auto; }
+  .m-anim .img { will-change: transform; }
+  .m-anim .img-1 { top: 14%; }
+  .m-anim .img-3 { top: 6%; }
+  .m-anim .img-2 { top: auto; bottom: 8%; }
+  .m-anim .img-4 { top: auto; bottom: 20%; }
 }
 
 @media (max-width: 380px) {
-  .quote-line { font-size: 17px; letter-spacing: 1.4px; }
+  .quote-line { font-size: 21px; letter-spacing: .8px; }
   .img-1 { width: 84px;  height: 112px; }
   .img-3 { width: 96px;  height: 170px; }
   .img-2 { width: 88px;  height: 170px; }

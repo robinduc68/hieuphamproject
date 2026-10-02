@@ -70,7 +70,7 @@ const features = [
    và nền vẫn maroon → lộ ra một khoảng trống. */
 onMounted(() => {
   if (prefersReducedMotion()) return
-  if (window.innerWidth < 768) return
+  if (window.innerWidth < 768) return   // mobile: không chuyển cảnh, nền xám đặc
 
   bgAnim.value = true
   ctx = gsap.context(() => {

@@ -1,5 +1,8 @@
 <template>
-  <header class="app-header" :class="{ 'app-header--overlay': overlay }">
+  <header
+    class="app-header"
+    :class="{ 'app-header--overlay': overlay, 'is-scrolled': scrolled && !menuOpen && !searchOpen && !mobileOpen }"
+  >
     <div class="header-wrap">
 
       <!-- Nav card — bo góc -->
@@ -159,7 +162,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onUnmounted } from 'vue'
+import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import CartDrawer from '@/components/ui/CartDrawer.vue'
 import MegaMenu  from '@/components/layout/MegaMenu.vue'
@@ -207,7 +210,18 @@ watch(() => router.currentRoute.value.fullPath, () => {
   menuOpen.value   = false
 })
 
-onUnmounted(() => { document.body.style.overflow = '' })
+// Ở đầu trang: rõ 100%. Đã kéo xuống: header vẫn dính trên cùng nhưng mờ còn 60%
+const scrolled = ref(false)
+function onScroll() { scrolled.value = window.scrollY > 10 }
+
+onMounted(() => {
+  onScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
@@ -219,13 +233,20 @@ onUnmounted(() => { document.body.style.overflow = '' })
   border-bottom: 1px solid var(--border);
 }
 
-/* Trang chủ: đè lên video */
+/* Đè lên nội dung, luôn dính trên cùng kể cả khi kéo xuống */
 .app-header--overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0; right: 0;
   background: transparent;
   border-bottom: none;
 }
+
+/* Đã kéo xuống: mờ còn 60%; chạm/hover/focus vào thì rõ lại.
+   Chỉ làm mờ thanh header, không làm mờ drawer/giỏ hàng/ô tìm kiếm. */
+.header-wrap { transition: opacity .3s ease; }
+.app-header.is-scrolled .header-wrap { opacity: .6; }
+.app-header.is-scrolled:hover .header-wrap,
+.app-header.is-scrolled:focus-within .header-wrap { opacity: 1; }
 
 /* Outer wrapper: badge + card side by side */
 .header-wrap {
@@ -512,9 +533,7 @@ onUnmounted(() => { document.body.style.overflow = '' })
     align-items: center;
     padding: 0 4px;
     border: none;
-    background: rgba(255, 255, 255, .62);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    background: var(--bg-white);
   }
   .burger-btn {
     height: 44px;
