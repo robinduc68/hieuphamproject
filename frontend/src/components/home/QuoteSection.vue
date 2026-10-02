@@ -244,7 +244,7 @@ function setupMobile() {
       start: 'center center',
       end: '+=200%',
       pin: sectionEl.value,
-      scrub: 1,
+      scrub: 0.6,
       anticipatePin: 1,
       invalidateOnRefresh: true,
     },
@@ -259,11 +259,16 @@ function setupMobile() {
   }
   /* Ảnh: bắt đầu dưới đáy màn hình, trôi qua vị trí đặt sẵn trong CSS rồi
      tiếp tục lên thêm chút (parallax) – mỗi ảnh tốc độ khác nhau. */
+  /* Ảnh xong sớm (~65% sóng chữ) rồi đứng yên, chữ chạy nốt.
+     Ảnh loading="lazy" nằm ngoài màn hình → trình duyệt chỉ tải/giải mã lúc
+     nó trồi vào giữa lúc cuộn ⇒ khựng. Mobile: tải + decode sẵn từ đầu. */
   q('.img').forEach((img, i) => {
+    img.loading = 'eager'
+    img.decode?.().catch(() => {})
     tl.fromTo(img,
       { y: () => window.innerHeight - pinnedTop() - img.offsetTop + 20 },
-      { y: () => -(40 + i * 25), duration: waveLen * (1.05 - i * 0.08) },
-      i * waveLen * 0.08)
+      { y: () => -(40 + i * 25), duration: waveLen * (0.5 - i * 0.03), force3D: true },
+      i * waveLen * 0.05)
   })
   tl.from(q('.quote-cta'), { opacity: 0, y: 18, duration: waveLen * 0.25 }, waveLen * 0.8)
 
