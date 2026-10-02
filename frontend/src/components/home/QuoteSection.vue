@@ -221,9 +221,23 @@ function setupMobile() {
   const ENTRY_RATIO = 0.2
   const cut = Math.ceil(chars.length * ENTRY_RATIO)
 
-  /* Chiều cao khối chữ → CSS tính top sticky để khối chữ nằm giữa màn hình.
+  /* Top sticky của khối chữ (px) để khối nằm giữa màn hình, tính ở JS rồi đưa
+     cho CSS (--stick-top). Không đọc ngược getComputedStyle(col).top: Safari trả
+     về sai với calc(svh…) ⇒ ScrollTrigger tính sai điểm bắt đầu dính.
+     svh (chiều cao lúc thanh địa chỉ hiện – không đổi khi cuộn) đo bằng 1 thẻ tạm.
      Đo trước mỗi lần ScrollTrigger tính lại (resize, font/ảnh load). */
-  const setH = () => section.style.setProperty('--qh', `${col.offsetHeight}px`)
+  let stickTopPx = 0
+  const setH = () => {
+    const probe = document.createElement('div')
+    probe.style.cssText = 'position:fixed;top:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none'
+    document.body.appendChild(probe)
+    const svh = probe.offsetHeight
+    probe.remove()
+    const qh = col.offsetHeight
+    stickTopPx = Math.round((svh - qh) / 2)
+    section.style.setProperty('--qh', `${qh}px`)
+    section.style.setProperty('--stick-top', `${stickTopPx}px`)
+  }
   setH()
   ScrollTrigger.addEventListener('refreshInit', setH)
 
@@ -232,7 +246,7 @@ function setupMobile() {
 
   const css = el => getComputedStyle(el)
   const padTop = () => parseFloat(css(section).paddingTop)
-  const stickTop = () => parseFloat(css(col).top)
+  const stickTop = () => stickTopPx
   // Khối chữ bắt đầu dính: đỉnh khối (= đỉnh section + padding-top) chạm sticky top
   const stickStart = () => `top+=${padTop()} ${stickTop()}`
   // Quãng dính = phần nội dung section còn lại dưới khối chữ (::after)
@@ -251,6 +265,11 @@ function setupMobile() {
       end: stickStart,
       scrub: true,
       invalidateOnRefresh: true,
+      /* Chuyển nền xong → section tự tô nền maroon (không còn phụ thuộc lớp nền
+         chung) ⇒ lớp nền chung có về xám sớm (vị trí trigger lệch trên máy thật)
+         thì nền quote vẫn giữ nguyên. Cuộn ngược lên → trong suốt lại. */
+      onLeave: () => { section.style.backgroundColor = '#681927' },
+      onEnterBack: () => { section.style.backgroundColor = '' },
     },
   })
   entry.fromTo(pageBg,
@@ -289,6 +308,8 @@ function setupMobile() {
   return () => {
     ScrollTrigger.removeEventListener('refreshInit', setH)
     section.style.removeProperty('--qh')
+    section.style.removeProperty('--stick-top')
+    section.style.backgroundColor = ''
     gsap.set(chars, { clearProps: 'opacity' })
     mAnim.value = false
     bgAnim.value = false
@@ -515,7 +536,7 @@ onUnmounted(() => {
      overflow-x: clip (không phải hidden) để không phá sticky. */
   .quote-section.m-anim {
     --pt: calc(70px + env(safe-area-inset-top));
-    --stick-top: calc(50svh - var(--qh, 0px) / 2);   /* đỉnh khối chữ lúc dính */
+    /* --stick-top: đỉnh khối chữ lúc dính – JS (setupMobile) tính px và gán vào section */
     background: transparent;    /* hiện lớp nền chung đổi màu */
     overflow-x: clip;
     overflow-y: visible;
@@ -543,7 +564,7 @@ onUnmounted(() => {
   .m-anim .img-lane {
     display: block;
     position: absolute;
-    top: calc(var(--pt) + 50svh + var(--qh, 0px) / 2 + var(--d));
+    top: calc(var(--pt) + 100svh - var(--stick-top, 0px) + var(--d));
     bottom: calc(96px + var(--qh, 0px) - var(--o) - var(--h));
     z-index: 0;
   }
