@@ -1,37 +1,42 @@
 <template>
   <section class="quote-section" :class="{ 'bg-anim': bgAnim, 'm-anim': mAnim }" ref="sectionEl">
-    <!-- Cột trái -->
-    <div class="col col-left">
-      <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" />
-      <img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" width="600" height="800" loading="lazy" decoding="async" />
-    </div>
+    <!-- Mobile: khung dính (position: sticky) giữa màn hình. Desktop: display contents -->
+    <div class="quote-stage" ref="stageEl">
+      <!-- Cột trái -->
+      <div class="col col-left">
+        <img src="/quote-1.png" alt="Khung dệt lụa" class="img img-1" width="450" height="800" loading="lazy" decoding="async" />
+        <img src="/quote-2.jpg" alt="Người phụ nữ guồng tơ" class="img img-2" width="600" height="800" loading="lazy" decoding="async" />
+      </div>
 
-    <!-- Cột giữa -->
-    <div class="col col-center">
-      <div class="center-inner" ref="centerInner">
-        <p class="quote-line cream">Hà Hoạt Silk hiểu rằng,</p>
-        <p class="quote-line cream">bộ đồ "đẹp" nhất không phải</p>
-        <p class="quote-line cream">những gì chạy theo số đông, mà là</p>
-        <p class="quote-line gold"><em><strong>lựa chọn phù hợp nhất,</strong></em></p>
-        <p class="quote-line gold"><em><strong>mang câu chuyện của riêng bạn.</strong></em></p>
-        <p class="quote-line cream spacer-top">Để Hà Hoạt Silk giúp bạn</p>
-        <p class="quote-line cream">
-          <em class="gold"><strong>tự tay</strong></em> tạo nên kiệt tác
-          <em class="gold"><strong>độc bản.</strong></em>
-        </p>
+      <!-- Cột giữa -->
+      <div class="col col-center">
+        <div class="center-inner" ref="centerInner">
+          <p class="quote-line cream">Hà Hoạt Silk hiểu rằng,</p>
+          <p class="quote-line cream">bộ đồ "đẹp" nhất không phải</p>
+          <p class="quote-line cream">những gì chạy theo số đông, mà là</p>
+          <p class="quote-line gold"><em><strong>lựa chọn phù hợp nhất,</strong></em></p>
+          <p class="quote-line gold"><em><strong>mang câu chuyện của riêng bạn.</strong></em></p>
+          <p class="quote-line cream spacer-top">Để Hà Hoạt Silk giúp bạn</p>
+          <p class="quote-line cream">
+            <em class="gold"><strong>tự tay</strong></em> tạo nên kiệt tác
+            <em class="gold"><strong>độc bản.</strong></em>
+          </p>
 
-        <div class="quote-cta">
-          <a href="#products" class="btn btn-solid">Khám phá sản phẩm</a>
-          <a href="#contact" class="btn btn-outline">Liên hệ hỗ trợ</a>
+          <div class="quote-cta">
+            <a href="#products" class="btn btn-solid">Khám phá sản phẩm</a>
+            <a href="#contact" class="btn btn-outline">Liên hệ hỗ trợ</a>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Cột phải -->
-    <div class="col col-right">
-      <img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" width="800" height="450" loading="lazy" decoding="async" />
-      <img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" width="600" height="800" loading="lazy" decoding="async" />
+      <!-- Cột phải -->
+      <div class="col col-right">
+        <img src="/quote-3.png" alt="Xưởng nhuộm tơ" class="img img-3" width="800" height="450" loading="lazy" decoding="async" />
+        <img src="/quote-4.jpg" alt="Lọ gốm nhuộm" class="img img-4" width="600" height="800" loading="lazy" decoding="async" />
+      </div>
     </div>
+    <!-- Mobile: quãng cuộn trong lúc khung dính đứng yên -->
+    <div class="quote-track" ref="trackEl" aria-hidden="true"></div>
   </section>
 </template>
 
@@ -46,6 +51,8 @@ gsap.registerPlugin(ScrollTrigger)
    Scroll: chữ dần hết mờ → rõ, ảnh trôi lên đúng chỗ, CTA hiện cuối. */
 const sectionEl = ref(null)
 const centerInner = ref(null)
+const stageEl = ref(null)
+const trackEl = ref(null)
 /* true khi timeline đổi nền thật sự chạy → mới cho section trong suốt.
    Nếu không (mobile / prefers-reduced-motion) giữ nền maroon đặc. */
 const bgAnim = ref(false)
@@ -197,9 +204,12 @@ function setupDesktop() {
 }
 
 /* ---------- MOBILE: giống leeemb.com ----------
-   Section cao đúng 1 màn hình, chữ ở giữa. Trượt lên tới đỉnh thì pin:
-   chữ sáng dần từng ký tự, 4 ảnh (mờ 50%) trôi từ dưới lên xuyên qua màn
-   hình phía sau chữ như parallax, cuối cùng CTA hiện ra rồi nhả pin. */
+   KHÔNG dùng GSAP pin: trên điện thoại pin (position: fixed bật/tắt bằng JS,
+   chạy sau luồng cuộn của trình duyệt + thanh địa chỉ co/giãn) làm khối chữ,
+   nút CTA giật/nhảy. Thay bằng CSS position: sticky – trình duyệt tự giữ khung
+   đứng yên giữa màn hình, mượt tuyệt đối. .quote-track phía sau tạo quãng cuộn.
+   Trong quãng đó: chữ sáng dần từng ký tự, 4 ảnh (mờ 50%) trôi từ đáy màn hình
+   lên như parallax và DỪNG trước khi chữ sáng xong, cuối cùng CTA hiện. */
 function setupMobile() {
   mAnim.value = true
   bgAnim.value = true
@@ -207,13 +217,35 @@ function setupMobile() {
   ScrollTrigger.config({ ignoreMobileResize: true })
 
   const q = gsap.utils.selector(sectionEl.value)
+  const stage = stageEl.value
   const chars = q('.qchar')
-  const CHAR = { opacity: 0.25, duration: 0.12, stagger: 0.014 }
+  const imgs = q('.img')
+  /* Chữ mờ sẵn (set) rồi to → sáng; không dùng from + stagger vì lúc
+     timeline ở progress 0 GSAP chỉ áp from-state cho ký tự đầu tiên. */
+  const CHAR = { opacity: 1, duration: 0.12, stagger: 0.014 }
+  gsap.set(chars, { opacity: 0.25 })
   const ENTRY_RATIO = 0.2
   const cut = Math.ceil(chars.length * ENTRY_RATIO)
 
-  /* 1. GIAO NHAU (như desktop): section trôi từ đáy lên tới lúc khối chữ ở giữa
-     màn hình → nền chung xám → maroon, chữ tối → cream/gold, vài dòng đầu sáng trước. */
+  /* Chiều cao khung → CSS tự tính top để khung nằm giữa màn hình (theo svh –
+     không đổi khi thanh địa chỉ ẩn/hiện ⇒ khung không bị xê dịch). */
+  const setStageH = () => sectionEl.value.style.setProperty('--stage-h', `${stage.offsetHeight}px`)
+  setStageH()
+  // Mỗi lần ScrollTrigger tính lại (resize, font/ảnh load) → đo lại khung trước
+  ScrollTrigger.addEventListener('refreshInit', setStageH)
+
+  /* Ảnh lazy nằm ngoài màn hình → chỉ được tải/giải mã đúng lúc trồi lên ⇒ khựng.
+     Tải + decode sẵn. */
+  imgs.forEach(img => { img.loading = 'eager'; img.decode?.().catch(() => {}) })
+
+  /* Điểm khung bắt đầu dính: đỉnh khung (= đỉnh section + padding-top)
+     chạm vị trí sticky top. */
+  const padTop = () => parseFloat(getComputedStyle(sectionEl.value).paddingTop)
+  const stickTop = () => parseFloat(getComputedStyle(stage).top)
+  const stickStart = () => `top+=${padTop()} ${stickTop()}`
+
+  /* 1. GIAO NHAU (như desktop): section trôi từ đáy lên tới lúc khung dính
+     → nền chung xám → maroon, chữ tối → cream/gold, vài dòng đầu sáng trước. */
   const BG_DURATION = 1.4
   const pageBg = document.querySelector('[data-page-bg]')
   const entry = gsap.timeline({
@@ -221,9 +253,8 @@ function setupMobile() {
     scrollTrigger: {
       trigger: sectionEl.value,
       start: 'top bottom',
-      endTrigger: centerInner.value,
-      end: 'center center',
-      scrub: 1,
+      end: stickStart,
+      scrub: 0.5,
       invalidateOnRefresh: true,
     },
   })
@@ -232,50 +263,36 @@ function setupMobile() {
     { backgroundColor: '#681927', duration: BG_DURATION }, 0)
   entry.from(q('.quote-line.cream'), { color: '#3A1219', duration: BG_DURATION }, 0)
   entry.from(q('.quote-line.gold, .quote-line .gold'), { color: '#7A5A16', duration: BG_DURATION }, 0)
-  entry.from(chars.slice(0, cut), { ...CHAR }, 0.4)
+  entry.to(chars.slice(0, cut), { ...CHAR }, 0.4)
 
-  /* 2. Pin khi khối chữ vào GIỮA màn hình: phần còn lại của chữ + ảnh trôi lên + CTA.
-     Section chỉ cao vừa nội dung (không cao 1 màn hình) → nhả pin xong
-     khoảng trống dưới CTA ngắn; phần màn hình dư là nền chung maroon. */
+  /* 2. Khung đang dính (suốt chiều cao .quote-track): chữ + ảnh + CTA. */
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
-      trigger: centerInner.value,
-      start: 'center center',
-      end: '+=200%',
-      pin: sectionEl.value,
-      scrub: 0.6,
-      anticipatePin: 1,
+      trigger: sectionEl.value,
+      start: stickStart,
+      end: () => `+=${trackEl.value.offsetHeight}`,
+      scrub: 0.5,
       invalidateOnRefresh: true,
     },
   })
   const waveLen = (chars.length - cut) * CHAR.stagger + CHAR.duration
-  tl.from(chars.slice(cut), { ...CHAR }, 0)
-  /* Đỉnh section trên màn hình lúc đang pin (khối chữ ở giữa màn hình) */
-  const pinnedTop = () => {
-    const ci = centerInner.value.getBoundingClientRect()
-    const sec = sectionEl.value.getBoundingClientRect()
-    return window.innerHeight / 2 - (ci.top - sec.top + ci.height / 2)
-  }
-  /* Ảnh: bắt đầu dưới đáy màn hình, trôi qua vị trí đặt sẵn trong CSS rồi
-     tiếp tục lên thêm chút (parallax) – mỗi ảnh tốc độ khác nhau. */
-  /* Ảnh xong sớm (~65% sóng chữ) rồi đứng yên, chữ chạy nốt.
-     Ảnh loading="lazy" nằm ngoài màn hình → trình duyệt chỉ tải/giải mã lúc
-     nó trồi vào giữa lúc cuộn ⇒ khựng. Mobile: tải + decode sẵn từ đầu. */
-  q('.img').forEach((img, i) => {
-    img.loading = 'eager'
-    img.decode?.().catch(() => {})
+  tl.to(chars.slice(cut), { ...CHAR }, 0)
+  /* Ảnh: từ dưới đáy màn hình (svh lớn nhất có thể = innerHeight lúc thanh địa chỉ
+     ẩn, +60 cho dư) trôi lên qua vị trí trong CSS rồi lên thêm chút.
+     Mỗi ảnh tốc độ khác nhau, tất cả xong ở ~55% sóng chữ rồi đứng yên.
+     Tween transform thuần (GPU), ease nhẹ ở cuối để ảnh dừng êm, không phanh gấp. */
+  imgs.forEach((img, i) => {
     tl.fromTo(img,
-      { y: () => window.innerHeight - pinnedTop() - img.offsetTop + 20 },
-      { y: () => -(40 + i * 25), duration: waveLen * (0.5 - i * 0.03), force3D: true },
+      { y: () => window.innerHeight - stickTop() - img.offsetTop + 60 },
+      { y: () => -(40 + i * 25), duration: waveLen * (0.5 - i * 0.03), ease: 'sine.out', force3D: true },
       i * waveLen * 0.05)
   })
-  tl.from(q('.quote-cta'), { opacity: 0, y: 18, duration: waveLen * 0.25 }, waveLen * 0.8)
+  // CTA chỉ hiện dần tại chỗ (không dịch y) → không làm khung nhảy.
+  tl.from(q('.quote-cta'), { autoAlpha: 0, duration: waveLen * 0.2 }, waveLen * 0.8)
 
   /* Quote trôi khỏi màn hình → trả nền chung về xám. Nếu để maroon, mép giữa
      các section nền xám (toạ độ lẻ px) lộ ra 1 đường đỏ mảnh trên điện thoại. */
-  /* Trigger = section kế tiếp (nằm sau pin-spacer nên vị trí đúng); khi nó
-     chạm đỉnh màn hình thì Quote đã trôi hết. */
   const nextSection = document.querySelector('.features-section')
   if (nextSection) ScrollTrigger.create({
     trigger: nextSection,
@@ -285,7 +302,13 @@ function setupMobile() {
   })
 
   ScrollTrigger.refresh()
-  return () => { mAnim.value = false; bgAnim.value = false }
+  return () => {
+    ScrollTrigger.removeEventListener('refreshInit', setStageH)
+    gsap.set(chars, { clearProps: 'opacity' })
+    sectionEl.value?.style.removeProperty('--stage-h')
+    mAnim.value = false
+    bgAnim.value = false
+  }
 }
 
 onUnmounted(() => {
@@ -309,6 +332,10 @@ onUnmounted(() => {
   gap: 8px;
   overflow: hidden;
 }
+/* Desktop: khung + track không tham gia layout grid */
+.quote-stage { display: contents; }
+.quote-track { display: none; }
+
 @media (min-width: 768px) {
   .quote-section.bg-anim { background: transparent; }   /* hiện lớp nền chung đổi màu */
 }
@@ -501,21 +528,27 @@ onUnmounted(() => {
   .btn-solid { background: var(--border); color: var(--brand-red); }
   .btn-outline { border-color: rgba(255, 255, 255, .85); color: #FFFFFF; }
 
-  /* Có hiệu ứng (JS bật .m-anim): section cao vừa nội dung, pin khi khối chữ
-     ở giữa màn hình; ảnh đặt theo % chiều cao, GSAP đẩy xuống đáy màn hình rồi trôi lên.
-     overflow-y visible để ảnh trôi lên từ đáy MÀN HÌNH (không bị cắt ở đáy section);
-     trình duyệt không hỗ trợ clip thì giữ hidden ở rule gốc. */
+  /* Có hiệu ứng (JS bật .m-anim): .quote-stage dính (sticky) giữa màn hình suốt
+     chiều cao .quote-track; ảnh đặt theo % chiều cao khung, GSAP đẩy xuống đáy
+     màn hình rồi trôi lên. overflow-y visible để ảnh trồi từ đáy MÀN HÌNH
+     (clip không tạo scroll container nên không phá sticky). */
   .quote-section.m-anim {
     background: transparent;    /* hiện lớp nền chung đổi màu */
     overflow-x: clip;
     overflow-y: visible;
-    display: flex;
-    align-items: flex-start;    /* gap với section trước ~1/3 */
-    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* dưới CTA ~1/3 trước (287px) */
+    padding: calc(70px + env(safe-area-inset-top)) 0 96px;   /* gap trên ~1/3, dưới CTA ~1/3 */
   }
-  .m-anim .col-center { width: 100%; }
+  .m-anim .quote-stage {
+    display: block;
+    position: sticky;
+    top: calc(50svh - var(--stage-h, 0px) / 2);
+  }
+  .m-anim .quote-track {
+    display: block;
+    height: 200svh;
+  }
   .m-anim .center-inner { will-change: auto; }
-  .m-anim .img { will-change: transform; }
+  .m-anim .img { will-change: transform; backface-visibility: hidden; }
   .m-anim .img-1 { top: 14%; }
   .m-anim .img-3 { top: 6%; }
   .m-anim .img-2 { top: auto; bottom: 8%; }
