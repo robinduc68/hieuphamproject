@@ -205,6 +205,18 @@ function setupMobile() {
   bgAnim.value = true
   // Thanh địa chỉ co/giãn khi cuộn không được làm ScrollTrigger tính lại (giật)
   ScrollTrigger.config({ ignoreMobileResize: true })
+  /* Mượt khi pin trên điện thoại: mặc định trình duyệt cuộn ở luồng riêng,
+     GSAP cập nhật pin/ảnh ở luồng JS sau đó 1–2 frame ⇒ section pin + ảnh
+     rung/khựng nhất là khi vuốt nhanh (quán tính). normalizeScroll để GSAP tự
+     điều khiển cuộn ⇒ cuộn, pin, ảnh cập nhật cùng 1 frame. Chỉ bật ở trang chủ
+     mobile, tắt lại khi rời trang / sang desktop (cleanup).
+     allowNestedScroll: vẫn vuốt ngang được carousel sản phẩm.
+     scroll-behavior: smooth (base.css) làm mỗi lần GSAP đặt vị trí cuộn bị
+     trình duyệt "trượt" thêm ⇒ phải tắt trong lúc bật normalizeScroll. */
+  const html = document.documentElement
+  const prevScrollBehavior = html.style.scrollBehavior
+  html.style.scrollBehavior = 'auto'
+  ScrollTrigger.normalizeScroll({ allowNestedScroll: true })
 
   const q = gsap.utils.selector(sectionEl.value)
   const chars = q('.qchar')
@@ -293,7 +305,12 @@ function setupMobile() {
   })
 
   ScrollTrigger.refresh()
-  return () => { mAnim.value = false; bgAnim.value = false }
+  return () => {
+    ScrollTrigger.normalizeScroll(false)
+    html.style.scrollBehavior = prevScrollBehavior
+    mAnim.value = false
+    bgAnim.value = false
+  }
 }
 
 onUnmounted(() => {
