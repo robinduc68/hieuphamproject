@@ -131,44 +131,14 @@
           <Transition name="pay-detail">
             <div v-if="payMethod === 'bank'" class="bank-wrap">
               <p class="bank-note">
-                Quét mã QR bằng ứng dụng ngân hàng của bạn và chuyển khoản với nội dung là mã đơn hàng.
+                Bấm <strong>Đặt hàng</strong> để nhận mã QR kèm sẵn số tiền cọc và nội dung
+                chuyển khoản. Quét bằng ứng dụng ngân hàng là xong — hệ thống tự ghi nhận
+                khi tiền về, không cần gửi ảnh xác nhận.
               </p>
-              <div class="bank-card">
-                <div class="bank-info">
-                  <p><strong>Ngân hàng:</strong> VPBank - Việt Nam Thịnh Vượng</p>
-                  <p><strong>Số tài khoản:</strong> <span class="bank-highlight">0886733714</span></p>
-                  <p><strong>Chủ tài khoản:</strong> <span class="bank-highlight">LÊ VĂN TUẤN</span></p>
-                  <p><strong>Số tiền:</strong> {{ formatPrice(depositAmount) }}</p>
-                  <p><strong>Nội dung CK:</strong> {{ orderCode }}</p>
-                  <button class="btn-copy" @click="copyOrderCode">Sao chép nội dung CK</button>
-                </div>
-                <div class="bank-qr">
-                  <div class="qr-placeholder">
-                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="5"  y="5"  width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
-                      <rect x="13" y="13" width="19" height="19" fill="#000"/>
-                      <rect x="60" y="5"  width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
-                      <rect x="68" y="13" width="19" height="19" fill="#000"/>
-                      <rect x="5"  y="60" width="35" height="35" fill="none" stroke="#000" stroke-width="4"/>
-                      <rect x="13" y="68" width="19" height="19" fill="#000"/>
-                      <rect x="60" y="60" width="8"  height="8"  fill="#000"/>
-                      <rect x="72" y="60" width="8"  height="8"  fill="#000"/>
-                      <rect x="84" y="60" width="8"  height="8"  fill="#000"/>
-                      <rect x="60" y="72" width="8"  height="8"  fill="#000"/>
-                      <rect x="84" y="72" width="8"  height="8"  fill="#000"/>
-                      <rect x="60" y="84" width="8"  height="8"  fill="#000"/>
-                      <rect x="72" y="84" width="20" height="8"  fill="#000"/>
-                      <rect x="44" y="5"  width="8"  height="8"  fill="#000"/>
-                      <rect x="44" y="17" width="8"  height="8"  fill="#000"/>
-                      <rect x="44" y="29" width="8"  height="8"  fill="#000"/>
-                      <rect x="44" y="44" width="8"  height="8"  fill="#000"/>
-                      <rect x="56" y="44" width="8"  height="8"  fill="#000"/>
-                    </svg>
-                  </div>
-                  <p class="qr-caption">Quét mã QR bằng ứng dụng ngân hàng của bạn</p>
-                  <button class="btn-qr">Tải mã QR</button>
-                </div>
-              </div>
+              <ul class="bank-steps">
+                <li>Số tiền cọc: <strong>{{ formatPrice(depositAmount) }}</strong> (50% giá trị đơn)</li>
+                <li>Phần còn lại thanh toán khi nhận hàng</li>
+              </ul>
             </div>
           </Transition>
         </section>
@@ -245,9 +215,40 @@
               <path d="M14 24l7 7 13-13" stroke="var(--brand-red)" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <h2 class="success-title">Đặt hàng thành công!</h2>
+          <h2 class="success-title">{{ paid ? 'Đã nhận tiền cọc!' : 'Đặt hàng thành công!' }}</h2>
           <p class="success-sub">Mã đơn hàng: <strong>{{ orderCode }}</strong></p>
-          <p class="success-desc">Chúng tôi sẽ liên hệ xác nhận qua điện thoại sớm nhất.</p>
+
+          <!-- Chuyển khoản: hiện mã QR rồi chờ ngân hàng báo về -->
+          <div v-if="payMethod === 'bank' && !paid" class="pay-box">
+            <p v-if="qrLoading" class="pay-loading">Đang tạo mã QR…</p>
+
+            <template v-else-if="qr?.available">
+              <img :src="qrImage" alt="Mã QR chuyển khoản" class="pay-qr" />
+              <p class="pay-amount">{{ formatPrice(qr.deposit_amount) }}</p>
+              <p class="pay-hint">Quét bằng ứng dụng ngân hàng — số tiền và nội dung đã điền sẵn.</p>
+              <p class="pay-wait"><span class="pay-dot" />Đang chờ ngân hàng xác nhận…</p>
+            </template>
+
+            <!-- Chưa bật VietQR hoặc tạo QR lỗi → chuyển khoản tay -->
+            <template v-else>
+              <p class="pay-hint">{{ qr?.message || 'Vui lòng chuyển khoản theo thông tin dưới đây.' }}</p>
+              <ul class="pay-manual">
+                <li>Ngân hàng: <strong>{{ bankInfo.bank }}</strong></li>
+                <li>Số tài khoản: <strong>{{ bankInfo.account }}</strong></li>
+                <li>Chủ tài khoản: <strong>{{ bankInfo.holder }}</strong></li>
+                <li>Số tiền: <strong>{{ formatPrice(qr?.deposit_amount ?? depositAmount) }}</strong></li>
+                <li>Nội dung: <strong>{{ orderCode }}</strong></li>
+              </ul>
+              <button class="btn-copy" @click="copyOrderCode">Sao chép nội dung CK</button>
+            </template>
+          </div>
+
+          <p v-else-if="paid" class="success-desc">
+            Đã nhận <strong>{{ formatPrice(qr?.deposit_amount ?? depositAmount) }}</strong> tiền cọc.
+            Chúng tôi sẽ liên hệ xác nhận sớm nhất.
+          </p>
+          <p v-else class="success-desc">Chúng tôi sẽ liên hệ xác nhận qua điện thoại sớm nhất.</p>
+
           <RouterLink to="/" class="success-btn">Về trang chủ</RouterLink>
         </div>
       </Transition>
@@ -256,10 +257,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
-import { ordersApi, locationsApi } from '@/api'
+import { ordersApi, locationsApi, paymentsApi } from '@/api'
 
 const cartStore = useCartStore()
 
@@ -270,9 +271,69 @@ const authStore = useAuthStore()
 const payMethod = ref('onepay')
 const agreed    = ref(false)
 
-const orderCode = 'VTL' + Math.floor(10000 + Math.random() * 90000)
+// Mã đơn do server cấp sau khi tạo đơn — đây cũng là nội dung chuyển khoản
+// và orderId gửi sang VietQR, nên bắt buộc phải là mã thật chứ không random.
+const orderCode = ref('')
 
 const depositAmount = computed(() => Math.round(cartStore.total * 0.5))
+
+// ── Thanh toán chuyển khoản qua VietQR ──────────────────────────────────
+const qr        = ref(null)    // { qr_code, qr_link, available, message, ... }
+const qrLoading = ref(false)
+const paid      = ref(false)
+let   pollTimer = null
+
+async function startVietQr() {
+  if (!orderCode.value) return
+  qrLoading.value = true
+  try {
+    qr.value = await paymentsApi.vietqr(orderCode.value)
+  } catch {
+    qr.value = null
+  } finally {
+    qrLoading.value = false
+  }
+  pollPayment()
+}
+
+/** Hỏi server 5 giây một lần, tối đa 15 phút. */
+function pollPayment() {
+  let ticks = 0
+  clearInterval(pollTimer)
+  pollTimer = setInterval(async () => {
+    ticks += 1
+    if (ticks > 180) return clearInterval(pollTimer)
+    try {
+      const st = await paymentsApi.status(orderCode.value)
+      if (st.payment_status === 'paid') {
+        paid.value = true
+        clearInterval(pollTimer)
+      }
+    } catch { /* mạng chập chờn thì bỏ qua, lần sau hỏi lại */ }
+  }, 5000)
+}
+
+/** VietQR trả cả ảnh sẵn (qr_link) lẫn chuỗi QR — có ảnh thì dùng luôn. */
+// Chưa cấu hình VietQR thì vẫn phải hiện đúng tài khoản như trước đây,
+// không được để khách nhìn vào khối trống không biết chuyển đi đâu.
+const BANK_FALLBACK = {
+  bank:    'VPBank - Việt Nam Thịnh Vượng',
+  account: '0886733714',
+  holder:  'LÊ VĂN TUẤN',
+}
+const bankInfo = computed(() => ({
+  bank:    qr.value?.bank_code    || BANK_FALLBACK.bank,
+  account: qr.value?.bank_account || BANK_FALLBACK.account,
+  holder:  qr.value?.account_name || BANK_FALLBACK.holder,
+}))
+
+const qrImage = computed(() => {
+  if (qr.value?.qr_link) return qr.value.qr_link
+  if (!qr.value?.qr_code) return ''
+  return `https://api.vietqr.io/image/${encodeURIComponent(qr.value.qr_code)}`
+})
+
+onUnmounted(() => clearInterval(pollTimer))
 
 const form = ref({
   email:     authStore.user?.email     ?? '',
@@ -335,7 +396,7 @@ function swatchGradient(hex) {
   return `linear-gradient(160deg,${hex}44,${hex}88)`
 }
 function copyOrderCode() {
-  navigator.clipboard?.writeText(orderCode)
+  navigator.clipboard?.writeText(orderCode.value)
 }
 
 function validate() {
@@ -357,9 +418,17 @@ async function handleSubmit() {
   if (!cartStore.count) { submitError.value = 'Giỏ hàng đang trống.'; return }
   submitting.value = true
   try {
-    await ordersApi.create({ ...form.value, items: cartStore.toOrderItems?.() ?? [] })
+    const order = await ordersApi.create({
+      ...form.value,
+      payment_method: payMethod.value,
+      items: cartStore.toOrderItems?.() ?? [],
+    })
+    orderCode.value = order.order_code || ''
     cartStore.clear()
     success.value = true
+
+    // Chuyển khoản → xin mã QR rồi chờ VietQR báo tiền về
+    if (payMethod.value === 'bank') await startVietQr()
   } catch {
     submitError.value = 'Có lỗi xảy ra, vui lòng thử lại.'
   } finally {
@@ -496,6 +565,35 @@ form { display: flex; flex-direction: column; gap: 16px; }
 
 /* Bank transfer */
 .bank-wrap { margin-top: 20px; }
+.bank-steps { margin: 12px 0 0 18px; font-size: 13px; line-height: 1.9; color: var(--text-dark); }
+
+/* Khối thanh toán trong popup đặt hàng thành công */
+.pay-box { margin: 18px 0 8px; }
+.pay-loading { font-size: 13px; color: var(--text-muted); padding: 24px 0; }
+.pay-qr {
+  width: 220px; height: 220px; margin: 0 auto;
+  border: 1px solid var(--border); border-radius: 10px; background: #fff;
+}
+.pay-amount {
+  font-family: var(--font-display); font-size: 22px;
+  color: var(--brand-red); margin-top: 12px;
+}
+.pay-hint { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-top: 6px; }
+.pay-wait {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 14px; font-size: 13px; color: var(--text-dark);
+}
+.pay-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--brand-red);
+  animation: pay-pulse 1.2s ease-in-out infinite;
+}
+@keyframes pay-pulse { 0%,100% { opacity: .25 } 50% { opacity: 1 } }
+
+.pay-manual {
+  list-style: none; margin: 14px 0; padding: 14px 16px;
+  background: var(--warm-white); border-radius: 8px;
+  font-size: 13px; line-height: 2; text-align: left;
+}
 .bank-note {
   font-family: var(--font-body);
   font-size: 13px;

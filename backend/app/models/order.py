@@ -1,6 +1,6 @@
 from peewee import (
     CharField, TextField, DecimalField,
-    IntegerField, ForeignKeyField
+    IntegerField, ForeignKeyField, DateTimeField
 )
 from .base import BaseModel
 from .user import User
@@ -48,6 +48,18 @@ class Order(BaseModel):
     payment_status   = CharField(max_length=20, default="unpaid")
     status           = CharField(max_length=20, default="pending")
     tracking_code    = CharField(max_length=100, null=True)
+
+    # Mã đơn in trên web và dùng làm nội dung chuyển khoản / orderId của VietQR.
+    # VietQR giới hạn orderId 13 ký tự, content 23 ký tự nên mã phải ngắn.
+    order_code       = CharField(max_length=20, null=True, unique=True)
+
+    # Thanh toán VietQR
+    qr_code          = TextField(null=True)                    # chuỗi QR để tự vẽ
+    qr_link          = CharField(max_length=500, null=True)    # ảnh QR do VietQR host
+    qr_transaction_id = CharField(max_length=100, null=True)   # transactionId lúc tạo QR
+    payment_ref      = CharField(max_length=100, null=True)    # mã giao dịch ngân hàng khi nhận tiền
+    paid_amount      = DecimalField(max_digits=16, decimal_places=0, null=True)
+    paid_at          = DateTimeField(null=True)
 
     class Meta:
         table_name = "orders"

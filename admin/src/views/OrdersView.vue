@@ -42,7 +42,7 @@
               <td><strong>{{ formatMoney(o.grand_total || o.total) }}</strong></td>
               <td>
                 <span class="badge" :class="`badge-${o.status}`">{{ statusLabel(o.status) }}</span>
-                <span class="badge badge-pay" :class="o.payment_status === 'paid' ? 'badge-green' : 'badge-orange'" style="margin-left:4px">{{ o.payment_status === 'paid' ? 'Đã TT' : 'Chưa TT' }}</span>
+                <span class="badge badge-pay" :class="payClass(o.payment_status)" style="margin-left:4px">{{ payShort(o.payment_status) }}</span>
               </td>
               <td>{{ formatDate(o.created_at) }}</td>
               <td>
@@ -75,7 +75,9 @@
             <div><span class="info-label">Địa chỉ</span><span>{{ selected.address || selected.shipping_address }}</span></div>
             <div><span class="info-label">Ghi chú</span><span>{{ selected.note || '—' }}</span></div>
             <div><span class="info-label">Mã vận đơn</span><span>{{ selected.tracking_code || '—' }}</span></div>
-            <div><span class="info-label">TT thanh toán</span><span>{{ selected.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán' }}</span></div>
+            <div><span class="info-label">TT thanh toán</span><span>{{ payLabel(selected.payment_status) }}</span></div>
+            <div v-if="selected.order_code"><span class="info-label">Mã đơn</span><span>{{ selected.order_code }}</span></div>
+            <div v-if="selected.payment_ref"><span class="info-label">Mã giao dịch NH</span><span>{{ selected.payment_ref }}</span></div>
             <div><span class="info-label">Hình thức TT</span><span>{{ selected.payment_method || '—' }}</span></div>
           </div>
 
@@ -113,6 +115,7 @@
                 <label class="form-label">Thanh toán</label>
                 <select v-model="newPayStatus" class="form-select">
                   <option value="unpaid">Chưa thanh toán</option>
+                  <option value="deposit_paid">Đã cọc</option>
                   <option value="paid">Đã thanh toán</option>
                   <option value="refunded">Đã hoàn tiền</option>
                 </select>
@@ -139,6 +142,17 @@ import { useToastStore } from '@/stores/toast.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 const toast = useToastStore()
+
+// Khách chuyển cọc 50% khi đặt → có trạng thái trung gian "đã cọc"
+const PAY_LABELS = {
+  unpaid:       'Chưa thanh toán',
+  deposit_paid: 'Đã cọc 50%',
+  paid:         'Đã thanh toán',
+  refunded:     'Đã hoàn tiền',
+}
+const payLabel = (v) => PAY_LABELS[v] || 'Chưa thanh toán'
+const payShort = (v) => ({ paid: 'Đã TT', deposit_paid: 'Đã cọc', refunded: 'Hoàn' }[v] || 'Chưa TT')
+const payClass = (v) => (v === 'paid' ? 'badge-green' : v === 'deposit_paid' ? 'badge-blue' : 'badge-orange')
 const auth = useAuthStore()
 
 const orders       = ref([])
@@ -226,6 +240,7 @@ onMounted(load)
 .info-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); }
 .badge-green  { background: #dcfce7 !important; color: #166534 !important; }
 .badge-orange { background: #fff7ed !important; color: #c2410c !important; }
+.badge-blue   { background: #dbeafe !important; color: #1e40af !important; }
 
 @media (max-width: 900px) {
   .toolbar { flex-wrap: wrap; }

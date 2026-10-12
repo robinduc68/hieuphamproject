@@ -1,6 +1,6 @@
 export { productsApi, categoriesApi } from './products'
 export { collectionsApi }             from './collections'
-export { ordersApi, newsletterApi }   from './orders'
+export { ordersApi, newsletterApi, paymentsApi } from './orders'
 export { usersApi }                   from './users'
 export { customizationApi }           from './customization'
 export { locationsApi }               from './locations'

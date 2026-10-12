@@ -12,6 +12,17 @@ export const ordersApi = {
   },
 }
 
+export const paymentsApi = {
+  /** Tạo (hoặc lấy lại) mã QR VietQR cho đơn hàng */
+  vietqr(orderCode) {
+    return client.post(`/payments/vietqr/${orderCode}`).then((r) => r.data)
+  },
+  /** Hỏi lại xem tiền đã về chưa */
+  status(orderCode) {
+    return client.get(`/payments/status/${orderCode}`).then((r) => r.data)
+  },
+}
+
 export const newsletterApi = {
   subscribe(email, fullName) {
     return client

@@ -54,8 +54,11 @@ def _order_to_out(order: Order) -> OrderOut:
         discount_code=order.discount_code,
         discount_amount=Decimal(str(order.discount_amount)),
         grand_total=Decimal(str(order.grand_total)),
+        order_code=order.order_code,
         payment_method=order.payment_method,
         payment_status=order.payment_status,
+        payment_ref=order.payment_ref,
+        paid_amount=Decimal(str(order.paid_amount)) if order.paid_amount is not None else None,
         status=order.status,
         tracking_code=order.tracking_code,
         created_at=order.created_at,
@@ -160,6 +163,11 @@ def create_order(
             payment_status="unpaid",
             status="pending",
         )
+        # Mã đơn = HH + id, gán ngay sau khi có id. Đây là nội dung chuyển khoản
+        # khách gõ và cũng là orderId gửi sang VietQR nên phải ngắn & duy nhất.
+        order.order_code = f"HH{order.id:06d}"
+        order.save()
+
         for li in line_items:
             OrderItem.create(
                 order=order,

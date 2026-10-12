@@ -74,8 +74,11 @@ class OrderOut(BaseModel):
     discount_code:   Optional[str] = None
     discount_amount: Decimal
     grand_total:     Decimal
+    order_code:      Optional[str] = None
     payment_method:  str
     payment_status:  str
+    payment_ref:     Optional[str] = None       # mã giao dịch ngân hàng
+    paid_amount:     Optional[Decimal] = None
     status:          str
     tracking_code:   Optional[str] = None
     items:           list[OrderItemOut] = []

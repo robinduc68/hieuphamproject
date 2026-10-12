@@ -31,6 +31,8 @@ class Settings(BaseSettings):
         validation_alias="ALLOWED_ORIGINS",
     )
     media_dir: str = Field(default="./media", validation_alias="MEDIA_DIR")
+    # Giới hạn dung lượng mỗi ảnh upload (MB) — khớp với dòng ghi trên form admin
+    max_upload_size_mb: int = Field(default=10, validation_alias="MAX_UPLOAD_SIZE_MB")
 
     # Cloudflare R2 (bỏ trống để dùng local storage)
     r2_account_id:       str | None = Field(default=None, validation_alias="R2_ACCOUNT_ID")
@@ -38,6 +40,35 @@ class Settings(BaseSettings):
     r2_secret_access_key: str | None = Field(default=None, validation_alias="R2_SECRET_ACCESS_KEY")
     r2_bucket_name:      str | None = Field(default=None, validation_alias="R2_BUCKET_NAME")
     r2_public_url:       str | None = Field(default=None, validation_alias="R2_PUBLIC_URL")  # https://pub-xxx.r2.dev hoặc custom domain
+
+    # ── VietQR ────────────────────────────────────────────────────────────
+    # Sandbox: https://dev.vietqr.org  |  Production: https://api.vietqr.org
+    vietqr_base_url: str = Field(default="https://dev.vietqr.org", validation_alias="VIETQR_BASE_URL")
+
+    # VietQR cấp cho merchant — dùng để HỆ THỐNG GỌI SANG VietQR (lấy token, tạo QR)
+    vietqr_username: str | None = Field(default=None, validation_alias="VIETQR_USERNAME")
+    vietqr_password: str | None = Field(default=None, validation_alias="VIETQR_PASSWORD")
+
+    # Tài khoản nhận tiền, in trên mã QR
+    vietqr_bank_code:    str | None = Field(default=None, validation_alias="VIETQR_BANK_CODE")
+    vietqr_bank_account: str | None = Field(default=None, validation_alias="VIETQR_BANK_ACCOUNT")
+    vietqr_account_name: str | None = Field(default=None, validation_alias="VIETQR_ACCOUNT_NAME")
+
+    # Tự đặt rồi khai báo cho VietQR — dùng để VietQR GỌI NGƯỢC VỀ hệ thống
+    # (họ lấy token ở /api/bank/api/token_generate rồi bắn giao dịch về
+    #  /api/bank/api/transaction-sync)
+    vietqr_callback_username: str | None = Field(default=None, validation_alias="VIETQR_CALLBACK_USERNAME")
+    vietqr_callback_password: str | None = Field(default=None, validation_alias="VIETQR_CALLBACK_PASSWORD")
+
+    @computed_field
+    @property
+    def vietqr_enabled(self) -> bool:
+        """Thiếu bất kỳ thông tin nào thì tắt VietQR, web quay về chuyển khoản tay."""
+        return bool(
+            self.vietqr_username and self.vietqr_password
+            and self.vietqr_bank_code and self.vietqr_bank_account
+            and self.vietqr_account_name
+        )
 
     @computed_field
     @property

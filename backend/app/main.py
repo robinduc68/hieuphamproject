@@ -17,6 +17,7 @@ from app.routers.customization  import router as customization_router
 from app.routers.uploads        import router as uploads_router
 from app.routers.settings       import router as settings_router
 from app.routers.posts          import router as posts_router
+from app.routers.payments       import router as payments_router, bank_router
 
 settings = get_settings()
 
@@ -68,6 +69,8 @@ app.include_router(customization_router)
 app.include_router(uploads_router)
 app.include_router(settings_router)
 app.include_router(posts_router)
+app.include_router(payments_router)
+app.include_router(bank_router)
 
 
 # ── Health check ──────────────────────────────────────────────────────────
