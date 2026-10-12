@@ -3,13 +3,15 @@
     <div class="fd-wrapper">
       <!-- Breadcrumb -->
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <RouterLink to="/">Home Page</RouterLink>
+        <RouterLink to="/">Trang chủ</RouterLink>
         <span class="sep">/</span>
         <RouterLink v-if="product.category" :to="`/danh-muc/${product.category.slug}`">
           {{ product.category.name }}
         </RouterLink>
         <span v-if="product.sub_category" class="sep">/</span>
-        <span v-if="product.sub_category">{{ product.sub_category }}</span>
+        <RouterLink v-if="product.sub_category" :to="subCategoryLink">
+          {{ product.sub_category }}
+        </RouterLink>
         <span class="sep">/</span>
         <span class="breadcrumb-current" aria-current="page">{{ product.name }}</span>
       </nav>
@@ -54,14 +56,13 @@
           <p class="fd-unit"><em>Đơn giá trên 1 {{ unit }} vải (chiều dài)</em></p>
 
           <ul class="fd-specs" v-if="specs.length">
-            <li v-for="s in specs" :key="s.label">
-              <span class="spec-label">{{ s.label }}:</span>
-              <!-- Chất liệu giữ nguyên định dạng admin soạn (đậm/nghiêng, danh
-                   sách, xuống dòng, ảnh) — đã lọc HTML trong renderRichText -->
-              <div v-if="s.html" class="spec-value rich-text" v-html="s.html" />
-              <template v-else> {{ s.value }}</template>
-            </li>
+            <li v-for="s in specs" :key="s.label">{{ s.label }}: {{ s.value }}</li>
           </ul>
+
+          <!-- Chất liệu: nội dung admin soạn sẵn đã tự có đề mục bên trong nên
+               không bọc thêm "Chất liệu:" nữa, đổ thẳng ra cùng cấp với các
+               dòng thông số ở trên. HTML đã lọc trong renderRichText. -->
+          <div v-if="fabricHtml" class="fd-fabric rich-text" v-html="fabricHtml" />
 
           <div class="fd-links">
             <button class="fd-link" @click="guideOpen = true">Định mức may đo</button>
@@ -148,6 +149,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import { DIRECT_ROUTES } from '@/composables/useCategories'
 import { renderRichText } from '@/utils/richtext'
 import { useSiteSettings, guideTable } from '@/composables/useSiteSettings'
 import GuideModal from '@/components/ui/GuideModal.vue'
@@ -229,6 +231,16 @@ watch(() => props.product?.id, () => {
   openTab.value   = 'desc'
 })
 
+/**
+ * Link của danh mục con trên breadcrumb. Vải có 2 trang riêng (DIRECT_ROUTES),
+ * còn lại về /cua-hang lọc theo slug đó.
+ */
+const subCategoryLink = computed(() => {
+  const slug = props.product?.sub_category_slug
+  if (!slug) return '/cua-hang'
+  return DIRECT_ROUTES[slug] || `/danh-muc/${slug}`
+})
+
 const images = computed(() => props.product?.images ?? [])
 const unit   = computed(() => props.product?.unit_label?.trim() || 'mét')
 
@@ -241,11 +253,12 @@ const specs = computed(() => {
   const p = props.product
   return [
     { label: 'Mã sản phẩm', value: p.sku_code },
-    { label: 'Chất liệu',   html:  renderRichText(p.fabric) },
     { label: 'Quy cách',    value: p.specification },
     { label: 'Khổ vải',     value: p.fabric_width },
-  ].filter(s => s.value || s.html)
+  ].filter(s => s.value)
 })
+
+const fabricHtml = computed(() => renderRichText(props.product.fabric))
 
 const tabs = computed(() => {
   const p = props.product
@@ -358,24 +371,37 @@ function addToCart() {
   content: ''; position: absolute; left: 2px; top: 9px;
   width: 5px; height: 5px; border-radius: 50%; background: var(--brand-red);
 }
-.fd-specs .spec-label { font-weight: 600; }
+/* Nội dung "Chất liệu" admin soạn — trình bày y hệt các dòng thông số ở trên:
+   chấm tròn đặc màu đỏ, cùng cỡ chữ, không thụt vào thêm một cấp. */
+.fd-fabric {
+  margin-bottom: 32px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--charcoal);
+}
+/* .rich-text toàn cục đặt 16px/1.9 cho nhiều thẻ khác nhau — ép tất cả về
+   cỡ của khối này để dòng "Lưu ý" không to hơn mấy dòng gạch đầu dòng. */
+.fd-fabric :deep(*) { font-size: inherit; line-height: inherit; }
 
-/* .rich-text toàn cục là cỡ 16px / line-height 1.9 — quá to cho khối thông số
-   nằm cạnh giá, nên thu lại cho khớp các dòng còn lại. */
-.spec-value { margin-top: 5px; }
-.spec-value :deep(p),
-.spec-value :deep(li)  { font-size: 14px; line-height: 1.65; }
-.spec-value :deep(p)   { margin-bottom: 8px; }
-.spec-value :deep(h1),
-.spec-value :deep(h2),
-.spec-value :deep(h3),
-.spec-value :deep(h4)  { font-size: 15px; margin: 10px 0 5px; }
-.spec-value :deep(ul),
-.spec-value :deep(ol)  { margin: 0 0 8px; padding-left: 20px; }
-.spec-value :deep(li)  { margin-bottom: 4px; }
-.spec-value :deep(img) { margin: 8px 0; border-radius: 6px; }
-.spec-value :deep(blockquote) { margin: 8px 0; padding-left: 12px; border-left: 2px solid var(--border); }
-.spec-value :deep(> *:last-child) { margin-bottom: 0; }
+.fd-fabric :deep(ul) { list-style: none; margin: 0 0 10px; padding: 0; }
+.fd-fabric :deep(ul li) { position: relative; padding-left: 18px; margin-bottom: 10px; }
+.fd-fabric :deep(ul li)::before {
+  content: ''; position: absolute; left: 2px; top: 9px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--brand-red);
+}
+.fd-fabric :deep(ol) { margin: 0 0 10px; padding-left: 20px; }
+.fd-fabric :deep(ol li) { margin-bottom: 10px; }
+.fd-fabric :deep(p)  { margin: 0 0 10px; }
+.fd-fabric :deep(h1),
+.fd-fabric :deep(h2),
+.fd-fabric :deep(h3),
+.fd-fabric :deep(h4) { font-size: 15px; font-weight: 600; margin: 12px 0 6px; }
+.fd-fabric :deep(img) { margin: 10px 0; border-radius: 6px; }
+.fd-fabric :deep(blockquote) {
+  margin: 10px 0; padding-left: 12px; border-left: 2px solid var(--border);
+}
+.fd-fabric :deep(> *:last-child) { margin-bottom: 0; }
 
 .fd-links { display: flex; justify-content: flex-start; margin: -18px 0 26px; }
 .fd-link {

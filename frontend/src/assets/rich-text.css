@@ -26,6 +26,9 @@
 .rich-text h4 { font-size: 15px; font-weight: 600; color: var(--charcoal); }
 
 .rich-text p { margin: 0 0 14px; }
+/* Nội dung soạn trước đây lưu đoạn bằng <div> (Enter của Chrome sinh <div>);
+   cho cùng khoảng cách với <p> để không phải sửa lại từng bài. */
+.rich-text div { margin: 0 0 14px; }
 .rich-text strong, .rich-text b { font-weight: 700; color: var(--charcoal); }
 .rich-text em, .rich-text i     { font-style: italic; }
 .rich-text u                    { text-decoration: underline; text-underline-offset: 2px; }
@@ -33,6 +36,9 @@
 .rich-text ul,
 .rich-text ol { margin: 0 0 14px; padding-left: 22px; }
 .rich-text li { margin-bottom: 6px; }
+/* Danh sách lồng: bám sát mục cha thay vì cách ra 14px như một khối mới */
+.rich-text li > ul,
+.rich-text li > ol { margin: 6px 0 0; }
 
 .rich-text a {
   color: var(--brand-red);

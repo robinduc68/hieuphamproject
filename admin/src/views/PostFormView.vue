@@ -142,6 +142,7 @@ import { useToastStore } from '@/stores/toast.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { toSlug } from '@/utils/slug.js'
 import { siteUrl } from '@/utils/siteUrl.js'
+import { imageTooLarge } from '@/utils/upload.js'
 
 const route  = useRoute()
 const router = useRouter()
@@ -217,6 +218,9 @@ async function onCoverSelected(e) {
   const file = e.target.files?.[0]
   e.target.value = ''
   if (!file) return
+
+  const tooBig = imageTooLarge(file)
+  if (tooBig) return toast.error(tooBig)
   uploading.value = true
   try {
     const fd = new FormData()

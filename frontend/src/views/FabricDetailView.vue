@@ -9,7 +9,7 @@
       <div class="fd-wrapper">
         <!-- Breadcrumb -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
-          <RouterLink to="/">Home Page</RouterLink>
+          <RouterLink to="/">Trang chủ</RouterLink>
           <span class="sep">/</span>
           <RouterLink :to="basePath">Kho lụa</RouterLink>
           <span class="sep">/</span>

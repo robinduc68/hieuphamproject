@@ -14,14 +14,26 @@
     <!-- Toolbar -->
     <div class="card toolbar">
       <input v-model="search" type="text" class="form-input" placeholder="Tìm tên sản phẩm..." style="max-width:280px" @keyup.enter="doSearch" />
-      <select v-model="filterCategory" class="form-select" style="max-width:180px" @change="doSearch">
+      <select v-model="filterCategory" class="form-select" style="max-width:180px" @change="onCategoryChange">
         <option value="">Tất cả danh mục</option>
         <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
       </select>
+      <!-- Tầng 2: chỉ hiện khi danh mục đang chọn có mục con -->
+      <select
+        v-if="filterSubcategories.length"
+        v-model="filterSubcategory"
+        class="form-select"
+        style="max-width:200px"
+        @change="doSearch"
+      >
+        <option value="">Tất cả mục con</option>
+        <option v-for="sb in filterSubcategories" :key="sb.id" :value="sb.id">{{ sb.name }}</option>
+      </select>
       <select v-model="filterStatus" class="form-select" style="max-width:160px" @change="doSearch">
-        <option value="">Tất cả</option>
+        <option value="">Tất cả trạng thái</option>
         <option value="new">Mới</option>
         <option value="featured">Nổi bật</option>
+        <option value="hidden">Đang ẩn</option>
       </select>
       <button class="btn btn-secondary" @click="doSearch">Tìm kiếm</button>
     </div>
@@ -43,7 +55,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in products" :key="p.id">
+            <tr v-for="p in products" :key="p.id" :class="{ 'row-hidden': !p.is_active }">
               <td>
                 <div class="product-thumb">
                   <img v-if="p.images?.length" :src="p.images[0].url" :alt="p.name" />
@@ -57,9 +69,10 @@
               <td>{{ p.category?.name || '—' }}</td>
               <td>{{ formatMoney(p.price) }}</td>
               <td>
+                <span v-if="!p.is_active" class="badge badge-cancelled" style="margin-right:4px">Đang ẩn</span>
                 <span v-if="p.is_new" class="badge badge-confirmed" style="margin-right:4px">Mới</span>
                 <span v-if="p.is_featured" class="badge badge-shipped">Nổi bật</span>
-                <span v-if="!p.is_new && !p.is_featured" class="badge badge-refunded">Thường</span>
+                <span v-if="p.is_active && !p.is_new && !p.is_featured" class="badge badge-refunded">Thường</span>
               </td>
               <td>
                 <div style="display:flex;gap:6px">
@@ -134,7 +147,20 @@ const page       = ref(1)
 const PER_PAGE   = 15
 
 const search         = ref('')
-const filterCategory = ref('')
+const filterCategory    = ref('')
+const filterSubcategory = ref('')
+
+// Mục con của danh mục đang chọn — không chọn danh mục thì không có tầng 2
+const filterSubcategories = computed(() => {
+  const cat = categories.value.find(c => c.id === Number(filterCategory.value))
+  return cat?.subcategories ?? []
+})
+
+// Đổi danh mục cha thì bỏ mục con cũ, tránh lọc ra danh sách rỗng khó hiểu
+function onCategoryChange() {
+  filterSubcategory.value = ''
+  doSearch()
+}
 const filterStatus   = ref('')
 const deleteTarget   = ref(null)
 const duplicatingId  = ref(null)
@@ -150,14 +176,18 @@ const pageNums   = computed(() => {
 async function load() {
   loading.value = true
   try {
-    const params = { page: page.value, per_page: PER_PAGE }
+    // Kèm sản phẩm đang ẩn, nếu không tắt "Hiển thị trên cửa hàng" là mất luôn
+    const params = { page: page.value, per_page: PER_PAGE, include_inactive: true }
     if (search.value) params.search = search.value
     if (filterCategory.value) params.category_id = filterCategory.value
+    if (filterSubcategory.value) params.subcategory_id = filterSubcategory.value
     if (filterStatus.value === 'new') params.is_new = true
     if (filterStatus.value === 'featured') params.is_featured = true
-    const res = await productsApi.list(params)
-    products.value = res.results ?? res
-    total.value    = res.total ?? res.length
+    const res  = await productsApi.list(params)
+    const list = res.results ?? res
+    // "Đang ẩn" lọc ở đây: backend không có tham số riêng cho nó
+    products.value = filterStatus.value === 'hidden' ? list.filter(p => !p.is_active) : list
+    total.value    = filterStatus.value === 'hidden' ? products.value.length : (res.total ?? list.length)
   } catch (e) {
     console.error('[ProductsView] load error:', e)
     products.value = []
@@ -235,4 +265,5 @@ onMounted(() => { load(); loadCategories() })
 .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .thumb-placeholder { width: 100%; height: 100%; background: #E5E7EB; }
 .product-name-cell { font-weight: 500; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-hidden { opacity: .55; }
 </style>

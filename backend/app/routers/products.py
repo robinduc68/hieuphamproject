@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, 
 from peewee import fn, DoesNotExist, IntegrityError
 
 from app.models.product import Product, ProductImage, ProductSize, Category
+from app.models.user import User
 from app.models.category import SubCategory
 from app.schemas.product import (
     ProductOut, ProductListOut, ProductCreate, ProductUpdate,
@@ -12,8 +13,9 @@ from app.schemas.product import (
     SubCategoryOut, SubCategoryCreate, SubCategoryUpdate,
     ProductImageUpdate, ProductSizeOut, SizeCreate, SizeUpdate,
 )
-from app.auth import require
+from app.auth import require, get_optional_user
 from app.database import get_db
+from app.config import get_settings
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 cat_router = APIRouter(prefix="/api/categories", tags=["Categories"])
@@ -22,6 +24,12 @@ sub_router = APIRouter(prefix="/api/subcategories", tags=["SubCategories"])
 
 # ── helpers ──────────────────────────────────────────────────────────────
 FABRIC_CATEGORY_SLUG = "lua-to-tam"
+
+# Ảnh sản phẩm trước đây không kiểm tra gì — chỉ nginx chặn, mà nginx trả về
+# trang 413 thô, admin không hiểu chuyện gì xảy ra.
+settings = get_settings()
+MAX_IMAGE_BYTES     = settings.max_upload_size_mb * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"}
 
 
 def _is_fabric_category(category_id: Optional[int], subcategory_id: Optional[int]) -> bool:
@@ -69,6 +77,8 @@ def _product_to_out(p: Product) -> dict:
         "care_instructions": p.care_instructions,
         "shipping_info":    p.shipping_info,
         "sub_category":     p.subcategory.name if getattr(p, "subcategory_id", None) else None,
+        # slug để breadcrumb ngoài web link được về đúng trang danh mục con
+        "sub_category_slug": p.subcategory.slug if getattr(p, "subcategory_id", None) else None,
         "is_new":           p.is_new,
         "is_active":        p.is_active,
         "is_featured":      p.is_featured,
@@ -188,13 +198,20 @@ def list_products(
     search:          Optional[str]  = Query(None),
     is_new:          Optional[bool] = Query(None),
     is_featured:     Optional[bool] = Query(None),
+    include_inactive: bool = Query(
+        False,
+        description="Kèm cả sản phẩm đang ẩn — chỉ admin, web khách gửi lên cũng bị bỏ qua",
+    ),
+    current_user: Optional[User] = Depends(get_optional_user),
     _db=Depends(get_db),
 ):
-    qs = (
-        Product.select()
-        .where(Product.is_active == True)
-        .order_by(Product.sort_order, Product.created_at.desc())
-    )
+    # Sản phẩm ẩn chỉ admin mới được thấy, nếu không trang admin tắt "Hiển thị
+    # trên cửa hàng" là sản phẩm biến mất khỏi chính danh sách admin.
+    show_hidden = include_inactive and current_user is not None and current_user.is_admin
+
+    qs = Product.select().order_by(Product.sort_order, Product.created_at.desc())
+    if not show_hidden:
+        qs = qs.where(Product.is_active == True)
     if category:
         cat = Category.get_or_none(Category.slug == category)
         if cat is None:
@@ -474,9 +491,19 @@ def upload_image(
     except DoesNotExist:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    file_bytes   = file.file.read()
     content_type = file.content_type or "image/jpeg"
-    public_url   = upload_file(file_bytes, file.filename or "image.jpg", product_id, content_type)
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Định dạng ảnh không được hỗ trợ.")
+
+    file_bytes = file.file.read()
+    if len(file_bytes) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Ảnh {len(file_bytes) / 1048576:.1f}MB vượt quá giới hạn "
+                   f"{settings.max_upload_size_mb}MB. Vui lòng nén hoặc giảm kích thước ảnh.",
+        )
+
+    public_url = upload_file(file_bytes, file.filename or "image.jpg", product_id, content_type)
 
     next_pos = (
         ProductImage.select(fn.COALESCE(fn.MAX(ProductImage.sort_order), -1))

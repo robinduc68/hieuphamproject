@@ -247,7 +247,7 @@
               <input ref="fileInput" type="file" accept="image/*" multiple style="display:none" @change="handleFileSelect" />
               <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;color:var(--text-2)"><path d="M24 8v24M12 20l12-12 12 12"/><path d="M8 36h32"/></svg>
               <p>Kéo thả hoặc <strong>click để chọn ảnh</strong></p>
-              <p style="font-size:12px;color:var(--text-2)">PNG, JPG, WEBP — tối đa 10MB mỗi ảnh</p>
+              <p style="font-size:12px;color:var(--text-2)">PNG, JPG, WEBP — tối đa {{ MAX_IMAGE_MB }}MB mỗi ảnh</p>
             </div>
 
             <div v-if="uploading" class="upload-progress">
@@ -381,6 +381,7 @@ import { useToastStore } from '@/stores/toast.js'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import { PATTERNS, COLOR_TAGS, SILK_TYPES } from '@/data/fabricOptions.js'
 import { toSlug } from '@/utils/slug.js'
+import { imageTooLarge, MAX_IMAGE_MB } from '@/utils/upload.js'
 import { siteUrl } from '@/utils/siteUrl.js'
 import { useAuthStore } from '@/stores/auth.js'
 
@@ -676,6 +677,13 @@ async function handleDrop(e) { await uploadFiles(Array.from(e.dataTransfer.files
 
 async function uploadFiles(files) {
   if (!files.length) return
+
+  // Chặn ảnh quá nặng ngay tại đây, khỏi tải lên rồi mới nhận lỗi 413
+  const tooBig = files.map(imageTooLarge).filter(Boolean)
+  tooBig.forEach(msg => toast.error(msg))
+  files = files.filter(f => !imageTooLarge(f))
+  if (!files.length) return
+
   uploading.value = true
   for (let i = 0; i < files.length; i++) {
     uploadProgress.value = `${i + 1}/${files.length}`

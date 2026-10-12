@@ -99,6 +99,7 @@ class ProductBase(BaseModel):
     care_instructions: Optional[str] = None
     shipping_info:     Optional[str] = None
     sub_category:      Optional[str] = None
+    sub_category_slug: Optional[str] = None
     is_new:            bool = False
     is_active:         bool = True
     is_featured:       bool = False
@@ -173,12 +174,14 @@ class ProductListOut(BaseModel):
     compare_at_price: Optional[Decimal] = None
     is_new:       bool
     is_featured:  bool
+    is_active:    bool = True
     product_type: str = "apparel"
     unit_label:   Optional[str] = None
     pattern:      Optional[str] = None
     color_tag:    Optional[str] = None
     silk_type:    Optional[str] = None
     sub_category: Optional[str] = None
+    sub_category_slug: Optional[str] = None
     category_id:  Optional[int] = None
     category:     Optional[CategoryOut] = None
     images:       list[ProductImageOut] = []

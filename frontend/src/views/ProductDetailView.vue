@@ -38,13 +38,13 @@
 
         <!-- Breadcrumb -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
-          <RouterLink to="/">Home Page</RouterLink>
+          <RouterLink to="/">Trang chủ</RouterLink>
           <span class="sep">/</span>
           <RouterLink v-if="product.category" :to="`/danh-muc/${product.category.slug}`">
             {{ product.category.name }}
           </RouterLink>
           <span class="sep">/</span>
-          <RouterLink v-if="product.sub_category" :to="`/danh-muc/${product.category?.slug}`">
+          <RouterLink v-if="product.sub_category" :to="subCategoryLink">
             {{ product.sub_category }}
           </RouterLink>
           <span class="sep">/</span>
@@ -290,6 +290,7 @@ import { customizationApi, productsApi } from '@/api'
 import FabricProductDetail      from '@/components/product/FabricProductDetail.vue'
 import GuideModal               from '@/components/ui/GuideModal.vue'
 import { renderRichText }       from '@/utils/richtext'
+import { DIRECT_ROUTES }        from '@/composables/useCategories'
 import { useSiteSettings, guideTable } from '@/composables/useSiteSettings'
 
 const { settings } = useSiteSettings()
@@ -386,6 +387,13 @@ const discountPercent = computed(() => {
   if (!hasDiscount.value) return 0
   const old = Number(product.value.compare_at_price)
   return Math.round((old - Number(product.value.price)) / old * 100)
+})
+
+/** Link danh mục con — trước đây trỏ nhầm về danh mục CHA. */
+const subCategoryLink = computed(() => {
+  const slug = product.value?.sub_category_slug
+  if (!slug) return `/danh-muc/${product.value?.category?.slug ?? ''}`
+  return DIRECT_ROUTES[slug] || `/danh-muc/${slug}`
 })
 
 const displayImages = computed(() => product.value?.images ?? [])

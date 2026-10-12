@@ -17,6 +17,8 @@
 
       <button type="button" class="rte-btn" title="Danh sách chấm đầu dòng" @mousedown.prevent="exec('insertUnorderedList')">• List</button>
       <button type="button" class="rte-btn" title="Danh sách đánh số"       @mousedown.prevent="exec('insertOrderedList')">1. List</button>
+      <button type="button" class="rte-btn" title="Thụt vào một cấp (Tab)"       @mousedown.prevent="indent">⇥</button>
+      <button type="button" class="rte-btn" title="Lùi ra một cấp (Shift+Tab)"  @mousedown.prevent="outdent">⇤</button>
       <button type="button" class="rte-btn" title="Chèn liên kết"           @mousedown.prevent="insertLink">🔗</button>
       <button type="button" class="rte-btn" title="Chèn ảnh vào nội dung"   @mousedown.prevent="pickImage" :disabled="uploading">
         {{ uploading ? 'Đang tải ảnh…' : '🖼 Ảnh' }}
@@ -53,6 +55,7 @@
       :data-placeholder="placeholder"
       :style="{ minHeight: minHeight + 'px' }"
       @input="onInput"
+      @keydown="onKeydown"
       @paste="onPaste"
       @keyup="syncState"
       @mouseup="syncState"
@@ -113,9 +116,71 @@ function normalize(html) {
 }
 
 /** HTML sạch để lưu: bỏ dấu chọn ảnh (chỉ phục vụ lúc soạn, không lưu vào DB). */
+// Thẻ khối — <div> chứa mấy thứ này thì không gói vào <p> được (HTML không hợp lệ)
+const BLOCK_TAGS = 'p,div,ul,ol,h1,h2,h3,h4,h5,h6,blockquote,table,figure,pre'
+
+/**
+ * Chuẩn hoá đoạn văn khi xuất ra: <div> ở cấp ngoài cùng và chữ nằm trần đều
+ * thành <p>, để nội dung lưu xuống có khoảng cách đoạn đúng ngoài website.
+ * Làm trên bản sao nên không đụng vào DOM đang gõ, con trỏ không bị nhảy.
+ */
+function isInline(node) {
+  if (node.nodeType === Node.TEXT_NODE) return true
+  if (node.nodeType !== Node.ELEMENT_NODE) return false
+  return !node.matches(BLOCK_TAGS)
+}
+
+function paragraphize(root) {
+  let run = []   // chuỗi node inline liền nhau = MỘT đoạn
+
+  // Gom cả cụm vào một <p>; gom từng node một sẽ tách "chữ<br>chữ" thành 2 đoạn
+  const flush = () => {
+    if (run.some(n => n.textContent.trim() || n.nodeName === 'IMG')) {
+      const p = document.createElement('p')
+      run[0].before(p)
+      run.forEach(n => p.appendChild(n))
+    }
+    run = []
+  }
+
+  for (const node of [...root.childNodes]) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'DIV' && !node.querySelector(BLOCK_TAGS)) {
+      flush()
+      const p = document.createElement('p')
+      p.innerHTML = node.innerHTML
+      node.replaceWith(p)
+    } else if (isInline(node)) {
+      run.push(node)
+    } else {
+      flush()
+    }
+  }
+  flush()
+}
+
+/**
+ * execCommand('indent') của Chrome đặt danh sách con làm con trực tiếp của <ul>
+ * cha (<ul><li>…</li><ul>…</ul></ul>) — sai chuẩn HTML. Chuyển nó vào trong
+ * <li> ngay trước để lưu ra HTML hợp lệ.
+ */
+function fixNestedLists(root) {
+  root.querySelectorAll('ul > ul, ul > ol, ol > ul, ol > ol').forEach((nested) => {
+    const prev = nested.previousElementSibling
+    if (prev && prev.tagName === 'LI') {
+      prev.appendChild(nested)
+    } else {
+      const li = document.createElement('li')
+      nested.before(li)
+      li.appendChild(nested)
+    }
+  })
+}
+
 function cleanHtml() {
   const clone = editor.value.cloneNode(true)
   clone.querySelectorAll('[data-rte-selected]').forEach(el => el.removeAttribute('data-rte-selected'))
+  fixNestedLists(clone)
+  paragraphize(clone)
   return normalize(clone.innerHTML)
 }
 
@@ -129,6 +194,9 @@ function onInput() {
 }
 
 onMounted(() => {
+  // Mặc định Chrome cho Enter sinh <div> — <div> không có khoảng cách đoạn nên
+  // 2 đoạn liền nhau nhìn y như 2 dòng trong cùng một đoạn. Ép sang <p>.
+  try { document.execCommand('defaultParagraphSeparator', false, 'p') } catch { /* trình duyệt cũ */ }
   editor.value.innerHTML = toHtml(props.modelValue)
 })
 
@@ -148,6 +216,29 @@ function exec(cmd, arg = null) {
 
 function setBlock(tag) {
   exec('formatBlock', `<${tag}>`)
+}
+
+/** Con trỏ có đang nằm trong một mục danh sách không. */
+function inListItem() {
+  const sel = window.getSelection()
+  if (!sel || !sel.rangeCount) return false
+  let node = sel.getRangeAt(0).startContainer
+  if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+  return !!node?.closest?.('li')
+}
+
+function indent()  { exec('indent') }
+function outdent() { exec('outdent') }
+
+/**
+ * Tab / Shift+Tab để phân cấp danh sách. Chỉ chặn phím khi con trỏ đang ở
+ * trong danh sách — ngoài danh sách vẫn để Tab chuyển ô như bình thường,
+ * và execCommand('indent') ngoài danh sách chỉ đẻ ra <blockquote> thừa.
+ */
+function onKeydown(e) {
+  if (e.key !== 'Tab' || !inListItem()) return
+  e.preventDefault()
+  e.shiftKey ? outdent() : indent()
 }
 
 function syncState() {
@@ -318,7 +409,13 @@ function onPaste(e) {
 .rte-body :deep(h2) { font-size: 18px; font-weight: 700; margin: 12px 0 8px; }
 .rte-body :deep(h3) { font-size: 15px; font-weight: 700; margin: 10px 0 6px; }
 .rte-body :deep(p)  { margin: 0 0 8px; }
+/* Nội dung cũ lưu bằng <div> (trước khi ép Enter sinh <p>) vẫn phải nhìn
+   thưa đúng như một đoạn riêng khi đang soạn. */
+.rte-body :deep(div) { margin: 0 0 8px; }
 .rte-body :deep(ul), .rte-body :deep(ol) { margin: 0 0 8px; padding-left: 22px; }
+/* Danh sách lồng: sát vào mục cha, không ăn thêm margin đáy của cấp ngoài */
+.rte-body :deep(li > ul), .rte-body :deep(li > ol) { margin: 4px 0 0; }
+.rte-body :deep(li) { margin-bottom: 2px; }
 .rte-body :deep(img) {
   max-width: 100%; height: auto; border-radius: 6px;
   margin: 8px 0; cursor: pointer; display: block;

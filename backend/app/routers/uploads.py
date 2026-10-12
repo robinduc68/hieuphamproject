@@ -17,7 +17,10 @@ CONTENT_EDITORS = (
     "content.update",
 )
 
-MAX_BYTES     = 10 * 1024 * 1024   # 10MB, khớp với giới hạn ghi trên form admin
+from app.config import get_settings
+
+settings = get_settings()
+MAX_BYTES     = settings.max_upload_size_mb * 1024 * 1024   # MAX_UPLOAD_SIZE_MB trong .env
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"}
 
 MAX_VIDEO_BYTES     = 200 * 1024 * 1024   # video nền trang chủ
