@@ -173,7 +173,8 @@
               <p class="item-name">{{ item.name.toUpperCase() }}</p>
               <p v-if="item.product_type === 'fabric'" class="item-detail">Bán theo {{ item.unit_label || 'mét' }}</p>
               <p v-else-if="item.tailoring_method === 'custom'" class="item-detail">May theo số đo</p>
-              <p v-else class="item-detail">Size: {{ item.size }}</p>
+              <!-- Khăn lụa không có size → không hiện dòng này -->
+              <p v-else-if="item.size" class="item-detail">Size: {{ item.size }}</p>
               <p v-if="item.lining_type" class="item-detail">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà ngoài' }}</p>
               <p v-if="item.color_option" class="item-detail">Màu sắc: {{ item.color_option === 'same' ? 'Giống ảnh mẫu' : 'Phối màu riêng' }}</p>
             </div>

@@ -33,8 +33,9 @@
               <div class="ci-info">
                 <p class="ci-name">{{ item.name }}</p>
                 <p v-if="isFabric(item)" class="ci-meta">Bán theo {{ item.unit_label || 'mét' }}</p>
-                <p v-else-if="item.tailoring_method !== 'custom'" class="ci-meta">Size: {{ item.size }}</p>
-                <p v-else class="ci-meta">May theo số đo</p>
+                <p v-else-if="item.tailoring_method === 'custom'" class="ci-meta">May theo số đo</p>
+                <!-- Khăn lụa không có size → không hiện dòng này -->
+                <p v-else-if="item.size" class="ci-meta">Size: {{ item.size }}</p>
                 <p v-if="item.lining_type" class="ci-meta">Tà trong: {{ item.lining_type === 'yem_roi' ? 'Yếm rời' : 'Liền tà' }}</p>
                 <p v-if="item.color_option" class="ci-meta">Màu: {{ item.color_option === 'same' ? 'Giống ảnh' : 'Phối màu riêng' }}</p>
                 <div class="ci-qty">

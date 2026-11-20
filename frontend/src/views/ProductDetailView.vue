@@ -25,11 +25,13 @@
       <RouterLink to="/" class="back-link">← Về trang chủ</RouterLink>
     </div>
 
-    <!-- Sản phẩm vải: layout riêng (bán theo mét, có thông số vải) -->
+    <!-- Sản phẩm vải: layout riêng (bán theo mét, có thông số vải).
+         Khăn lụa dùng chung layout này, bán theo cái (variant="scarf"). -->
     <FabricProductDetail
-      v-else-if="product && isFabric"
+      v-else-if="product && (isFabric || isScarf)"
       :product="product"
       :related="related"
+      :variant="isFabric ? 'fabric' : 'scarf'"
     />
 
     <!-- Product loaded -->
@@ -410,6 +412,10 @@ const isFabric = computed(() => {
   if (p.product_type) return p.product_type === 'fabric'
   return p.category?.slug === 'lua-to-tam'
 })
+
+// Khăn lụa: giá cố định, bán theo cái, không có tuỳ chọn may → dùng layout vải.
+// Backend cũng bỏ kiểm tra size cho danh mục này khi đặt hàng (orders.py).
+const isScarf = computed(() => product.value?.category?.slug === 'khan-lua')
 
 const tabs = computed(() => {
   if (!product.value) return []

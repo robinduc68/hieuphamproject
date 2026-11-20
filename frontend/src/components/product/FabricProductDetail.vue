@@ -53,7 +53,7 @@
             {{ formatPrice(product.price) }}
             <span v-if="hasDiscount" class="fd-price-old">{{ formatPrice(product.compare_at_price) }}</span>
           </p>
-          <p class="fd-unit"><em>Đơn giá trên 1 {{ unit }} vải (chiều dài)</em></p>
+          <p v-if="!isScarf" class="fd-unit"><em>Đơn giá trên 1 {{ unit }} vải (chiều dài)</em></p>
 
           <ul class="fd-specs" v-if="specs.length">
             <li v-for="s in specs" :key="s.label">{{ s.label }}: {{ s.value }}</li>
@@ -64,7 +64,7 @@
                dòng thông số ở trên. HTML đã lọc trong renderRichText. -->
           <div v-if="fabricHtml" class="fd-fabric rich-text" v-html="fabricHtml" />
 
-          <div class="fd-links">
+          <div v-if="!isScarf" class="fd-links">
             <button class="fd-link" @click="guideOpen = true">Định mức may đo</button>
           </div>
 
@@ -74,9 +74,9 @@
               <input
                 class="qty-val qty-input"
                 type="text"
-                inputmode="decimal"
+                :inputmode="isScarf ? 'numeric' : 'decimal'"
                 :value="formatQty(qty)"
-                aria-label="Số mét"
+                :aria-label="isScarf ? 'Số lượng' : 'Số mét'"
                 @change="onQtyInput"
                 @blur="onQtyInput"
                 @keyup.enter="$event.target.blur()"
@@ -89,7 +89,7 @@
             </button>
           </div>
 
-          <p class="fd-qty-hint">Có thể nhập số mét vải lẻ cần mua. Ví dụ: 3.8</p>
+          <p v-if="!isScarf" class="fd-qty-hint">Có thể nhập số mét vải lẻ cần mua. Ví dụ: 3.8</p>
 
           <p class="fd-total">
             Tạm tính {{ formatQty(qty) }} {{ unit }}:
@@ -157,7 +157,12 @@ import GuideModal from '@/components/ui/GuideModal.vue'
 const props = defineProps({
   product: { type: Object, required: true },
   related: { type: Array, default: () => [] },
+  // 'fabric' = vải bán theo mét (cho nhập số lẻ)
+  // 'scarf'  = khăn lụa bán theo cái (chỉ số nguyên, không có định mức may đo)
+  variant: { type: String, default: 'fabric' },
 })
+
+const isScarf = computed(() => props.variant === 'scarf')
 
 const cart = useCartStore()
 
@@ -171,8 +176,11 @@ const MAX_QTY = 999
 const qty     = ref(1)
 
 function setQty(value) {
-  // làm tròn 1 chữ số lẻ, tránh 0.1 + 0.2 = 0.30000000000000004
-  const n = Math.round(Number(value) * 10) / 10
+  // Vải: làm tròn 1 chữ số lẻ, tránh 0.1 + 0.2 = 0.30000000000000004
+  // Khăn: chỉ số nguyên
+  const n = isScarf.value
+    ? Math.round(Number(value))
+    : Math.round(Number(value) * 10) / 10
   qty.value = Number.isFinite(n) ? Math.min(Math.max(n, MIN_QTY), MAX_QTY) : MIN_QTY
 }
 
@@ -242,7 +250,7 @@ const subCategoryLink = computed(() => {
 })
 
 const images = computed(() => props.product?.images ?? [])
-const unit   = computed(() => props.product?.unit_label?.trim() || 'mét')
+const unit   = computed(() => props.product?.unit_label?.trim() || (isScarf.value ? 'cái' : 'mét'))
 
 const hasDiscount = computed(() => {
   const old = Number(props.product?.compare_at_price ?? 0)
@@ -292,8 +300,9 @@ function isPlaceholderImg(img) {
 }
 
 function addToCart() {
-  // size = đơn vị, để mua thêm cùng loại vải thì cộng dồn vào một dòng giỏ hàng
-  cart.addItem(props.product, unit.value, qty.value)
+  // Vải: size = đơn vị, để mua thêm cùng loại vải thì cộng dồn vào một dòng giỏ hàng.
+  // Khăn: không có size → để trống, giỏ hàng/thanh toán sẽ không hiện dòng "Size".
+  cart.addItem(props.product, isScarf.value ? '' : unit.value, qty.value)
   justAdded.value = true
   setTimeout(() => { justAdded.value = false }, 2000)
 }

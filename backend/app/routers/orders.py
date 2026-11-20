@@ -7,6 +7,7 @@ from peewee import DoesNotExist, IntegrityError
 from app.models.order import Order, OrderItem
 from app.models.newsletter import NewsletterSubscription as Newsletter
 from app.models.product import Product, ProductSize
+from app.models.category import Category, SubCategory
 from app.models.customization import CustomizationOption
 from app.models.user import User
 from app.schemas.order import (
@@ -22,6 +23,24 @@ nl_router = APIRouter(prefix="/api/newsletter", tags=["Newsletter"])
 
 
 # ── helpers ───────────────────────────────────────────────────────────────
+SCARF_CATEGORY_SLUG = "khan-lua"
+
+
+def _is_scarf(product: Product) -> bool:
+    """Sản phẩm thuộc nhánh danh mục 'Khăn lụa' (bán theo cái, không có size)."""
+    if product.category_id:
+        cat = Category.get_or_none(Category.id == product.category_id)
+        if cat and cat.slug == SCARF_CATEGORY_SLUG:
+            return True
+    if product.subcategory_id:
+        sub = SubCategory.get_or_none(SubCategory.id == product.subcategory_id)
+        if sub:
+            cat = Category.get_or_none(Category.id == sub.category_id)
+            if cat and cat.slug == SCARF_CATEGORY_SLUG:
+                return True
+    return False
+
+
 def _item_to_out(i: OrderItem) -> OrderItemOut:
     return OrderItemOut(
         id=i.id,
@@ -102,9 +121,11 @@ def create_order(
         # Vải bán theo mét, "size" chỉ là nhãn đơn vị nên không có bản ghi
         # ProductSize nào để đối chiếu → bỏ qua, giống may theo số đo.
         is_fabric = getattr(product, "product_type", None) == "fabric"
+        # Khăn lụa bán theo cái, không có size → cũng bỏ qua.
+        is_scarf  = not is_fabric and _is_scarf(product)
 
         # Size validation: skip for custom tailoring
-        if item.tailoring_method != "custom" and not is_fabric:
+        if item.tailoring_method != "custom" and not is_fabric and not is_scarf:
             size_to_check = item.size
             try:
                 ProductSize.get(
