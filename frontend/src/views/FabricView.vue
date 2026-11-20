@@ -72,10 +72,18 @@
       <main class="fabric-main">
         <p class="fabric-desc">Chọn mẫu vải để thiết kế bộ áo dài, pháp phục của riêng bạn.</p>
 
-        <div class="fabric-grid">
+        <div class="fabric-grid" :aria-busy="loading">
+          <!-- Khung chờ trong lúc tải sản phẩm -->
+          <template v-if="loading">
+            <div v-for="n in 12" :key="`sk-${n}`" class="fabric-card fabric-skeleton" aria-hidden="true">
+              <div class="fabric-img skeleton-box" />
+              <div class="skeleton-line" />
+            </div>
+          </template>
+
           <!-- Vải thật tạo từ trang admin (bộ lọc họa tiết/màu chỉ áp dụng cho mẫu demo) -->
           <RouterLink
-            v-for="p in shownProducts"
+            v-for="p in pagedProducts"
             :key="`p-${p.id}`"
             :to="`/san-pham/${p.slug}`"
             class="fabric-card"
@@ -99,6 +107,17 @@
             <p class="fabric-name">{{ fabric.name }}</p>
           </RouterLink>
         </div>
+
+        <!-- Phân trang -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button class="pg-btn" :disabled="currentPage === 1" @click="goPage(currentPage - 1)">←</button>
+          <button
+            v-for="n in pageNumbers" :key="n"
+            class="pg-btn" :class="{ active: n === currentPage }"
+            @click="goPage(n)"
+          >{{ n }}</button>
+          <button class="pg-btn" :disabled="currentPage === totalPages" @click="goPage(currentPage + 1)">→</button>
+        </div>
       </main>
 
     </div>
@@ -106,12 +125,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { fabrics as allFabrics, patterns, colors, fabricGradient } from '@/data/fabrics'
 import { useFabricProducts, productImage, productGradient } from '@/composables/useFabricProducts'
 import { useSiteSettings } from '@/composables/useSiteSettings'
 
-const { common: fabricProducts } = useFabricProducts()
+const { common: fabricProducts, loading } = useFabricProducts()
 
 const patternSearch   = ref('')
 const selectedPatterns = ref([])
@@ -150,6 +170,40 @@ const shownProducts = computed(() => {
     list = list.filter(p => selectedColors.value.includes((p.color_tag || '').trim()))
   return list
 })
+
+// ── Phân trang (số trang nằm trên URL ?page= để bấm Back quay lại đúng trang) ──
+const PER_PAGE = 24
+const route  = useRoute()
+const router = useRouter()
+
+const totalPages = computed(() => Math.max(1, Math.ceil(shownProducts.value.length / PER_PAGE)))
+// ?page= vượt quá số trang hiện có → hiện trang cuối
+const currentPage = computed(() =>
+  Math.min(Math.max(1, Number(route.query.page) || 1), totalPages.value)
+)
+const pagedProducts = computed(() =>
+  shownProducts.value.slice((currentPage.value - 1) * PER_PAGE, currentPage.value * PER_PAGE)
+)
+const pageNumbers = computed(() => {
+  const pages = [], cur = currentPage.value, last = totalPages.value
+  for (let i = Math.max(1, cur - 2); i <= Math.min(last, cur + 2); i++) pages.push(i)
+  return pages
+})
+
+function pageQuery(p) {
+  const { page, ...rest } = route.query
+  return p > 1 ? { ...rest, page: p } : rest
+}
+
+function goPage(p) {
+  router.push({ query: pageQuery(p) })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Đổi bộ lọc → về trang 1
+watch([selectedPatterns, selectedColors], () => {
+  if (route.query.page) router.replace({ query: pageQuery(1) })
+}, { deep: true })
 
 function toggleColor(name) {
   const i = selectedColors.value.indexOf(name)
@@ -432,6 +486,54 @@ function resetFilter() {
   text-align: center;
   text-transform: uppercase;
 }
+
+/* ── Khung chờ khi đang tải ── */
+.fabric-skeleton { cursor: default; pointer-events: none; }
+.skeleton-box,
+.skeleton-line {
+  background: linear-gradient(90deg, #e9e3d8 25%, #f4f0e8 50%, #e9e3d8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+.skeleton-line {
+  width: 70%;
+  height: 14px;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+@keyframes skeleton-shine {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-box, .skeleton-line { animation: none; }
+}
+
+/* ── Phân trang (cùng kiểu với trang Cửa hàng) ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #ddd;
+}
+.pg-btn {
+  width: 38px; height: 38px;
+  border: 1px solid #ddd;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-medium);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.pg-btn:hover:not(:disabled) { border-color: var(--brand-red); color: var(--brand-red); }
+.pg-btn.active { background: var(--brand-red); border-color: var(--brand-red); color: #fff; }
+.pg-btn:disabled { opacity: .3; cursor: default; }
 
 /* Bộ lọc trên mobile: gập lại sau nút, tránh đẩy lưới sản phẩm xuống quá xa */
 .filter-toggle {

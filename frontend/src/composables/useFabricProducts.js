@@ -11,6 +11,24 @@ import { productsApi, categoriesApi } from '@/api'
  */
 const FABRIC_CATEGORY_SLUG = 'lua-to-tam'
 const PURE_SILK_SUB_SLUG   = 'lua-nha-xa-100-to-tam'
+const API_PAGE_SIZE        = 100   // API giới hạn per_page tối đa 100
+
+/** Tải đủ mọi sản phẩm của danh mục vải (gọi nhiều đợt, mỗi đợt 100). */
+async function fetchAllFabricProducts() {
+  const params = { category: FABRIC_CATEGORY_SLUG, per_page: API_PAGE_SIZE }
+  const first  = await productsApi.list({ ...params, page: 1 })
+  const pages  = Math.ceil((first.total ?? 0) / API_PAGE_SIZE)
+  const rest   = pages > 1
+    ? await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) => productsApi.list({ ...params, page: i + 2 })),
+      )
+    : []
+  // Bỏ trùng theo id phòng khi 2 đợt trả chồng nhau
+  const seen = new Set()
+  return [first, ...rest]
+    .flatMap(d => d.results ?? [])
+    .filter(p => !seen.has(p.id) && seen.add(p.id))
+}
 
 export function useFabricProducts() {
   const common   = ref([])
@@ -20,15 +38,14 @@ export function useFabricProducts() {
   async function fetch() {
     loading.value = true
     try {
-      const [cats, data] = await Promise.all([
+      const [cats, items] = await Promise.all([
         categoriesApi.list(),
-        productsApi.list({ category: FABRIC_CATEGORY_SLUG, per_page: 100 }),
+        fetchAllFabricProducts(),
       ])
       // API sản phẩm trả về tên danh mục con (sub_category), không trả slug →
       // tra tên tương ứng với slug từ cây danh mục.
       const cat      = (Array.isArray(cats) ? cats : []).find(c => c.slug === FABRIC_CATEGORY_SLUG)
       const pureName = cat?.subcategories?.find(s => s.slug === PURE_SILK_SUB_SLUG)?.name
-      const items    = data.results ?? []
 
       pureSilk.value = pureName ? items.filter(p => p.sub_category === pureName) : []
       common.value   = pureName ? items.filter(p => p.sub_category !== pureName) : items
