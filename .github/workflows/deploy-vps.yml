@@ -10,8 +10,10 @@ name: Deploy (VPS)
 # `git pull`: reset --hard nên không bao giờ kẹt vì conflict trên VPS.
 #
 # Secrets (Settings > Secrets and variables > Actions):
-#   VPS_HOST, VPS_USERNAME, VPS_SSH_KEY (private key), VPS_PORT (tuỳ chọn),
-#   PROJECT_PATH (thư mục project trên VPS, đã có .env + checkout sẵn).
+#   VPS_HOST, VPS_USERNAME, VPS_SSH_KEY (private key), VPS_PORT (tuỳ chọn).
+# Đường dẫn project trên VPS hardcode trong script dưới — không phải thông tin
+# nhạy cảm, và truyền qua `envs` của ssh-action từng làm hỏng cd (giá trị tới
+# VPS bị lỗi).
 
 on:
   push:
@@ -34,7 +36,6 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         env:
-          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
           BRANCH: ${{ github.ref_name }}
           COMMIT: ${{ github.sha }}
         with:
@@ -42,11 +43,12 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          envs: PROJECT_PATH,BRANCH,COMMIT
+          envs: BRANCH,COMMIT
           command_timeout: 25m
           script: |
             set -euo pipefail
 
+            PROJECT_PATH=/var/www/hahoatsilk
             cd "$PROJECT_PATH"
 
             if [ ! -f ".env" ]; then
