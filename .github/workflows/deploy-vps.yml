@@ -1,0 +1,97 @@
+name: Deploy (VPS)
+
+# TỰ CHẠY mỗi khi có code mới trên `main` (push thẳng hoặc merge PR/xong).
+# Vẫn chạy tay được (workflow_dispatch): GitHub UI > Actions > "Deploy (VPS)"
+# > Run workflow > chọn branch > Run.
+#
+# SSH vào VPS -> fetch + reset về commit vừa push -> docker compose up -d --build
+# (frontend, admin, backend — backend tự chạy migration + seed lúc khởi động,
+# xem CMD trong backend/Dockerfile). Cùng lệnh với deploy.sh, chỉ khác là không
+# `git pull`: reset --hard nên không bao giờ kẹt vì conflict trên VPS.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   VPS_HOST, VPS_USERNAME, VPS_SSH_KEY (private key), VPS_PORT (tuỳ chọn),
+#   PROJECT_PATH (thư mục project trên VPS, đã có .env + checkout sẵn).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Hai deploy chồng nhau sẽ đánh nhau trên cùng một cây code. cancel-in-progress:
+# false — hủy giữa chừng có thể bỏ lại build/migration đang chạy; deploy sau xếp
+# hàng đợi, chạy tiếp khi deploy trước xong.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: PROJECT_PATH,BRANCH,COMMIT
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+
+            cd "$PROJECT_PATH"
+
+            if [ ! -f ".env" ]; then
+              echo "ERROR: thiếu $PROJECT_PATH/.env — tạo trên VPS rồi chạy lại."
+              exit 1
+            fi
+
+            echo "==> Updating code..."
+            git fetch --prune origin "$BRANCH"
+            git reset --hard "$COMMIT"
+            echo "=== $(git rev-parse --short HEAD) $(git log -1 --pretty=%s) ==="
+
+            echo "==> Building & starting containers..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+            echo "==> Waiting for services..."
+            sleep 10
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+
+            echo "==> Health check..."
+            fail=0
+            for url in http://127.0.0.1:3000/ http://127.0.0.1:3001/; do
+              if curl -fsS -o /dev/null --max-time 10 "$url"; then
+                echo "  OK   $url"
+              else
+                echo "  FAIL $url"
+                fail=1
+              fi
+            done
+            # Backend không expose port ra ngoài (docker-compose.prod.yml) ->
+            # gọi health từ trong container.
+            if docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+                 exec -T backend python -c \
+                 "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=10)"; then
+              echo "  OK   backend /api/health"
+            else
+              echo "  FAIL backend /api/health"
+              fail=1
+            fi
+
+            if [ "$fail" -ne 0 ]; then
+              echo "=== DEPLOY FAILED — xem log: ==="
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend
+              exit 1
+            fi
+
+            echo ""
+            echo "✓ Deploy xong! (cách dọn image cũ: docker image prune -f)"
